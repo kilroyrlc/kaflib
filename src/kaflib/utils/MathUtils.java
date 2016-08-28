@@ -1,5 +1,8 @@
 package kaflib.utils;
 
+import java.security.MessageDigest;
+import java.util.ArrayList;
+
 /*
  * Copyright (c) 2015 Christopher Ritchie
  * 
@@ -23,6 +26,9 @@ package kaflib.utils;
  */
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Random;
+
 
 /**
  * Contains math utilities.
@@ -45,4 +51,64 @@ public class MathUtils {
 		}
 		return sum;
 	}
+	
+	/**
+	 * Gets a list of random numbers of the specified size, max value is
+	 * INT_MAX.
+	 * @param size
+	 * @return
+	 */
+	public static List<Integer> getRandoms(final int size) {
+		return getRandoms(size, Integer.MAX_VALUE);
+	}
+	
+	/**
+	 * Gets a list of random numbers with the specified size and max.
+	 * @param size
+	 * @param max
+	 * @return
+	 */
+	public static List<Integer> getRandoms(final int size, final int max) {
+		Random r = new Random();
+		List<Integer> l = new ArrayList<Integer>();
+	
+		while (l.size() < size) {
+			l.add(r.nextInt(max));
+		}
+		return l;
+	}
+	
+	/**
+	 * Returns the minimum positive value of the two supplied, null if both are
+	 * negative.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static Integer minPositive(int a, int b) {
+		if (a < 0 && b < 0) {
+			return null;
+		}
+		else if (a < 0) {
+			return b;
+		}
+		else if (b < 0) {
+			return a;
+		}
+		else {
+			return Math.min(a, b);
+		}
+	}
+	
+	/**
+	 * Returns the md5 value for the specified bytes.
+	 * @param bytes
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] getMD5(final byte[] bytes) throws Exception {
+		MessageDigest digest = MessageDigest.getInstance("MD5");
+		return digest.digest(bytes);
+	}
+	
 }

@@ -2,12 +2,12 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="C:/Users/Dell/Desktop/github/kaflib/lib/opencsv-3.3.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Dell/Desktop/github/kaflib/lib/poi-3.11-20141221.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Dell/Desktop/github/kaflib/lib/poi-excelant-3.11-20141221.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Dell/Desktop/github/kaflib/lib/poi-ooxml-3.11-20141221.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Dell/Desktop/github/kaflib/lib/poi-ooxml-schemas-3.11-20141221.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Dell/Desktop/github/kaflib/lib/xmlbeans-2.6.0.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Dell/Desktop/github/kaflib/lib/zip4j_1.3.2.jar"/>
+	<classpathentry kind="lib" path="C:/data/code/kaflib/lib/opencsv-3.3.jar"/>
+	<classpathentry kind="lib" path="C:/data/code/kaflib/lib/poi-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="C:/data/code/kaflib/lib/poi-excelant-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="C:/data/code/kaflib/lib/poi-ooxml-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="C:/data/code/kaflib/lib/poi-ooxml-schemas-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="C:/data/code/kaflib/lib/xmlbeans-2.6.0.jar"/>
+	<classpathentry kind="lib" path="C:/data/code/kaflib/lib/zip4j_1.3.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

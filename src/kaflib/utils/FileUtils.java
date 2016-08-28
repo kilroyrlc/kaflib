@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,7 +56,7 @@ import com.opencsv.CSVReader;
  * A set of utilities file handling.
  */
 public class FileUtils {
-
+	
 	/**
 	 * Reads the specified xlsx file to a matrix of strings.
 	 * @param file
@@ -158,7 +159,7 @@ public class FileUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String read(final File file, int maxLength) throws Exception {
+	public static String read(final File file, final long maxLength) throws Exception {
 		BufferedReader reader = getReader(file);
 		StringBuffer buffer = new StringBuffer();
 		
@@ -453,6 +454,112 @@ public class FileUtils {
         parameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
         parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
         file.createZipFile(new ArrayList<File>(Arrays.asList(directory.listFiles())), parameters);
+	}
+	
+	/**
+	 * Returns the file extension - all text after the last '.'.
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static String getExtension(final File file) throws Exception {
+		String name = file.getName();
+		if (name == null || name.lastIndexOf('.') < 0) {
+			return null;
+		}
+		return name.substring(name.lastIndexOf('.') + 1);
+	}
+	
+	/**
+	 * An unsophisticated check to see if the file extension is
+	 *  - bmp
+	 *  - gif
+	 *  - jpg
+	 *  - png
+	 *  - tif
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static boolean isImageFile(final File file) throws Exception {
+		String extension = getExtension(file).toLowerCase();
+		if (extension == null) {
+			return false;
+		}
+		
+		if (!extension.equals(".bmp") &&
+			!extension.equals(".gif") &&
+			!extension.equals("jpg") &&
+			!extension.equals(".png") &&
+			!extension.equals(".tif")) {
+			return false;
+		}
+		return true;
+		
+	}
+	
+	/**
+	 * Returns the md5 value for the specified file.
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] getMD5(final File file) throws Exception {
+		return MathUtils.getMD5(FileUtils.read(file, -1).getBytes());
+	}
+	
+	/**
+	 * Renames the specified file to an [a-z0-9] name based on a hash of its
+	 * contents.  The file is md5 hashed, those bytes are then mapped to 
+	 * [a-z0-9].
+	 * @param file
+	 * @throws Exception
+	 */
+	public static void renameToHash(final File file, final File outputDirectory) throws Exception {
+		if (file.isDirectory()) {
+			throw new Exception("Cannot rename directory.");
+		}
+		if (!outputDirectory.exists()) {
+			outputDirectory.mkdir();
+		}
+		if (!outputDirectory.isDirectory() || !outputDirectory.exists()) {
+			throw new Exception("Cannot access output directory: " + outputDirectory + ".");
+		}
+
+		
+		final String extension = getExtension(file);
+		final byte md5[] = getMD5(file);
+
+		String name = StringUtils.mapToWords(md5) + "." + extension;
+		
+		File ofile = new File(outputDirectory, name);
+		if (ofile.exists()) {
+			System.out.println("Collision: " + file + " -> " + name + ".");
+			return;
+		}
+		
+		FileUtils.copy(ofile, file);
+	}
+	
+	/**
+	 * Copy the file from source to destination.
+	 */	
+	public static void copy(final File destination, final File source) throws Exception {
+		FileUtils.createIf(destination);
+		if (!destination.canWrite()) {
+			throw new Exception("Cannot write: " + destination.getAbsolutePath() + ".");
+		}
+
+		FileInputStream instream = new FileInputStream(source);
+		FileOutputStream outstream = new FileOutputStream(destination);
+        FileChannel in = instream.getChannel();
+        FileChannel out = outstream.getChannel();
+        out.transferFrom(in, 0, in.size());
+        
+        in.close();
+        out.close();
+        instream.close();
+        outstream.close();
 	}
 	
 }
