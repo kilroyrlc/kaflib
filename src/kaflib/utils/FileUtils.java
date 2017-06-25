@@ -477,24 +477,32 @@ public class FileUtils {
 	 *  - jpg
 	 *  - png
 	 *  - tif
+	 *  - mp4
+	 *  - jpeg
 	 * @param file
 	 * @return
 	 * @throws Exception
 	 */
 	public static boolean isImageFile(final File file) throws Exception {
+		if (getExtension(file) == null) {
+			return false;
+		}
+		
 		String extension = getExtension(file).toLowerCase();
 		if (extension == null) {
 			return false;
 		}
 		
-		if (!extension.equals(".bmp") &&
-			!extension.equals(".gif") &&
-			!extension.equals("jpg") &&
-			!extension.equals(".png") &&
-			!extension.equals(".tif")) {
-			return false;
+		if (extension.equals("bmp") ||
+			extension.equals("gif") ||
+			extension.equals("jpg") ||
+			extension.equals("png") ||
+			extension.equals("tif") ||
+			extension.equals("jpeg") ||
+			extension.equals("mp4")) {
+			return true;
 		}
-		return true;
+		return false;
 		
 	}
 	

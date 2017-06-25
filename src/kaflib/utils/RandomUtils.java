@@ -195,8 +195,6 @@ public class RandomUtils {
 			iterator.next();
 		}
 		return iterator.next();
-	}
-	
-	
+	}	
 	
 }

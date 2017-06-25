@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import kaflib.types.Direction.Cardinal;
 import kaflib.utils.CheckUtils;
 import kaflib.utils.FileUtils;
 import kaflib.utils.MathUtils;
@@ -45,7 +46,7 @@ import com.opencsv.CSVWriter;
 /**
  * Defines a 2d array template type.
  */
-public class Matrix<T> {
+public class Matrix<T> implements MatrixNavigator<T> {
 	
 	private ArrayList<String> columnLabels;
 	private ArrayList<ArrayList<T>> matrix;
@@ -170,6 +171,26 @@ public class Matrix<T> {
 		}
 		
 		return matrix.get(row).get(column);
+	}
+
+	/**
+	 * Adds an empty row of data to the end of matrix.
+	 * @param row
+	 */
+	public void addRow() {
+		matrix.add(new ArrayList<T>());
+	}
+
+	/**
+	 * Adds an empty row of data to the end of matrix.
+	 * @param row
+	 */
+	public void addRow(final int size) {
+		ArrayList<T> row = new ArrayList<T>(size);
+		for (int i = 0; i < size; i++) {
+			row.add(null);
+		}
+		addRow(row);
 	}
 	
 	/**
@@ -549,5 +570,49 @@ public class Matrix<T> {
 			i++;
 		}
 		return matrix;
+	}
+
+	@Override
+	public T getNeighbor(Coordinate me, Cardinal direction) throws Exception {
+		int column = me.getX() + Direction.getOffset(direction).getX();
+		int row = me.getY() + Direction.getOffset(direction).getY();
+		if (!hasValue(row, column)) {
+			return null;
+		}
+		else {
+			return get(row, column);
+		}
+	}
+
+	@Override
+	public List<T> getNeighbors(Coordinate me, boolean nsewOnly) throws Exception {
+		List<T> neighbors = new ArrayList<T>();
+		if (getNeighbor(me, Cardinal.NORTH) != null) {
+			neighbors.add(getNeighbor(me, Cardinal.NORTH));
+		}
+		if (getNeighbor(me, Cardinal.SOUTH) != null) {
+			neighbors.add(getNeighbor(me, Cardinal.SOUTH));
+		}
+		if (getNeighbor(me, Cardinal.EAST) != null) {
+			neighbors.add(getNeighbor(me, Cardinal.EAST));
+		}
+		if (getNeighbor(me, Cardinal.WEST) != null) {
+			neighbors.add(getNeighbor(me, Cardinal.WEST));
+		}
+		if (!nsewOnly) {
+			if (getNeighbor(me, Cardinal.NORTHEAST) != null) {
+				neighbors.add(getNeighbor(me, Cardinal.NORTHEAST));
+			}
+			if (getNeighbor(me, Cardinal.SOUTHEAST) != null) {
+				neighbors.add(getNeighbor(me, Cardinal.SOUTHEAST));
+			}
+			if (getNeighbor(me, Cardinal.SOUTHWEST) != null) {
+				neighbors.add(getNeighbor(me, Cardinal.SOUTHWEST));
+			}
+			if (getNeighbor(me, Cardinal.NORTHWEST) != null) {
+				neighbors.add(getNeighbor(me, Cardinal.NORTHWEST));
+			}
+		}
+		return neighbors;
 	}
 }

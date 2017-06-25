@@ -56,7 +56,11 @@ public class RenameImagesToHash extends JFrame {
 	    
 	    for (File file : files) {
 	    	if (FileUtils.isImageFile(file)) {
+	    		System.out.println(file.getName());
 	    		FileUtils.renameToHash(file, output);
+	    	}
+	    	else {
+	    		System.out.println("!" + file.getName());
 	    	}
 	    }
 	}

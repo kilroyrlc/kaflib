@@ -26,6 +26,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -346,4 +348,66 @@ public class TypeUtils {
 		return list;
 	}
 	
+	/**
+	 * Returns a histogram of items in the collection.
+	 * @param collection
+	 * @return
+	 * @throws Exception
+	 */
+	public static <T> Map<T, Integer> getHistogram(Collection<T> collection) {
+		if (collection == null || collection.isEmpty()) {
+			return null;
+		}		
+		Map<T, Integer> histogram = new HashMap<T, Integer>();
+		for (T item : collection) {
+			if (histogram.containsKey(item)) {
+				histogram.put(item, histogram.get(item) + 1);
+			}
+			else {
+				histogram.put(item, 1);
+			}
+		}
+		return histogram;
+	}
+	
+	/**
+	 * Returns a list of unique elements by the most frequent.
+	 * @param collection
+	 * @return
+	 * @throws Exception
+	 */
+	public static<T> List<T> getByMostFrequent(Collection<T> collection) {
+		if (collection == null || collection.isEmpty()) {
+			return null;
+		}
+		
+		final Map<T, Integer> histogram = getHistogram(collection);
+		List<T> list = new ArrayList<T>();
+		list.addAll(histogram.keySet());
+		Collections.sort(list, new Comparator<T>() {
+			@Override
+			public int compare(T o1, T o2) {
+				if (histogram.get(o1) > histogram.get(o2)) {
+					return -1;
+				}
+				else if (histogram.get(o1) < histogram.get(o2)) {
+					return 1;
+				}
+				return 0;
+			}
+		});
+		return list;
+	}
+	
+	/**
+	 * Shorthand for iterator().next() used to access the first element in a
+	 * collection that isn't necessarily indexed.
+	 * @param collection
+	 * @return
+	 * @throws Exception
+	 */
+	public static<T> T getItem(Collection<T> collection) throws Exception {
+		CheckUtils.checkNonEmpty(collection, "collection");
+		return collection.iterator().next();
+	}
 }
