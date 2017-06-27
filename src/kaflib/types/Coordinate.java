@@ -1,6 +1,9 @@
 package kaflib.types;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Random;
 import java.util.Set;
 
 import kaflib.utils.CheckUtils;
@@ -13,6 +16,25 @@ public class Coordinate {
 	public Coordinate(final int x, final int y) {
 		this.x = x;
 		this.y = y;
+	}
+	
+
+	public Coordinate(final Coordinate coordinate) {
+		this.x = coordinate.getX();
+		this.y = coordinate.getY();
+	}
+	
+	/**
+	 * Get distance to another coordinate.
+	 * @param other
+	 * @return
+	 * @throws Exception
+	 */
+	public int getDistance(Coordinate other) throws Exception {
+		CheckUtils.check(other, "other coord");
+		
+		return (int) Math.sqrt(((other.getX() - x) * (other.getX() - x)) +
+							  ((other.getY() - y) * (other.getY() - y)));
 	}
 	
 	public int getX() {
@@ -67,6 +89,119 @@ public class Coordinate {
 			}
 		}
 	}
+	
+	/**
+	 * Return the nearest coordinate from the collection.
+	 * @param others
+	 * @return
+	 * @throws Exception
+	 */
+	public Coordinate getNearest(Collection<Coordinate> others) throws Exception {
+		CheckUtils.check(others, "coords");
+		Coordinate min = null;
+		int min_distance = Integer.MAX_VALUE;
+		
+		Iterator<Coordinate> i = others.iterator();
+		while (i.hasNext()) {
+			Coordinate c = i.next();
+			int d = getDistance(c);
+			if (d < min_distance) {
+				min = c;
+				min_distance = d;
+			}
+		}
+		return min;
+	}
+	
+	/**
+	 * Returns the midpoint between the two points.
+	 * @param endpoint
+	 * @return
+	 * @throws Exception
+	 */
+	public Coordinate getMidpoint(Coordinate endpoint) throws Exception {
+		CheckUtils.check(endpoint, "endpoint");
+		
+		int dx = (endpoint.getX() - x) / 2;
+		int dy = (endpoint.getY() - y) / 2;
+		
+		if (dx == 0 && dy == 0) {
+			return new Coordinate(this);
+		}
+		
+		return new Coordinate(x + dx, y + dy);
+	}
+	
+	/**
+	 * Gets a point between coordinates that is approximately 'distance' from 
+	 * this.  Does a binary search, there may be a mathy way.
+	 * @param end
+	 * @param distance
+	 * @return
+	 * @throws Exception
+	 */
+	public Coordinate getColinear(Coordinate endpoint, int distance) throws Exception {
+		return getColinear(endpoint, distance, 0);
+	}
+	
+	private Coordinate getColinear(Coordinate endpoint, int distance, int count) throws Exception {
+		CheckUtils.check(endpoint, "endpoint");
+		CheckUtils.checkNonNegative(distance);
+
+		if (distance == 0 || this.equals(endpoint)) {
+			return new Coordinate(this);
+		}
+		
+		Coordinate midpoint = getMidpoint(endpoint);
+		int d = getDistance(midpoint);
+
+		if (d > distance) {
+			return getColinear(midpoint, distance, count + 1);
+		}
+		else if (d < distance) {
+			return midpoint.getColinear(endpoint, distance - d, count + 1);
+		}
+		else {
+			return midpoint;
+		}
+		
+	}
+	
+	/**
+	 * Get a randomly-placed point with 'radius' of this point.
+	 * @param radius
+	 * @return
+	 */
+	public Coordinate getRandomNeighbor(int radius) throws Exception {
+		CheckUtils.checkNonNegative(radius);
+		
+		if (radius == 0) {
+			return new Coordinate(this);
+		}
+		
+		Random random = new Random();
+
+		// Add a random dx/dy to the point.  Check the distance, if it's
+		// acceptable, return, otherwise try again and decrease the possible
+		// dx/dy values.
+		for (int i = radius; i > 0; i--) {
+			int dx = random.nextInt(i);
+			int dy = random.nextInt(i);
+			if (random.nextBoolean()) {
+				dx *= -1;
+			}
+			if (random.nextBoolean()) {
+				dy *= -1;
+			}
+			Coordinate c = new Coordinate(x + dx, y + dy);
+			
+			if (this.getDistance(c) < radius) {
+				return c;
+			}
+		}
+		return new Coordinate(this);
+	}
+	
 	
 	public Set<Coordinate> getNeighbors() {
 		Set<Coordinate> neighbors = new HashSet<Coordinate>();

@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.xmlbeans.impl.util.Base64;
+
 
 /**
  * Contains math utilities.
@@ -60,6 +62,21 @@ public class MathUtils {
 	 */
 	public static List<Integer> getRandoms(final int size) {
 		return getRandoms(size, Integer.MAX_VALUE);
+	}
+	
+	/**
+	 * Returns an integeral percentage.
+	 * 
+	 *  @param numerator the value.
+	 *  @param denominator the divisor.
+	 *  @return (numerator * 100) / denominator, or 0 if the denominator
+	 *          is <= 0.
+	 */	
+	public static int getPercent(final int numerator, final int denominator) throws Exception {
+		if (denominator <= 0) {
+			throw new Exception("Denominator must be greater than zero.");
+		}
+		return (100 * numerator) / denominator;
 	}
 	
 	/**
@@ -109,6 +126,53 @@ public class MathUtils {
 	public static byte[] getMD5(final byte[] bytes) throws Exception {
 		MessageDigest digest = MessageDigest.getInstance("MD5");
 		return digest.digest(bytes);
+	}
+	
+	/**
+	 * Encodes the specified bytes into base64.
+	 * @param bytes
+	 * @param urlSafe
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] encodeBase64(final byte[] bytes, 
+								      final boolean urlSafe) throws Exception {
+		byte encoded[] = Base64.encode(bytes);
+		if (urlSafe) {
+			for (int i = 0; i < encoded.length; i++) {
+				if (encoded[i] == '+') {
+					encoded[i] = '-';
+				}
+				if (encoded[i] == '/') {
+					encoded[i] = '_';
+				}
+			}
+		}
+		return encoded;
+		
+	}
+	
+	/**
+	 * Decodes the specified bytes from base64.
+	 * @param bytes
+	 * @param urlSafe
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] decodeBase64(final byte[] bytes, 
+									  final boolean urlSafe) throws Exception {
+		if (urlSafe) {
+			for (int i = 0; i < bytes.length; i++) {
+				if (bytes[i] == '-') {
+					bytes[i] = '+';
+				}
+				if (bytes[i] == '_') {
+					bytes[i] = '/';
+				}
+			}
+		}
+		
+		return Base64.decode(bytes);
 	}
 	
 }

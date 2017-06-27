@@ -173,7 +173,8 @@ public class ProgressLabel extends JPanel {
 	private Client getClient(final Object handle) throws Exception {
 		Client c = contains(handle);
 		if (c == null) {
-			throw new Exception("Unknown handle: " + handle.toString() + ".");
+			throw new Exception("Unknown handle: " + handle.toString() + 
+								", did you register it?");
 		}
 		return c;
 	}
@@ -299,12 +300,14 @@ public class ProgressLabel extends JPanel {
 		}
 		
 		try {
-			g.setColor(Color.BLACK);
-			g.setFont(FONT);
-			g.drawString(StringUtils.resize(text, columns), 8, 18);
+			if (text != null) {
+				g.setColor(Color.BLACK);
+				g.setFont(FONT);
+				g.drawString(StringUtils.resize(text, columns), 8, 18);
+			}
 		}
 		catch (Exception e) {
-			System.out.println("Unable to render string:\n" + text);
+			System.out.println("ProgressLabel unable to render string:\n" + text);
 		}
 
 		g.setColor(Color.BLACK);

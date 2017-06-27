@@ -5,7 +5,6 @@ import java.io.File;
 
 import javax.swing.JFrame;
 
-import kaflib.graphics.MedianFilter;
 import kaflib.graphics.RegionFillFilter;
 import kaflib.gui.ImageComponent;
 import kaflib.types.Percent;

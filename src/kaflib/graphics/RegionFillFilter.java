@@ -1,10 +1,7 @@
 package kaflib.graphics;
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import kaflib.graphics.ImageTraverser.Order;
@@ -91,6 +88,14 @@ public class RegionFillFilter extends Filter implements Traversable {
 		}
 	}
 
+	/**
+	 * Gets softness.
+	 * @return
+	 */
+	public int getSoftness() {
+		return softness;
+	}
+	
 	@Override
 	public BufferedImage apply() throws Exception {
 		traverser.start();

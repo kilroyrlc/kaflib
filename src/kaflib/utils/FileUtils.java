@@ -35,8 +35,10 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import kaflib.types.Matrix;
 
@@ -159,7 +161,7 @@ public class FileUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String read(final File file, final long maxLength) throws Exception {
+	public static String readString(final File file, final long maxLength) throws Exception {
 		BufferedReader reader = getReader(file);
 		StringBuffer buffer = new StringBuffer();
 		
@@ -507,13 +509,68 @@ public class FileUtils {
 	}
 	
 	/**
+	 * Reads bytes from a stream into an array.
+	 * @param stream
+	 * @param length
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] read(final InputStream stream, final int length) throws Exception {
+		
+		byte bytes[] = new byte[length];
+		int index = 0;
+		while (index < length) {
+			index += stream.read(bytes, index, length - index);
+		}
+		
+		return bytes;
+	}
+	
+	/**
 	 * Returns the md5 value for the specified file.
 	 * @param file
 	 * @return
 	 * @throws Exception
 	 */
 	public static byte[] getMD5(final File file) throws Exception {
-		return MathUtils.getMD5(FileUtils.read(file, -1).getBytes());
+		return MathUtils.getMD5(FileUtils.readString(file, -1).getBytes());
+	}
+	
+	/**
+	 * Renames the specified file to a base 64 name based on a hash of its
+	 * contents.  Truncates at a max length, or null to not truncate.
+	 * @param file
+	 * @throws Exception
+	 */
+	public static void renameToBase64Hash(final File file, 
+										  final File outputDirectory,
+										  final Integer length) throws Exception {
+		if (file.isDirectory()) {
+			throw new Exception("Cannot rename directory.");
+		}
+		if (!outputDirectory.exists()) {
+			outputDirectory.mkdir();
+		}
+		if (!outputDirectory.isDirectory() || !outputDirectory.exists()) {
+			throw new Exception("Cannot access output directory: " + outputDirectory + ".");
+		}
+
+		
+		final String extension = getExtension(file);
+		final byte md5[] = getMD5(file);
+		
+		String name = new String(MathUtils.encodeBase64(md5, true));
+		if (length != null && name.length() > length) {
+			name = name.substring(0, length);
+		}
+		name = name + "." + extension;
+		
+		File ofile = new File(outputDirectory, name);
+		if (ofile.exists()) {
+			throw new Exception("Collision: " + file + " -> " + name + ".");
+		}
+		
+		FileUtils.copy(ofile, file);
 	}
 	
 	/**
@@ -523,7 +580,7 @@ public class FileUtils {
 	 * @param file
 	 * @throws Exception
 	 */
-	public static void renameToHash(final File file, final File outputDirectory) throws Exception {
+	public static void renameToHexHash(final File file, final File outputDirectory) throws Exception {
 		if (file.isDirectory()) {
 			throw new Exception("Cannot rename directory.");
 		}
@@ -542,8 +599,7 @@ public class FileUtils {
 		
 		File ofile = new File(outputDirectory, name);
 		if (ofile.exists()) {
-			System.out.println("Collision: " + file + " -> " + name + ".");
-			return;
+			throw new Exception("Collision: " + file + " -> " + name + ".");
 		}
 		
 		FileUtils.copy(ofile, file);
@@ -568,6 +624,123 @@ public class FileUtils {
         out.close();
         instream.close();
         outstream.close();
+	}
+	
+	/**
+	 * Reads the input file into a byte array.
+	 * 
+	 *  @param input the file to read.
+	 *  @return A byte array of the file contents.
+	 *  @throws Exception On null input.
+	 */	
+	public static byte[] read(final File input) throws Exception {
+		return read(input, -1);
+	}
+	
+	/**
+	 * Reads the input file into a byte array.
+	 * 
+	 *  @param input the file to read.
+	 *  @param maxBytes the maximum number of bytes allowed, -1 for unlimited.
+	 *  @return A byte array of the file contents or null if the file is too 
+	 *  large.
+	 *  @throws Exception On null input.
+	 */	
+	public static byte[] read(final File input, final int maxBytes) throws Exception {
+		CheckUtils.checkReadable(input, "input file");
+
+		if (input.length() > Integer.MAX_VALUE || 
+			input.length() > maxBytes) {
+			throw new Exception("File size (" + input.length() + 
+								") longer than max (" + maxBytes + ".");
+		}
+		FileInputStream stream = null;
+		try {
+			stream = new FileInputStream(input);
+			byte buffer[] = new byte[(int)input.length()];
+			int read = 0;
+			int index = 0;
+			
+			read = stream.read(buffer, 0, buffer.length);
+			while (read > 0) {
+				index += read;
+				read = stream.read(buffer, index, buffer.length - read);
+			}
+			
+			stream.close();
+			
+			if (index != buffer.length) {
+				throw new Exception("File read error, file length: " + buffer.length +
+									" but read: " + read + ".");
+			}
+			
+			return buffer;
+		}
+		catch (Exception e) {
+			if (stream != null) {
+				stream.close();
+			}
+			throw e;
+		}
+	}
+	
+	
+	/**
+	 * Returns all files under the specified root directory/file.
+	 * @param root
+	 * @return
+	 */
+	public static Set<File> getRecursive(final File root) {
+		return getRecursive(root, null);
+	}
+	
+	/**
+	 * Returns all files under the specified root directory/file ending
+	 * with the specified extension.
+	 * @param root
+	 * @param extension
+	 * @return
+	 */
+	public static Set<File> getRecursive(final File root, final String extension) {
+		Set<File> files = new HashSet<File>();
+		if (!root.isDirectory()) {
+			files.add(root);
+			return files;
+		}
+		
+		File list[] = root.listFiles();
+		for (File file : list) {
+			if (file.isDirectory()) {
+				files.addAll(getRecursive(file));
+			}
+			else {
+				files.add(file);
+			}
+		}
+		return files;
+	}
+
+	/**
+	 * Returns the total number of files under the given root directory/file.
+	 * @param root
+	 * @return
+	 */
+	public static int countFiles(final File root) {
+		int count = 0;
+		if (root.isFile()) {
+			return 1;
+		}
+		
+		File list[] = root.listFiles();
+		for (File file : list) {
+			if (file.isDirectory()) {
+				count += countFiles(root);
+			}
+			else {
+				count++;
+			}
+		}
+		return count;
 	}
 	
 }
