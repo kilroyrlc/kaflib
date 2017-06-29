@@ -172,6 +172,31 @@ public class CheckUtils {
 	 * @param value
 	 * @throws Exception
 	 */
+	public static void checkPositive(float value) throws Exception {
+		checkPositive(value, null);
+	}
+	
+	/**
+	 * Throws if the given value is < 1.
+	 * @param value
+	 * @throws Exception
+	 */
+	public static void checkPositive(float value, final String description) throws Exception {
+		if (value <= 0) {
+			if (description == null) {
+				throw new Exception("Non-positive value: " + value + ".");
+			}
+			else {
+				throw new Exception("Non-positive value: " + description + " = " + value + ".");
+			}
+		}
+	}
+	
+	/**
+	 * Throws if the given value is < 1.
+	 * @param value
+	 * @throws Exception
+	 */
 	public static void checkPositive(long value, final String description) throws Exception {
 		if (value < 1) {
 			if (description == null) {

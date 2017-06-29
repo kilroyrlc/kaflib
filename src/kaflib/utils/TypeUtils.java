@@ -1,5 +1,8 @@
 package kaflib.utils;
 
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
 /*
  * Copyright (c) 2015 Christopher Ritchie
  * 
@@ -410,4 +413,6 @@ public class TypeUtils {
 		CheckUtils.checkNonEmpty(collection, "collection");
 		return collection.iterator().next();
 	}
+	
+	
 }

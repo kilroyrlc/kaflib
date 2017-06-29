@@ -1,8 +1,10 @@
 package kaflib.types;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -214,6 +216,29 @@ public class Coordinate {
 		neighbors.add(new Coordinate(getX(), getY() - 1));
 		neighbors.add(new Coordinate(getX(), getY() + 1));
 		return neighbors;
+	}
+	
+	public enum BoxValues {
+		X,
+		Y,
+		WIDTH,
+		HEIGHT
+	}
+	
+	/**
+	 * Returns an x/y width/height where width and height are positive.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static Map<BoxValues, Integer> getXYWH(final Coordinate a, 
+										          final Coordinate b) {
+		Map<BoxValues, Integer> values = new HashMap<BoxValues, Integer>();
+		values.put(BoxValues.X, Math.min(a.getX(), b.getX()));
+		values.put(BoxValues.Y, Math.min(a.getY(), b.getY()));
+		values.put(BoxValues.WIDTH, Math.abs(a.getX() - b.getX()));
+		values.put(BoxValues.HEIGHT, Math.abs(a.getY() - b.getY()));
+		return values;
 	}
 	
 	public int hashCode() {
