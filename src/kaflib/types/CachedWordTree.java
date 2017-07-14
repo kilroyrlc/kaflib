@@ -70,6 +70,22 @@ public class CachedWordTree extends WordTree implements Serializable {
 	}
 	
 	/**
+	 * Retuns the most accessed value.
+	 * @return
+	 */
+	public String getMostFrequent() {
+		String string = null;
+		int value = 0;
+		for (String key : cache.keySet()) {
+			if (cache.get(key) > value) {
+				string = key;
+				value = cache.get(value);
+			}
+		}
+		return string;
+	}
+	
+	/**
 	 * Return a list of matches, with cache hits listed first by most recent
 	 * access.
 	 * @param prefix

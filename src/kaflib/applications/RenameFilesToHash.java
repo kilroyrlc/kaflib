@@ -54,15 +54,18 @@ public class RenameFilesToHash extends JFrame {
 		    output.mkdir();
 	    }
 	    
-	    try {
-		    for (File file : chooser.getSelectedFiles()) {
-	    		System.out.println(file.getName());
+	    StringBuffer collisions = new StringBuffer();
+	    for (File file : chooser.getSelectedFiles()) {
+		    try {    	
+		    	System.out.println(file.getName());
 	    		FileUtils.renameToBase64Hash(file, output, MAX_LENGTH);
 		    }
+		    catch (Exception e) {
+		    	collisions.append(e.getMessage() + "\n");
+		    }
 	    }
-	    catch (Exception e) {
-	    	JOptionPane.showMessageDialog(this, "Problem: " + e.getMessage());
-	    	e.printStackTrace();
+	    if (collisions.length() > 0) {
+	    	JOptionPane.showMessageDialog(this, "Problems: " + collisions.toString());
 	    }
 	}
 

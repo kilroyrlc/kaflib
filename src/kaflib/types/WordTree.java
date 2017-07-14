@@ -1,9 +1,12 @@
 package kaflib.types;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -97,6 +100,21 @@ public class WordTree implements Serializable {
 			words = root.getAll(prefix, maxSize);
 		}
 		return words;
+	}
+	
+	/**
+	 * Returns an ordered list of values matching the prefix.  In this case,
+	 * they are sorted alphabetically.
+	 * @param prefix
+	 * @param maxSize
+	 * @return
+	 * @throws Exception
+	 */
+	public List<String> getOrdered(final String prefix, final int maxSize) throws Exception {
+		List<String> list = new ArrayList<String>();
+		list.addAll(get(prefix, maxSize));
+		Collections.sort(list);
+		return list;
 	}
 	
 	/**

@@ -2,7 +2,6 @@ package kaflib.gui;
 
 import java.awt.FlowLayout;
 
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -44,7 +43,7 @@ public class TextFieldPanel extends JPanel {
 	 * Returns the field component.
 	 * @return
 	 */
-	public JComponent getField() {
+	public JTextField getField() {
 		return field;
 	}
 

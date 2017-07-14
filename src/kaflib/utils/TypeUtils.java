@@ -1,7 +1,6 @@
 package kaflib.utils;
 
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.InputStream;
 
 /*
  * Copyright (c) 2015 Christopher Ritchie
@@ -37,6 +36,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.poi.util.IOUtils;
 
 /**
  * Contains utilities for various Java data types.
@@ -414,5 +415,14 @@ public class TypeUtils {
 		return collection.iterator().next();
 	}
 	
+	/**
+	 * Reads a stream to a byte buffer.
+	 * @param stream
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] read(final InputStream stream) throws Exception {
+		return IOUtils.toByteArray(stream);
+	}
 	
 }

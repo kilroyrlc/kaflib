@@ -6,12 +6,14 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 
 import kaflib.types.Percent;
 import kaflib.utils.CheckUtils;
@@ -137,6 +139,25 @@ public class GraphicsUtils {
 		return rgb;
 	}
 	
+	/**
+	 * Reads the specified file to a buffered image.
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static BufferedImage read(final File file) throws Exception {
+		return ImageIO.read(file);
+	}
+
+	/**
+	 * Reads the specified stream to a buffered image.
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static BufferedImage read(final InputStream stream) throws Exception {
+		return ImageIO.read(stream);
+	}
 	
 	/**
 	 * Converts and image to a buffered image.
@@ -187,7 +208,75 @@ public class GraphicsUtils {
 	}
 	
 	/**
-	 * Returns a cropped version of htis image.
+	 * Scales the image.
+	 * @param image
+	 * @param factor
+	 * @return
+	 */
+	public static BufferedImage getScaled(final BufferedImage image, float factor) {
+		
+		return GraphicsUtils.toBufferedImage(
+				image.getScaledInstance((int) (image.getWidth() / factor), 
+										(int) (image.getHeight() / factor), 
+										Image.SCALE_SMOOTH), image.getType());
+	}
+	
+	/**
+	 * Scales the image to be within maxWidth and maxHeight, or just one
+	 * constraint if the other is null.
+	 * @param image
+	 * @param factor
+	 * @return
+	 */
+	public static BufferedImage getScaled(final BufferedImage image, 
+										  final Integer maxWidth, 
+										  final Integer maxHeight) throws Exception {
+		if (maxWidth == null && maxHeight == null) {
+			throw new Exception("Must specify at least one constraint.");
+		}
+		
+		Float scale_x = null;
+		if (maxWidth != null) {
+			scale_x = (float) maxWidth / image.getWidth();
+		}
+		
+		Float scale_y = null;
+		if (maxHeight != null) {
+			scale_y = (float) maxHeight / image.getHeight();
+		}
+		
+		float scaling;
+		if (scale_y == null) {
+			scaling = scale_x;
+		}
+		else if (scale_x == null) {
+			scaling = scale_y;
+		}
+		else {
+			if (scale_x * image.getHeight() > maxHeight) {
+				scaling = scale_y;
+			}
+			else {
+				scaling = scale_x;
+			}
+		}
+		
+		return getScaled(image, scaling);
+
+	}
+	
+	/**
+	 * Converts the image to an imageicon.
+	 * @param image
+	 * @return
+	 * @throws Exception
+	 */
+	public static ImageIcon getImageIcon(final BufferedImage image) throws Exception {
+		return new ImageIcon(image);
+	}
+	
+	/**
+	 * Returns a cropped version of this image.
 	 * @param image
 	 * @param x
 	 * @param y

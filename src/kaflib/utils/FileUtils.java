@@ -555,7 +555,28 @@ public class FileUtils {
 			throw new Exception("Cannot access output directory: " + outputDirectory + ".");
 		}
 
+		String name = getMD5Base64Name(file, length);
 		
+		File ofile = new File(outputDirectory, name);
+		if (ofile.exists()) {
+			throw new Exception("Collision: " + file + "(" + 
+								file.length()/1000 + "k)" + " -> " + name + 
+								"(" + ofile.length()/1000 + "k).");
+		}
+		
+		FileUtils.copy(ofile, file);
+	}
+	
+	/**
+	 * Returns the md5 hash of the file as a url-safe base-64 encoded name.
+	 * File extension is preserved.  If length nonnull, truncates at length.
+	 * @param file
+	 * @param length
+	 * @return
+	 * @throws Exception
+	 */
+	public static String getMD5Base64Name(final File file,
+										  final Integer length) throws Exception {
 		final String extension = getExtension(file);
 		final byte md5[] = getMD5(file);
 		
@@ -563,14 +584,10 @@ public class FileUtils {
 		if (length != null && name.length() > length) {
 			name = name.substring(0, length);
 		}
-		name = name + "." + extension;
-		
-		File ofile = new File(outputDirectory, name);
-		if (ofile.exists()) {
-			throw new Exception("Collision: " + file + " -> " + name + ".");
+		if (extension != null && extension.length() > 0) {
+			name = name + "." + extension;
 		}
-		
-		FileUtils.copy(ofile, file);
+		return name;
 	}
 	
 	/**
@@ -634,7 +651,7 @@ public class FileUtils {
 	 *  @throws Exception On null input.
 	 */	
 	public static byte[] read(final File input) throws Exception {
-		return read(input, -1);
+		return read(input, null);
 	}
 	
 	/**
@@ -646,11 +663,11 @@ public class FileUtils {
 	 *  large.
 	 *  @throws Exception On null input.
 	 */	
-	public static byte[] read(final File input, final int maxBytes) throws Exception {
+	public static byte[] read(final File input, final Integer maxBytes) throws Exception {
 		CheckUtils.checkReadable(input, "input file");
 
 		if (input.length() > Integer.MAX_VALUE || 
-			input.length() > maxBytes) {
+			(maxBytes != null && input.length() > maxBytes)) {
 			throw new Exception("File size (" + input.length() + 
 								") longer than max (" + maxBytes + ".");
 		}

@@ -93,7 +93,6 @@ public class AESUtils {
 	}
 	
 	
-	
 	/**
 	 * Encrypt the specified input file, using the given key.  The output file
 	 * will be named the b64 encoding of the input, the IV will be written to
@@ -130,6 +129,27 @@ public class AESUtils {
 		Pair<byte[], byte[]> ciphertext = encryptAESCBC(plaintext, key);
 		plaintext = null;
 		System.gc();
+		
+		FileOutputStream ostream = new FileOutputStream(out);
+		ostream.write(ciphertext.getFirst());
+		ostream.write(ciphertext.getSecond());
+		ostream.close();
+		return out;
+	}
+	
+	/**
+	 * Encrypt the specified data, using the given key.  The IV will be written to
+	 * the beginning of the output file.
+	 * @param in
+	 * @param key
+	 * @param maxLength
+	 * @throws Exception
+	 */
+	public static File encrypt(final byte in[],
+							   final File out,
+							   final SecretKey key) throws Exception {
+		// Encrypt source file.
+		Pair<byte[], byte[]> ciphertext = encryptAESCBC(in, key);
 		
 		FileOutputStream ostream = new FileOutputStream(out);
 		ostream.write(ciphertext.getFirst());
@@ -179,6 +199,33 @@ public class AESUtils {
 		ostream.close();
 		
 		return out;
+	}
+	
+	/**
+	 * Decrypts the specified file, using the given key.
+	 * @param in
+	 * @param key
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] decrypt(final File in,
+							     final SecretKey key) throws Exception {
+		if (in.length() > Integer.MAX_VALUE) {
+			throw new Exception("Input file longer than int max.");
+		}	
+		int data_length = (int)in.length() - IV_LENGTH;
+		
+		FileInputStream instream = new FileInputStream(in);
+
+		byte iv[] = FileUtils.read(instream, IV_LENGTH);
+		byte ciphertext[] = FileUtils.read(instream, data_length);
+
+		instream.close();
+
+		byte plaintext[];
+		plaintext = decryptAESCBC(iv, ciphertext, key);
+		ciphertext = null;
+		return plaintext;
 	}
 	
 	/**

@@ -1,6 +1,5 @@
 package kaflib.gui;
 
-import javax.swing.JComponent;
 import javax.swing.JPasswordField;
 
 /**
@@ -26,7 +25,7 @@ public class PasswordPanel extends TextFieldPanel {
 		return new String(field.getPassword());
 	}
 	
-	public JComponent getField() {
+	public JPasswordField getField() {
 		return field;
 	}
 }

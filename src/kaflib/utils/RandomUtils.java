@@ -180,6 +180,16 @@ public class RandomUtils {
 		return calendar.getTime();
 	}
 	
+	/**
+	 * Returns a random value from the array.
+	 * @param values
+	 * @return
+	 * @throws Exception
+	 */
+	public static <T> T getRandom(final T values[]) throws Exception {
+		CheckUtils.checkNonEmpty(values, "values");
+		return values[randomInt(values.length)];
+	}	
 	
 	/**
 	 * Returns a random value from the set.

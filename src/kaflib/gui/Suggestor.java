@@ -27,6 +27,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import kaflib.types.CachedWordTree;
+import kaflib.types.WordTree;
 
 /**
  * Derived from Dave.
@@ -39,7 +40,7 @@ public class Suggestor {
 	private final Window container;
 	private JPanel suggestion_panel;
 	private JWindow suggestion_popup;
-	private CachedWordTree suggestions;
+	private WordTree suggestions;
 	private int tW;
 	private int tH;
 	private DocumentListener documentListener = new DocumentListener() {
@@ -62,8 +63,20 @@ public class Suggestor {
 	private final Color suggestionFocusedColor;
 
 	public Suggestor(final JTextField textField, 
+			 final Window mainWindow, 
+			 final WordTree suggestions) {
+		this(textField, 
+			 mainWindow, 
+			 suggestions, 
+			 Color.WHITE.brighter(), 
+			 Color.BLUE, 
+	  		 Color.RED, 
+	  		 0.75f);
+	}
+	
+	public Suggestor(final JTextField textField, 
 					 final Window mainWindow, 
-					 final CachedWordTree suggestions, 
+					 final WordTree suggestions, 
 					 final Color popUpBackground, 
 					 final Color textColor, 
 					 final Color suggestionFocusedColor, 

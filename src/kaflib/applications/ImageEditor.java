@@ -1,49 +1,108 @@
 package kaflib.applications;
 
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
-import kaflib.graphics.RegionFillFilter;
-import kaflib.gui.ImageComponent;
-import kaflib.types.Percent;
+import kaflib.gui.ThumbCropComponent;
 
+/**
+ * Defines a type that shows a raster image and a client/child-specified 
+ * toolbar.
+ */
 public class ImageEditor {
 	 
-	private ImageComponent inputImage;
-	private ImageComponent outputImage;
-	private JFrame inputFrame;
-	private JFrame outputFrame;
+	private ThumbCropComponent image;
+	private JFrame frame;
+	private JPanel panel;
+	private JScrollPane input_pane;
 	
-	
+	/**
+	 * Create the editor with the specified image.
+	 * @param image
+	 * @param inputs
+	 * @throws Exception
+	 */
 	public ImageEditor(final File image) throws Exception {
-		inputFrame = new JFrame();
-		outputFrame = new JFrame();
-		
-		inputImage = new ImageComponent(image);
-		outputImage = new ImageComponent(image);
-		
-		inputFrame.add(inputImage);
-		outputFrame.add(outputImage);
-		inputFrame.pack();
-		inputFrame.setVisible(true);
-		outputFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		outputFrame.pack();
-		outputFrame.setVisible(true);
+		this.image = new ThumbCropComponent(image);
 	}
 	
-	public void process() throws Exception {
-		BufferedImage image = inputImage.getImage();
-		//MedianFilter filter = new MedianFilter(image, 5, new Percent(40));
-		RegionFillFilter filter = new RegionFillFilter(image, 35, 1, new Percent(100));
-		outputImage.update(filter.apply());
+	/**
+	 * Create the editor with the specified image.
+	 * @param image
+	 * @param inputs
+	 * @throws Exception
+	 */
+	public ImageEditor(final BufferedImage image) throws Exception {
+		this.image = new ThumbCropComponent(image);
+	}
+
+	/**
+	 * Create the editor with the specified image.
+	 * @param image
+	 * @param inputs
+	 * @throws Exception
+	 */
+	public ImageEditor() throws Exception {
+		this.image = new ThumbCropComponent();
 	}
 	
+	protected ThumbCropComponent getComponent() {
+		return image;
+	}
+	
+	protected JFrame getFrame() {
+		return frame;
+	}
+	
+	/**
+	 * Does the gui init.
+	 * @throws Exception
+	 */
+	public void show() throws Exception {
+		frame = new JFrame();
+		panel = new JPanel(new BorderLayout());
+		
+		this.image.setThumbnailAspect((float) 0.85);
+		panel.add(this.image, BorderLayout.CENTER);
+		
+		input_pane = new JScrollPane(getInputPanel());
+		panel.add(input_pane, BorderLayout.EAST);
+		
+		frame.add(panel);
+		frame.pack();
+		frame.setVisible(true);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.pack();
+		frame.setVisible(true);
+	}
+	
+	/**
+	 * Returns the input panel.  Meant to be overridden.
+	 * @return
+	 */
+	protected JPanel getInputPanel() {
+		return new JPanel();
+	}
+	
+	/**
+	 * Unit test function.
+	 * @param args
+	 */
 	public static void main(String args[]) {
 		try {
-			ImageEditor editor = new ImageEditor(new File("flag.jpg"));
-			editor.process();
+			JPanel panel = new JPanel(new GridLayout(3, 1));
+			panel.add(new JLabel("Label a"));
+			panel.add(new JLabel("Label b"));
+			panel.add(new JLabel("Label c"));
+			
+			new ImageEditor(new File("flag.jpg"));
 		}
 		catch (Exception e) {
 			e.printStackTrace();

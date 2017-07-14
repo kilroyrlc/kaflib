@@ -116,6 +116,33 @@ public class CheckUtils {
 	}
 	
 	/**
+	 * Verifies that the supplied array is non-null and non-empty.
+	 * @param collection
+	 * @throws Exception
+	 */
+	public static <T> void checkNonEmpty(final T array[]) throws Exception {
+		checkNonEmpty(array, null);
+	}
+
+	/**
+	 * Verifies that the supplied array is non-null and non-empty.
+	 * @param collection
+	 * @throws Exception
+	 */
+	public static <T> void checkNonEmpty(final T array[],
+										 final String description) throws Exception {
+		check(array, description);
+		if (array.length == 0) {
+			if (description == null) {
+				throw new Exception("Empty array.");
+			}
+			else {
+				throw new Exception("Empty array: " + description + ".");
+			}
+		}
+	}
+	
+	/**
 	 * Verifies that the supplied collection is non-null and non-empty.
 	 * @param collection
 	 * @throws Exception
@@ -369,6 +396,29 @@ public class CheckUtils {
 		CheckUtils.check(file, "directory");
 		if (!file.exists() || !file.isDirectory()) {
 			throw new Exception("File: " + file + " does not exist or is not a directory.");
+		}
+	}
+	
+	public static void checkRange(final int value, final int min, final int max) throws Exception {
+		checkRange(value, min, max, null);
+	}
+	
+	/**
+	 * Checks that the value is within the specified range, inclusive.
+	 * @param value
+	 * @param min
+	 * @param max
+	 * @param description
+	 * @throws Exception
+	 */
+	public static void checkRange(final int value, final int min, final int max, final String description) throws Exception {
+		if (value < min || value > max) {
+			if (description != null) {
+				throw new Exception("Value " + value + " out of range [" + min + ", " + max + "]: " + description + ".");
+			}
+			else {
+				throw new Exception("Value " + value + " out of range [" + min + ", " + max + "].");				
+			}
 		}
 	}
 	

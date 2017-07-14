@@ -133,6 +133,25 @@ public class Coordinate {
 		
 		return new Coordinate(x + dx, y + dy);
 	}
+
+	/**
+	 * Returns a new coordinate as close as possible to a box from 0-max.
+	 * @param value
+	 * @param maxX
+	 * @param maxY
+	 * @return
+	 * @throws Exception
+	 */
+	public Coordinate bound(final int maxX, final int maxY) throws Exception {
+		CheckUtils.checkPositive(maxX, "x");
+		CheckUtils.checkPositive(maxY, "y");
+		int x = Math.max(getX(), 0);
+		int y = Math.max(getY(), 0);
+		x = Math.min(x, maxX);
+		y = Math.min(y, maxY);
+		
+		return new Coordinate(x, y);
+	}
 	
 	/**
 	 * Gets a point between coordinates that is approximately 'distance' from 
