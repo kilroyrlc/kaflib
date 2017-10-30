@@ -90,6 +90,12 @@ public class EditableImageComponent extends ImageComponent implements MouseListe
 		thumbnail = null;
 		super.update(image);
 	}
+
+	public void update(final BufferedImage image, final BufferedImage thumbnail) throws Exception {
+		this.thumbnail = thumbnail;
+		super.update(image);
+	}
+
 	
 	/**
 	 * Returns the down click location, or null if the mouse was upclicked 

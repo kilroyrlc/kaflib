@@ -1,5 +1,7 @@
 package kaflib.utils;
 
+import java.io.InputStream;
+
 /*
  * Copyright (c) 2015 Christopher Ritchie
  * 
@@ -620,6 +622,34 @@ public class StringUtils {
 	}
 	
 	/**
+	 * Replaces characters not matching the okay class with the specified character.
+	 * @param string
+	 * @param okayClass
+	 * @param replace
+	 * @return
+	 * @throws Exception
+	 */
+	public static String replace(final String string, final String okayClass, char replace) throws Exception {
+		CheckUtils.check(string, "string");
+		CheckUtils.check(okayClass, "okay class");
+		
+		if (!okayClass.startsWith("[") || !okayClass.endsWith("]")) {
+			throw new Exception("Must specify a regex character class [...].");
+		}
+		
+		StringBuffer buffer = new StringBuffer();
+		for (int i = 0; i < string.length(); i++) {
+			if (!string.substring(i, i+1).matches(okayClass)) {
+				buffer.append(replace);
+			}
+			else {
+				buffer.append(string.charAt(i));
+			}
+		}
+		return new String(buffer);
+	}
+	
+	/**
 	 * Replaces all nonword characters (^\W or not [a-zA-Z_0-9]) with the specified character.
 	 * @param string
 	 * @param replace
@@ -828,6 +858,15 @@ public class StringUtils {
 		
 		return new String(buffer);
 	}
-	
+
+	/**
+	 * Reads the stream to a utf8 string.
+	 * @param stream
+	 * @return
+	 * @throws Exception
+	 */
+	public static String read(final InputStream stream) throws Exception {
+		return new String(TypeUtils.read(stream), "UTF-8");
+	}
 	
 }

@@ -1,10 +1,18 @@
 package kaflib.utils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.security.AlgorithmParameters;
 import java.security.spec.KeySpec;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import javax.crypto.Cipher;
@@ -137,6 +145,89 @@ public class AESUtils {
 		return out;
 	}
 	
+	public static void encryptObject(final Serializable object, 
+	   		  final File file, 
+	   		  final SecretKey key) throws Exception {
+
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		ObjectOutputStream ostream = new ObjectOutputStream(bytes);
+		try {
+			ostream.writeObject(object);
+			AESUtils.encrypt(bytes.toByteArray(), file, key);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			bytes.close();
+			ostream.close();
+		}
+
+	}
+	
+	public static void encryptObjects(final Collection<Serializable> objects, 
+							   		  final File file, 
+							   		  final SecretKey key) throws Exception {
+		
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		ObjectOutputStream ostream = new ObjectOutputStream(bytes);
+		try {
+			for (Serializable object : objects) {
+				ostream.writeObject(object);
+			}
+			
+			AESUtils.encrypt(bytes.toByteArray(), file, key);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			bytes.close();
+			ostream.close();
+		}
+
+	}
+	
+	public static Object decryptObject(final File file, final SecretKey key) throws Exception {
+		ByteArrayInputStream bytes = new ByteArrayInputStream(AESUtils.decrypt(file, key));
+		ObjectInputStream ostream = new ObjectInputStream(bytes);
+		Object object = null;
+		try {
+			object = ostream.readObject();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			bytes.close();
+			ostream.close();
+		}
+		return object;
+
+	}
+		
+	public static List<Object> decryptObjects(final File file, final SecretKey key) throws Exception {
+		ByteArrayInputStream bytes = new ByteArrayInputStream(AESUtils.decrypt(file, key));
+		ObjectInputStream ostream = new ObjectInputStream(bytes);
+		List<Object> objects = new ArrayList<Object>();
+		try {
+			Object object = ostream.readObject();
+			while (object != null) {
+				objects.add(object);
+				object = ostream.readObject();
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			bytes.close();
+			ostream.close();
+		}
+		return objects;
+
+	}
+	
 	/**
 	 * Encrypt the specified data, using the given key.  The IV will be written to
 	 * the beginning of the output file.
@@ -148,6 +239,8 @@ public class AESUtils {
 	public static File encrypt(final byte in[],
 							   final File out,
 							   final SecretKey key) throws Exception {
+		CheckUtils.check(out, "output file");
+		
 		// Encrypt source file.
 		Pair<byte[], byte[]> ciphertext = encryptAESCBC(in, key);
 		
@@ -210,22 +303,30 @@ public class AESUtils {
 	 */
 	public static byte[] decrypt(final File in,
 							     final SecretKey key) throws Exception {
+		CheckUtils.checkReadable(in, "file: " + in);
+		
 		if (in.length() > Integer.MAX_VALUE) {
 			throw new Exception("Input file longer than int max.");
 		}	
 		int data_length = (int)in.length() - IV_LENGTH;
 		
-		FileInputStream instream = new FileInputStream(in);
-
-		byte iv[] = FileUtils.read(instream, IV_LENGTH);
-		byte ciphertext[] = FileUtils.read(instream, data_length);
-
-		instream.close();
-
-		byte plaintext[];
-		plaintext = decryptAESCBC(iv, ciphertext, key);
-		ciphertext = null;
-		return plaintext;
+		try {
+			FileInputStream instream = new FileInputStream(in);
+	
+			byte iv[] = FileUtils.read(instream, IV_LENGTH);
+			byte ciphertext[] = FileUtils.read(instream, data_length);
+	
+			instream.close();
+	
+			byte plaintext[];
+			plaintext = decryptAESCBC(iv, ciphertext, key);
+			ciphertext = null;
+			return plaintext;
+		}
+		catch (Exception e) {
+			System.out.println("Unable to read: " + in + ".\n");
+			throw e;
+		}
 	}
 	
 	/**

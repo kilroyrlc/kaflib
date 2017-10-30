@@ -34,12 +34,14 @@ public class WordTree implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private final Node root;
+	private int hash;
 	
 	/**
 	 * Creates an empty word tree.
 	 */
 	public WordTree() {
 		root = new Node();
+		hash = 0;
 	}
 
 	/**
@@ -59,7 +61,16 @@ public class WordTree implements Serializable {
 	 */
 	public void insert(final String word) throws Exception {
 		CheckUtils.checkNonEmpty(word, "word");
+		long sum = hash + word.hashCode();
+		hash = (int) (sum % Integer.MAX_VALUE);
 		root.insert(word);
+	}
+	
+	/**
+	 * Returns a hash for this object.
+	 */
+	public int hashCode() {
+		return hash;
 	}
 	
 	/**

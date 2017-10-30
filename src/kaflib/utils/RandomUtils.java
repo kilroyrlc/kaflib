@@ -1,5 +1,7 @@
 package kaflib.utils;
 
+import java.util.ArrayList;
+
 /*
  * Copyright (c) 2015 Christopher Ritchie
  * 
@@ -23,8 +25,11 @@ package kaflib.utils;
  */
 
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -94,7 +99,16 @@ public class RandomUtils {
 	public static long randomLong(final long bound) {
 		return Math.abs(random.nextLong()) % bound;
 	}
-	
+
+	public static Integer randomD6() {
+		try {
+			return randomInt(1, 6);
+		}
+		catch (Exception e) {
+			System.err.println("Invalid hard coded value for d6.");
+			return null;
+		}
+	}
 
 	/**
 	 * Returns a random integer at least min, <= max.
@@ -206,5 +220,44 @@ public class RandomUtils {
 		}
 		return iterator.next();
 	}	
+
+	/**
+	 * Randomly arranges the supplied values into a list.
+	 * @param values
+	 * @return
+	 * @throws Exception
+	 */
+	public static <T> List<T> randomize(final Collection<T> values) throws Exception {
+		List<T> destination = new ArrayList<T>(values.size());
+		while (!values.isEmpty()) {
+			T value = TypeUtils.getRandom(values);
+			destination.add(value);
+			values.remove(value);
+		}
+		return destination;
+	}
+	
+	/**
+	 * Returns a specified number of distinct integers between min and max,
+	 * inclusive.
+	 * @param count
+	 * @param min
+	 * @param max
+	 * @return
+	 * @throws Exception
+	 */
+	public static List<Integer> randomSet(final int count, 
+										  final int min, 
+										  final int max) throws Exception {
+		Set<Integer> values = new HashSet<Integer>();
+		if (count < 1 || count > max - min) {
+			throw new Exception("Invalid parameters.");
+		}
+		
+		while (values.size() < count) {
+			values.add(RandomUtils.randomInt(min, max));
+		}
+		return randomize(values);
+	}
 	
 }

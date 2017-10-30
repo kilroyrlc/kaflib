@@ -30,6 +30,9 @@ import java.io.FileReader;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -161,7 +164,7 @@ public class FileUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String readString(final File file, final long maxLength) throws Exception {
+	public static String readString(final File file, final Long maxLength) throws Exception {
 		BufferedReader reader = getReader(file);
 		StringBuffer buffer = new StringBuffer();
 		
@@ -170,7 +173,9 @@ public class FileUtils {
 			while ((line = reader.readLine()) != null) {
 				buffer.append(line);
 				buffer.append("\n");
-				if (maxLength > 0 && buffer.length() > maxLength) {
+				if (maxLength != null && 
+					maxLength > 0 && 
+					buffer.length() > maxLength) {
 					reader.close();
 					return null;
 				}
@@ -332,7 +337,78 @@ public class FileUtils {
 		input.close();
 		output.close();
 	}
+	
+	
+	/**
+	 * Reads the html from the specified url using tor.
+	 * @param url
+	 * @return
+	 * @throws Exception
+	 */
+	public static String torGet(final URL url) throws Exception {
+		
+		final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
+									  new InetSocketAddress("127.0.0.1", 9150));
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
+		//HttpURLConnection.setFollowRedirects(false);
+		//connection.setConnectTimeout(60000);
+		//connection.setReadTimeout(60000);
+		for (int i = 0; i < 5; i++) {
+			try {
+				connection.connect();
+				break;
+			}
+			catch (Exception e) {
+				System.out.println(e.getMessage());
+			}
+		}		
+		
+		String string = StringUtils.read(connection.getInputStream());
+		connection.disconnect();
+		return string;
+	}
+	
+	/**
+	 * Downloads the specified url to file using tor.
+	 * @param file
+	 * @param url
+	 * @throws Exception
+	 */
+	public static void torDownload(final File file, final URL url) throws Exception {
+		if (!file.exists()) {
+			file.createNewFile();
+		}
+		
+		final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
+									  new InetSocketAddress("127.0.0.1", 9150));
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
+		//HttpURLConnection.setFollowRedirects(false);
+		//connection.setConnectTimeout(60000);
+		//connection.setReadTimeout(60000);
+		for (int i = 0; i < 5; i++) {
+			try {
+				connection.connect();
+				break;
+			}
+			catch (Exception e) {
+				System.out.println(e.getMessage());
+			}
+		}		
+		
+		InputStream input = connection.getInputStream();
+		OutputStream output = new FileOutputStream(file);
 
+		byte[] bytes = new byte[2048];
+		int length;
+
+		while ((length = input.read(bytes)) != -1) {
+			output.write(bytes, 0, length);
+		}
+		input.close();
+		output.close();
+		connection.disconnect();
+	}
+	
 	/**
      * Creates a file [prefix][rand%256][suffix] in the current directory.
 	 * Thread safe and ensures the file does not already exist.
@@ -533,7 +609,7 @@ public class FileUtils {
 	 * @throws Exception
 	 */
 	public static byte[] getMD5(final File file) throws Exception {
-		return MathUtils.getMD5(FileUtils.readString(file, -1).getBytes());
+		return MathUtils.getMD5(FileUtils.readString(file, null).getBytes());
 	}
 	
 	/**

@@ -49,7 +49,7 @@ public class TypeUtils {
 	 * @param values
 	 * @return
 	 */
-	public static <T> T getRandom(final Set<T> values) {
+	public static <T> T getRandom(final Collection<T> values) {
 		if (values == null || values.size() == 0) {
 			return null;
 		}
@@ -89,6 +89,7 @@ public class TypeUtils {
 		return list;
 	}
 
+	
 	/**
 	 * Returns a list as such: [values][suffix].
 	 * @param values

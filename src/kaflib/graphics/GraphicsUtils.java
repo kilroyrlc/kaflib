@@ -67,6 +67,26 @@ public class GraphicsUtils {
 	}
 	
 	/**
+	 * Returns whether or not the supplied images are equal, pixel for pixel.
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static boolean equal(BufferedImage a, BufferedImage b) {
+		if (a.getWidth() != b.getWidth() ||
+			a.getHeight() != b.getHeight()) {
+			return false;
+		}
+        for (int x = 0; x < a.getWidth(); x++) {
+            for (int y = 0; y < a.getHeight(); y++) {
+                if (a.getRGB(x, y) != b.getRGB(x, y))
+                    return false;
+            }
+        }
+        return true;
+	}
+	
+	/**
 	 * Blends r, g, and b into originalRGB by the specified percent.
 	 * @param r
 	 * @param g
