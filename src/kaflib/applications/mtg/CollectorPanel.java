@@ -137,16 +137,16 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 			int id = Integer.valueOf(db.getRandomID(true));
 			
 			int next = id + RandomUtils.randomInt(1, 25);
-			if (next >= min && next <= max && !db.contains("" + next)) {
+			if (next >= min && next <= max && !db.contains(next)) {
 				values.add(next);
 			}
 			next = id - RandomUtils.randomInt(1, 25);
-			if (next >= min && next <= max && !db.contains("" + next)) {
+			if (next >= min && next <= max && !db.contains(next)) {
 				values.add(next);
 			}
 		
 			next = RandomUtils.randomInt(min, max);
-			if (!db.contains("" + next)) {
+			if (!db.contains(next)) {
 				values.add(next);
 			}
 			
@@ -184,8 +184,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 
 		try {
 			progress.register(this, values.size());
-			for (Integer value : values) {
-				String id = "" + value;
+			for (Integer id : values) {
 				if (!db.contains(id)) {
 					if (torAvailable()) {
 						progress.setText("Scraping: " + id + " using tor.");
@@ -217,7 +216,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		return temp.replaceAll("\"\\s+align.*\\>", "]");
 	}
 	
-	private Card parseCard(final String html, final String id) throws Exception {
+	private Card parseCard(final String html, final int id) throws Exception {
 		Document document = Jsoup.parse(html);
 		Elements elements;
 		
@@ -335,7 +334,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		}
 	}
 	
-	private void scrape(final String id) throws Exception {
+	private void scrape(final int id) throws Exception {
 		Boolean english = isEnglish(get(new URL("http://gatherer.wizards.com/Pages/Card/Languages.aspx?printed=false&multiverseid=" + id)));
 		
 		if (english == null) {

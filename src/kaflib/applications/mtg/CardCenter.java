@@ -27,7 +27,6 @@ import kaflib.gui.Suggestor;
 import kaflib.types.Matrix;
 import kaflib.types.WordTree;
 import kaflib.types.Worker;
-import kaflib.utils.FileUtils;
 import kaflib.utils.GUIUtils;
 
 public class CardCenter extends JFrame implements FocusListener, 
@@ -55,8 +54,8 @@ public class CardCenter extends JFrame implements FocusListener,
 	private final JButton save;
 	
 	// Deck panel.
-	private final FileSelectorComponent deck_name;
-	private final AddRemoveList<String> deck;
+	private final FileSelectorComponent card_list_file;
+	private final AddRemoveList<String> card_list;
 	
 	// Image panel.
 	private final ImageComponent image;
@@ -102,13 +101,13 @@ public class CardCenter extends JFrame implements FocusListener,
 		search_panel.add(save);
 		
 		// Deck panel.
-		deck_name = new FileSelectorComponent(true, true, db.getDeckDirectory(), "xlsx");
-		deck_name.setListener(this);
-		deck_panel.add(deck_name, BorderLayout.NORTH);
+		card_list_file = new FileSelectorComponent(true, true, db.getDeckDirectory(), "xlsx");
+		card_list_file.setListener(this);
+		deck_panel.add(card_list_file, BorderLayout.NORTH);
 
-		deck = new AddRemoveList<String>(null, 12);
-		deck.setListener(this);
-		deck_panel.add(deck, BorderLayout.CENTER);
+		card_list = new AddRemoveList<String>(null, 12);
+		card_list.setListener(this);
+		deck_panel.add(card_list, BorderLayout.CENTER);
 		
 		// Image panel.
 		image = new ImageComponent();
@@ -242,9 +241,9 @@ public class CardCenter extends JFrame implements FocusListener,
 							db.write();
 							
 							// Write deck.
-							File deck_file = deck_name.getSelected();
+							File deck_file = card_list_file.getSelected();
 							if (deck_file != null) {
-								Matrix.createMatrix(deck.get()).toXLSX(deck_file);
+								Matrix.createMatrix(card_list.get()).toXLSX(deck_file);
 							}
 							
 							label.setText("Saved.");
@@ -359,27 +358,35 @@ public class CardCenter extends JFrame implements FocusListener,
 		return current_name;
 	}
 
+	/**
+	 * Updates the card list to the specified file.  This should probably only
+	 * be called from fileSelected() and on a non-ui thread.
+	 * @param file
+	 */
+	private void updateCardList(final File file) {
+		try {
+			card_list.clear();
+			if (!file.exists()) {
+				return;
+			}
+			CardList list = CardList.getList(db, file);
+			for (Card card : list) {
+				card_list.add(card.getName());
+			}
+		}
+		catch (Exception e) {
+			JOptionPane.showMessageDialog(self, "Unable to write db file.");
+			e.printStackTrace();
+		}
+	}
+	
 	@Override
 	public void fileSelected(final File file) {
 		try {
 			Worker worker = new Worker() {
 				@Override
 				protected void process() throws Exception {
-					try {
-						deck.clear();
-						if (file.exists()) {
-							Matrix<String> matrix = FileUtils.readXLSXSheet(file, false);
-							for (int i = 0; i < matrix.getRowCount(); i++) {
-								if (matrix.hasValue(i, 0)) {
-									deck.add(matrix.get(i, 0));
-								}
-							}
-						}
-					}
-					catch (Exception e) {
-						JOptionPane.showMessageDialog(self, "Unable to write db file.");
-						e.printStackTrace();
-					}
+					updateCardList(file);
 				}
 			};
 			worker.run();
@@ -392,7 +399,7 @@ public class CardCenter extends JFrame implements FocusListener,
 
 	@Override
 	public void createSelected() {
-		deck.clear();		
+		card_list.clear();		
 		String name = GUIUtils.showTextInputDialog(this, "Enter new deck name:");
 		if (name == null || name.isEmpty()) {
 			return;
@@ -400,13 +407,13 @@ public class CardCenter extends JFrame implements FocusListener,
 		if (!name.endsWith(".xlsx")) {
 			name = name + ".xlsx";
 		}
-		deck_name.add(name);
-		deck_name.setSelected(name);
+		card_list_file.add(name);
+		card_list_file.setSelected(name);
 	}
 
 	@Override
 	public void noneSelected() {
-		deck.clear();
+		card_list.clear();
 	}
 
 	@Override

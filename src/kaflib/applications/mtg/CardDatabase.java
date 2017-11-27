@@ -25,6 +25,7 @@ public class CardDatabase {
 	private final File default_card;
 		
 	public static final String DB_NAME = "cards.xlsx";
+	public static final int COLUMNS = 8;
 	public static final int ID = 0;
 	public static final int NAME = 1;
 	public static final int COST = 2;
@@ -33,12 +34,13 @@ public class CardDatabase {
 	public static final int TEXT = 5;
 	public static final int P_T = 6;
 	public static final int HAVE = 7;
+	
 	public static final String INVALID = "invalid";
 	public static final String FOREIGN = "foreign";
 	
 	
 	private final File db_file;
-	private final Map<String, Card> cards;
+	private final Map<Integer, Card> cards;
 	private final Map<String, Boolean> have;
 
 	public CardDatabase() throws Exception {
@@ -60,7 +62,7 @@ public class CardDatabase {
 		}
 		default_card = new File(image_directory, "none.png");
 		
-		cards = new HashMap<String, Card>();
+		cards = new HashMap<Integer, Card>();
 		have = new HashMap<String, Boolean>();
 		
 		Matrix<String> matrix;
@@ -71,7 +73,7 @@ public class CardDatabase {
 
 			for (int i = 0; i < matrix.getRowCount(); i++) {
 				Card card = new Card(matrix.getRow(i));
-				cards.put(card.getNumber(), card);
+				cards.put(card.getID(), card);
 				
 				if (card.isDomestic()) {
 					CheckUtils.check(card.getName(), "card: " + card);
@@ -96,15 +98,15 @@ public class CardDatabase {
 		return have.keySet();
 	}
 	
-	public boolean contains(final String id) {
+	public boolean contains(final int id) {
 		return cards.containsKey(id);
 	}
-	
-	public void addInvalid(final String id) {
+
+	public void addInvalid(final int id) {
 		cards.put(id, Card.createInvalid(id));
 	}
 
-	public void addForeign(final String id) {
+	public void addForeign(final int id) {
 		cards.put(id, Card.createForeign(id));
 	}
 	
@@ -140,7 +142,7 @@ public class CardDatabase {
 	}
 	
 	public void add(final Card card) throws Exception {
-		cards.put(card.getNumber(), card);
+		cards.put(card.getID(), card);
 		if (card.isDomestic()) {
 			if (!have.containsKey(card.getName())) {
 				have.put(card.getName(), false);
@@ -171,7 +173,7 @@ public class CardDatabase {
 	}
 
 	public String getName(final String name) {
-		for (String id : cards.keySet()) {
+		for (int id : cards.keySet()) {
 			if (cards.get(id).getName().toLowerCase().equals(name.toLowerCase())) {
 				return cards.get(id).getName();
 			}
@@ -179,9 +181,9 @@ public class CardDatabase {
 		return null;
 	}
 
-	public String getRandomID(final boolean domesticOnly) throws Exception {
+	public int getRandomID(final boolean domesticOnly) throws Exception {
 		while (true) {
-			String id = RandomUtils.getRandom(cards.keySet());
+			int id = RandomUtils.getRandom(cards.keySet());
 			if (!domesticOnly || cards.get(id).isDomestic()) {
 				return id;
 			}
@@ -189,7 +191,7 @@ public class CardDatabase {
 	}
 	
 	public File getImage(final String name) {
-		for (String id : cards.keySet()) {
+		for (int id : cards.keySet()) {
 			if (cards.get(id).getName().toLowerCase().equals(name.toLowerCase())) {
 				File file = new File(image_directory, id + ".png");
 				if (file.exists()) {
@@ -207,8 +209,8 @@ public class CardDatabase {
 	 * @throws Exception
 	 */
 	public void removeNonDomestic(final int start, final int end) throws Exception {
-		Set<String> remove = new HashSet<String>();
-		for (String id : cards.keySet()) {
+		Set<Integer> remove = new HashSet<Integer>();
+		for (int id : cards.keySet()) {
 			if (!cards.get(id).isDomestic()) {
 				int value = Integer.valueOf(id);
 				if (value >= start && value <= end) {
@@ -217,7 +219,7 @@ public class CardDatabase {
 			}
 		}
 		
-		for (String id : remove) {
+		for (int id : remove) {
 			cards.remove(id);
 		}
 	}
@@ -229,8 +231,8 @@ public class CardDatabase {
 	 * @throws Exception
 	 */
 	public void removeInvalids(final int start, final int end) throws Exception {
-		Set<String> remove = new HashSet<String>();
-		for (String id : cards.keySet()) {
+		Set<Integer> remove = new HashSet<Integer>();
+		for (int id : cards.keySet()) {
 			if (cards.get(id).isInvalid()) {
 				int value = Integer.valueOf(id);
 				if (value >= start && value <= end) {
@@ -239,7 +241,7 @@ public class CardDatabase {
 			}
 		}
 		
-		for (String id : remove) {
+		for (int id : remove) {
 			cards.remove(id);
 		}
 	}
@@ -252,9 +254,9 @@ public class CardDatabase {
 	 */
 	public File getRandomImage(final String name) throws Exception {
 		Set<File> files = new HashSet<File>();
-		for (String id : cards.keySet()) {
-			if (cards.get(id).getName().toLowerCase().equals(name.toLowerCase())) {
-				File file = new File(image_directory, id + ".png");
+		for (int id : cards.keySet()) {
+			if (cards.get(id).matches(name)) {
+				File file = new File(image_directory, cards.get(id).getIDString() + ".png");
 				if (file.exists()) {
 					files.add(file);
 				}
@@ -288,8 +290,8 @@ public class CardDatabase {
 	
 	public Set<Card> getCards(final String name) {
 		Set<Card> matches = new HashSet<Card>();
-		for (String id : cards.keySet()) {
-			if (cards.get(id).getName().toLowerCase().equals(name.toLowerCase())) {
+		for (int id : cards.keySet()) {
+			if (cards.get(id).matches(name)) {
 				matches.add(cards.get(id));
 			}
 		}
@@ -324,7 +326,7 @@ public class CardDatabase {
 		}
 		
 		Matrix<String> matrix = new Matrix<String>();
-		for (String id : cards.keySet()) {
+		for (int id : cards.keySet()) {
 			Card card = cards.get(id);
 			
 			List<String> values = card.getValues();
