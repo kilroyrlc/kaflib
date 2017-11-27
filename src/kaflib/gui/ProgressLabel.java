@@ -234,6 +234,14 @@ public class ProgressLabel extends JPanel {
 	}
 	
 	/**
+	 * Returns the currently-displayed text.
+	 * @return
+	 */
+	public String getText() {
+		return text;
+	}
+	
+	/**
 	 * Returns the current value for the specified client.
 	 * @param client
 	 * @return

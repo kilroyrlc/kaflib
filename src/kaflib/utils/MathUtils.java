@@ -118,6 +118,24 @@ public class MathUtils {
 	}
 	
 	/**
+	 * Returns the max value in the collection.
+	 * @param values
+	 * @return
+	 */
+	public static Integer max(final Collection<Integer> values) {
+		Integer max = null;
+		for (Integer value : values) {
+			if (value == null) {
+				continue;
+			}
+			if (max == null || value > max) {
+				max = value;
+			}
+		}
+		return max;
+	}
+	
+	/**
 	 * Returns the md5 value for the specified bytes.
 	 * @param bytes
 	 * @return

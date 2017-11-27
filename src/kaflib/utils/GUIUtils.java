@@ -45,6 +45,21 @@ import kaflib.types.Pair;
 public class GUIUtils {
 
 	/**
+	 * Prompts the user for generic text input.
+	 * @param parent
+	 * @param message
+	 */
+	public static String showTextInputDialog(final Component parent, final String message) {
+		return (String) JOptionPane.showInputDialog(parent, 
+								    message, 
+								    "Input", 
+								    JOptionPane.QUESTION_MESSAGE, 
+								    null, 
+								    null, 
+								    null);
+	}
+	
+	/**
 	 * Shows an error dialog.
 	 * @param parent
 	 * @param message

@@ -338,6 +338,20 @@ public class FileUtils {
 		output.close();
 	}
 	
+	/**
+	 * Read the url to a string.
+	 * @param url
+	 * @return
+	 * @throws Exception
+	 */
+	public static String read(final URL url) throws Exception {
+		InputStream input = url.openStream();
+
+		String string = StringUtils.read(input);
+		input.close();
+		return string;
+	}
+	
 	
 	/**
 	 * Reads the html from the specified url using tor.
@@ -796,18 +810,22 @@ public class FileUtils {
 	 */
 	public static Set<File> getRecursive(final File root, final String extension) {
 		Set<File> files = new HashSet<File>();
-		if (!root.isDirectory()) {
-			files.add(root);
-			return files;
+		String dot_extension = extension;
+		if (dot_extension != null) {
+			if (!dot_extension.startsWith(".")) {
+				dot_extension = "." + dot_extension;
+			}
 		}
 		
 		File list[] = root.listFiles();
 		for (File file : list) {
 			if (file.isDirectory()) {
-				files.addAll(getRecursive(file));
+				files.addAll(getRecursive(file, dot_extension));
 			}
 			else {
-				files.add(file);
+				if (extension == null || file.getName().endsWith(dot_extension)) {
+					files.add(file);					
+				}
 			}
 		}
 		return files;

@@ -34,7 +34,8 @@ public class SuggestTextFieldPanel extends TextFieldPanel {
 			        			  Color.WHITE.brighter(), 
 			        			  Color.BLUE, 
 			        			  Color.RED, 
-			        			  0.75f);
+			        			  0.75f,
+			        			  true);
 		
 	}
 	

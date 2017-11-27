@@ -136,6 +136,10 @@ public class ImageComponent extends Component {
 	 * @throws Exception
 	 */
 	public void update(final File file) throws Exception {
+		if (file == null || !file.exists()) {
+			return;
+		}
+		
 		image = ImageIO.read(file);
 
 		width = (int)(image.getWidth() * scaling);

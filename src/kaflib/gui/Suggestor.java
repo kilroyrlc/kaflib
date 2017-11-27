@@ -6,6 +6,7 @@ import java.awt.GridLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -43,6 +44,22 @@ public class Suggestor {
 	private WordTree suggestions;
 	private int tW;
 	private int tH;
+	
+	private KeyListener keyListener = new KeyListener() {
+		@Override
+		public void keyTyped(KeyEvent e) {
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			checkForAndShowSuggestions();		
+		}
+		
+	};
 	private DocumentListener documentListener = new DocumentListener() {
 		@Override
 		public void insertUpdate(DocumentEvent de) {
@@ -56,22 +73,23 @@ public class Suggestor {
 
 		@Override
 		public void changedUpdate(DocumentEvent de) {
-			checkForAndShowSuggestions();
 		}
 	};
 	private final Color suggestionsTextColor;
 	private final Color suggestionFocusedColor;
 
 	public Suggestor(final JTextField textField, 
-			 final Window mainWindow, 
-			 final WordTree suggestions) {
+			 		 final Window mainWindow, 
+			 		 final WordTree suggestions,
+			 		 final boolean justKeyEvents) {
 		this(textField, 
 			 mainWindow, 
 			 suggestions, 
 			 Color.WHITE.brighter(), 
 			 Color.BLUE, 
 	  		 Color.RED, 
-	  		 0.75f);
+	  		 0.75f,
+	  		 justKeyEvents);
 	}
 	
 	public Suggestor(final JTextField textField, 
@@ -80,13 +98,20 @@ public class Suggestor {
 					 final Color popUpBackground, 
 					 final Color textColor, 
 					 final Color suggestionFocusedColor, 
-					 final float opacity) {
+					 final float opacity,
+					 final boolean justKeyEvents) {
 		this.text_field = textField;
 		this.suggestionsTextColor = textColor;
 		this.container = mainWindow;
 		this.suggestionFocusedColor = suggestionFocusedColor;
-		this.text_field.getDocument().addDocumentListener(documentListener);
-
+		
+		if (justKeyEvents) {
+			text_field.addKeyListener(keyListener);
+		}
+		else {
+			text_field.getDocument().addDocumentListener(documentListener);
+		}
+		
 		this.suggestions = suggestions;
 
 		tW = 0;
@@ -187,7 +212,6 @@ public class Suggestor {
 
 	private void checkForAndShowSuggestions() {
 		suggestion_panel.removeAll();
-
 		tW = 0;
 		tH = 0;
 
@@ -279,6 +303,7 @@ public class Suggestor {
 	}
 
 	private boolean wordTyped(final String typedWord) {
+		
 		if (typedWord.isEmpty()) {
 			return false;
 		}
@@ -321,7 +346,7 @@ public class Suggestor {
 	    	        tree.accessed("and");
 	    	        tree.accessed("hammer");
 	    	        
-	    	        new Suggestor(f, frame, tree, Color.WHITE.brighter(), Color.BLUE, Color.RED, 0.75f);
+	    	        new Suggestor(f, frame, tree, Color.WHITE.brighter(), Color.BLUE, Color.RED, 0.75f, true);
 	    	        JPanel p = new JPanel();
 	
 	    	        p.add(f);

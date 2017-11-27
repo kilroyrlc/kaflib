@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -98,6 +99,25 @@ public class Matrix<T> implements MatrixNavigator<T> {
 		for (String label : labels) {
 			columnLabels.add(label);
 		}
+	}
+	
+	/**
+	 * Gets all values in the specified column.
+	 * @param column
+	 * @return
+	 * @throws Exception
+	 */
+	public List<T> getColumn(final int column) throws Exception {
+		List<T> list = new ArrayList<T>();
+		for (int i = 0; i < getRowCount(); i++) {
+			if (hasValue(i, column)) {
+				list.add(get(i, column));
+			}
+			else {
+				list.add(null);
+			}
+		}
+		return list;
 	}
 	
 	/**
@@ -568,6 +588,19 @@ public class Matrix<T> implements MatrixNavigator<T> {
 				matrix.set(i, 1, map.get(k).toString());
 			}
 			i++;
+		}
+		return matrix;
+	}
+	
+	/**
+	 * Creates a single-column matrix.
+	 * @param values
+	 * @return
+	 */
+	public static <T> Matrix<T> createMatrix(final Collection<T> values) {
+		Matrix<T> matrix = new Matrix<T>();
+		for (T value : values) {
+			matrix.addRow(TypeUtils.getList(value));
 		}
 		return matrix;
 	}
