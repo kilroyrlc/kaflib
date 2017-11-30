@@ -271,12 +271,7 @@ public class CardCenter extends JFrame implements FocusListener,
 	 */
 	private void cardFound() {
 		try {
-			if (db.have(current_name)) {
-				have.setSelected(true);
-			}
-			else {
-				have.setSelected(false);
-			}
+			have.setSelected(db.have(current_name));
 			setImage();
 		}
 		catch (Exception e) {

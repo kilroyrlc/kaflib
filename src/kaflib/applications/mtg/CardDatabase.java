@@ -181,6 +181,27 @@ public class CardDatabase {
 		return null;
 	}
 
+	/**
+	 * Returns a random card id in the have list.
+	 * @return
+	 * @throws Exception
+	 */
+	public Integer getRandomHaveID() throws Exception {
+		int start = RandomUtils.randomInt(have.size());
+		int i = 0;
+		for (String name : have.keySet()) {
+			if (i < start) {
+				i++;
+			}
+			else {
+				if (have.get(name)) {
+					return RandomUtils.getRandom(getCards(name)).getID();
+				}
+			}
+		}
+		return null;
+	}
+	
 	public int getRandomID(final boolean domesticOnly) throws Exception {
 		while (true) {
 			int id = RandomUtils.getRandom(cards.keySet());
@@ -335,14 +356,14 @@ public class CardDatabase {
 					throw new Exception("No have listing for: " + card);
 				}
 				if (have.get(card.getName())) {
-					values.add(new String("yes"));
+					values.set(HAVE, new String("yes"));
 				}
 				else {
-					values.add(new String("no"));
+					values.set(HAVE, new String("no"));
 				}
 			}
 			else {
-				values.add(new String("n/a"));
+				values.set(HAVE, new String("n/a"));
 			}
 
 			matrix.addRow(values);

@@ -121,6 +121,21 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		add(progress, BorderLayout.SOUTH);
 	}
 	
+	private static int randomNeighbor(final int seed, 
+									  final int min, 
+									  final int max) throws Exception {
+		int neighbor = seed;
+		if (RandomUtils.randomBoolean()) {
+			neighbor += RandomUtils.randomInt(1, 25);
+		}
+		else {
+			neighbor -= RandomUtils.randomInt(1, 25);
+		}
+		neighbor = Math.max(min, neighbor);
+		neighbor = Math.min(max, neighbor);
+		return neighbor;
+	}
+	
 	/**
 	 * Generates collect targets.
 	 * @param count
@@ -134,24 +149,34 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 										 final int max) throws Exception {
 		Set<Integer> values = new HashSet<Integer>();
  		for (int i = 0; i < 2 * count; i++) {
-			int id = Integer.valueOf(db.getRandomID(true));
-			
-			int next = id + RandomUtils.randomInt(1, 25);
-			if (next >= min && next <= max && !db.contains(next)) {
-				values.add(next);
+ 			Set<Integer> temp = new HashSet<Integer>();
+ 			// Add three neighbors to a random valid id.
+			Integer id = db.getRandomID(true);
+			if (id != null) {
+				temp.add(randomNeighbor(id, min, max));
+				temp.add(randomNeighbor(id, min, max));
+				temp.add(randomNeighbor(id, min, max));
 			}
-			next = id - RandomUtils.randomInt(1, 25);
-			if (next >= min && next <= max && !db.contains(next)) {
-				values.add(next);
+ 			// Add three neighbors to a random card I have.
+			id = db.getRandomHaveID();
+			if (id != null) {
+				temp.add(randomNeighbor(id, min, max));
+				temp.add(randomNeighbor(id, min, max));
+				temp.add(randomNeighbor(id, min, max));
 			}
 		
-			next = RandomUtils.randomInt(min, max);
-			if (!db.contains(next)) {
-				values.add(next);
-			}
-			
-			if (values.size() >= count) {
-				break;
+			temp.add(RandomUtils.randomInt(min, max));
+			temp.add(RandomUtils.randomInt(min, max));
+			temp.add(RandomUtils.randomInt(min, max));
+
+			// Add all temp ids not already in the db.
+			for (Integer value : temp) {
+				if (!db.contains(value)) {
+					values.add(value);
+				}
+				if (values.size() >= count) {
+			 		return values;
+				}
 			}
 		}
  		return values;
