@@ -220,7 +220,54 @@ public class RandomUtils {
 		}
 		return iterator.next();
 	}	
+	
+	/**
+	 * Returns a specified number of values from the set, at random.
+	 * @param values
+	 * @param count
+	 * @return
+	 * @throws Exception
+	 */
+	public static <T> Set<T> getRandom(final Set<T> values, 
+									   final int count) throws Exception {
+		Set<T> randoms = new HashSet<T>();
 
+		// Use iterators to get random values.
+		if (count < values.size() / 4) {
+			while (randoms.size() < count) {
+				randoms.add(RandomUtils.getRandom(values));
+			}
+		}
+		// Create a list, select random indices from it, convert it back to a set.
+		else {
+			List<T> list = new ArrayList<T>();
+			list.addAll(values);
+			randoms.addAll(RandomUtils.getRandom(list, count));
+		}
+		return randoms;
+	}
+
+	/**
+	 * Returns a specified number of values from the list, at random.  Indices
+	 * are not repeated, but if multiple indices have identical values there 
+	 * could be duplicates.
+	 * @param values
+	 * @param count
+	 * @return
+	 * @throws Exception
+	 */
+	public static <T> List<T> getRandom(final List<T> values,
+										final int count) throws Exception {
+		Set<Integer> indices = RandomUtils.randomSet(Math.min(count, values.size()),
+													 0, 
+													 values.size());
+		List<T> list = new ArrayList<T>();
+		for (Integer i : indices) {
+			list.add(values.get(i));
+		}
+		return list;
+	}
+	
 	/**
 	 * Randomly arranges the supplied values into a list.
 	 * @param values
@@ -239,6 +286,23 @@ public class RandomUtils {
 	
 	/**
 	 * Returns a specified number of distinct integers between min and max,
+	 * inclusive, ordered randomly.
+	 * @param count
+	 * @param min
+	 * @param max
+	 * @return
+	 * @throws Exception
+	 */
+	public static List<Integer> randomizedSet(final int count, 
+										  final int min, 
+										  final int max) throws Exception {
+		Set<Integer> values = randomSet(count, min, max);
+		
+		return randomize(values);
+	}
+	
+	/**
+	 * Returns a specified number of distinct integers between min and max,
 	 * inclusive.
 	 * @param count
 	 * @param min
@@ -246,18 +310,19 @@ public class RandomUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static List<Integer> randomSet(final int count, 
-										  final int min, 
-										  final int max) throws Exception {
+	public static Set<Integer> randomSet(final int count, 
+										final int min, 
+										final int max) throws Exception {
 		Set<Integer> values = new HashSet<Integer>();
 		if (count < 1 || count > max - min) {
 			throw new Exception("Invalid parameters.");
 		}
-		
+
 		while (values.size() < count) {
 			values.add(RandomUtils.randomInt(min, max));
 		}
-		return randomize(values);
+
+		return values;
 	}
 	
 }

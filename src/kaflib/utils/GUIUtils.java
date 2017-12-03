@@ -27,15 +27,20 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.File;
 import java.text.NumberFormat;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 import kaflib.types.Pair;
 
@@ -44,6 +49,17 @@ import kaflib.types.Pair;
  */
 public class GUIUtils {
 
+	public static Border getTitledBorder(final String title) {
+		Border border = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
+		return BorderFactory.createTitledBorder(border, title, TitledBorder.LEFT, TitledBorder.TOP);
+	}
+	
+	public static JPanel getTitledPanel(final String title) {
+		JPanel panel = new JPanel();
+		panel.setBorder(getTitledBorder(title));
+		return panel;
+	}
+	
 	/**
 	 * Prompts the user for generic text input.
 	 * @param parent
@@ -126,6 +142,29 @@ public class GUIUtils {
 	 */
 	public static Border getEmptyBorder(int width) {
 		return new EmptyBorder(width, width, width, width);
+	}
+
+	/**
+	 * Prompts the user to choose a directory, returns null if they did not.
+	 * @param parent
+	 * @return
+	 */
+	public static File chooseDirectory(final Component parent) {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+			File file = chooser.getSelectedFile();
+			if (file != null && file.exists() && file.isDirectory()) {
+				return file;
+			}
+			else {
+				return null;
+			}
+		}
+		else {
+			return null;
+		}
 	}
 	
 	/**

@@ -15,6 +15,8 @@ public class Card implements Comparable<Card> {
 	private final String types;
 	private final String text;
 	private final String pt;
+	private Float community_rating;
+	private Integer community_votes;
 
 	/**
 	 * Create a card.
@@ -40,6 +42,8 @@ public class Card implements Comparable<Card> {
 		this.types = types;
 		this.text = text;
 		this.pt = pt;
+		community_rating = null;
+		community_votes = null;
 	}
 	
 	/**
@@ -66,6 +70,8 @@ public class Card implements Comparable<Card> {
 		this.types = types;
 		this.text = text;
 		this.pt = pt;
+		community_rating = null;
+		community_votes = null;
 	}
 	
 	/**
@@ -81,6 +87,18 @@ public class Card implements Comparable<Card> {
 			this.cmc = values.get(CardDatabase.CMC);
 			this.types = values.get(CardDatabase.TYPE);
 			this.pt = values.get(CardDatabase.P_T);
+			
+			if (values.size() >= 10 && 
+				!values.get(CardDatabase.RATING).isEmpty() && 
+				!values.get(CardDatabase.VOTES).isEmpty()) {
+				this.community_rating = Float.valueOf(values.get(CardDatabase.RATING));
+				this.community_votes = Integer.valueOf(values.get(CardDatabase.VOTES));
+			}
+			else {
+				this.community_rating = null;
+				this.community_votes = null;
+				
+			}
 			
 			String temp = values.get(CardDatabase.TEXT);
 			temp = temp.replace("<i>", "");
@@ -120,6 +138,14 @@ public class Card implements Comparable<Card> {
 			}
 		}
 		return true;
+	}
+	
+	public void setCommunityRating(float rating) {
+		community_rating = rating;
+	}
+	
+	public void setCommunityVotes(int votes) {
+		community_votes = votes;
 	}
 	
 	/**
@@ -187,6 +213,10 @@ public class Card implements Comparable<Card> {
 		return pt;
 	}
 	
+	public Float getRating() {
+		return community_rating;
+	}
+	
 	public boolean isInvalid() {
 		return getName().equals(CardDatabase.INVALID);
 	}
@@ -194,6 +224,15 @@ public class Card implements Comparable<Card> {
 	public boolean isDomestic() {
 		return !getName().equals(CardDatabase.INVALID) &&
 			   !getName().equals(CardDatabase.FOREIGN);
+	}
+	
+	public boolean hasRating() {
+		if (community_rating != null && community_votes != null) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 	
 	/**
@@ -212,6 +251,11 @@ public class Card implements Comparable<Card> {
 		list.set(CardDatabase.TYPE, getTypes());
 		list.set(CardDatabase.TEXT, getText());
 		list.set(CardDatabase.P_T, getPT());
+		
+		if (community_rating != null && community_votes != null) {
+			list.set(CardDatabase.RATING, String.format("%.2f", community_rating));	
+			list.set(CardDatabase.VOTES, String.format("%d", community_votes));	
+		}
 		
 		return list;
 	}

@@ -25,7 +25,7 @@ public class CardDatabase {
 	private final File default_card;
 		
 	public static final String DB_NAME = "cards.xlsx";
-	public static final int COLUMNS = 8;
+	public static final int COLUMNS = 10;
 	public static final int ID = 0;
 	public static final int NAME = 1;
 	public static final int COST = 2;
@@ -34,6 +34,8 @@ public class CardDatabase {
 	public static final int TEXT = 5;
 	public static final int P_T = 6;
 	public static final int HAVE = 7;
+	public static final int RATING = 8;
+	public static final int VOTES = 9;
 	
 	public static final String INVALID = "invalid";
 	public static final String FOREIGN = "foreign";
@@ -102,6 +104,24 @@ public class CardDatabase {
 		return cards.containsKey(id);
 	}
 
+	public boolean fullyPopulated(final int id) {
+		// Card ids not tracked are not fully populated.
+		if (!contains(id)) {
+			return false;
+		}
+		// Foreign/invalid are fully populated.
+		if (!cards.get(id).isDomestic()) {
+			return true;
+		}
+		// Cards without rating are not fully populated.
+		if (!cards.get(id).hasRating()) {
+			return false;
+		}
+		
+		// All criteria above satisfied, fully populated.
+		return true;
+	}
+	
 	public void addInvalid(final int id) {
 		cards.put(id, Card.createInvalid(id));
 	}
@@ -202,6 +222,16 @@ public class CardDatabase {
 		return null;
 	}
 	
+	/**
+	 * Gets a random set of haves.
+	 * @param count
+	 * @return
+	 * @throws Exception
+	 */
+	public Set<String> getRandomHaveNames(final int count) throws Exception {
+		return RandomUtils.getRandom(have.keySet(), count);
+	}
+	
 	public int getRandomID(final boolean domesticOnly) throws Exception {
 		while (true) {
 			int id = RandomUtils.getRandom(cards.keySet());
@@ -292,6 +322,29 @@ public class CardDatabase {
 	}
 	
 	/**
+	 * Returns the mtg community rating, out of five.
+	 * @param name
+	 * @return
+	 * @throws Exception
+	 */
+	public Float getRating(final String name) throws Exception {
+		Set<Card> cards = getCards(name);
+		float value = (float) 0.0;
+		int count = 0;
+		for (Card card : cards) {
+			if (card.hasRating()) {
+				value += card.getRating();
+				count++;
+			}
+		}
+		if (count == 0) {
+			return null;
+		}
+		
+		return value / (float) count;
+	}
+	
+	/**
 	 * Return the card matching the name.  The ID will be arbitrary.
 	 * @param name
 	 * @return
@@ -308,13 +361,32 @@ public class CardDatabase {
 		}
 		return cards.iterator().next();
 	}
-	
-	public Set<Card> getCards(final String name) {
-		Set<Card> matches = new HashSet<Card>();
+
+	/**
+	 * Returns all card IDs matching the name.
+	 * @param name
+	 * @return
+	 */
+	public Set<Integer> getIDs(final String name) {
+		Set<Integer> matches = new HashSet<Integer>();
 		for (int id : cards.keySet()) {
 			if (cards.get(id).matches(name)) {
-				matches.add(cards.get(id));
+				matches.add(id);
 			}
+		}
+		return matches;
+		
+	}
+	
+	/**
+	 * Returns all cards matching the name.
+	 * @param name
+	 * @return
+	 */
+	public Set<Card> getCards(final String name) {
+		Set<Card> matches = new HashSet<Card>();
+		for (int id : getIDs(name)) {
+			matches.add(cards.get(id));
 		}
 		return matches;
 	}

@@ -90,6 +90,17 @@ public class ScrolledList<T> extends JPanel {
 		model.removeElement(value);
 	}
 	
+	public void removeDuplicates() {
+		for (int i = model.size() - 1; i > 0; i--) {
+			for (int j = i - 1; j >= 0; j--) {
+				if (model.getElementAt(i).equals(model.getElementAt(j))) {
+					model.remove(i);
+				}
+				break;
+			}
+		}
+	}
+	
 	public T removeSelected() {
 		T selected = getSelected();
 		model.removeElement(getSelected());

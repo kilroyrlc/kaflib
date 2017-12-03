@@ -77,6 +77,11 @@ public class AddRemoveList<T> extends JPanel implements ActionListener,
 		this.listener = listener;
 	}
 		
+	public void setOperationsEnabled(final boolean enabled) {
+		add.setEnabled(enabled);
+		remove.setEnabled(enabled);
+	}
+	
 	public List<T> get() {
 		return list.get();
 	}
@@ -95,6 +100,10 @@ public class AddRemoveList<T> extends JPanel implements ActionListener,
 	
 	public void remove(final T value) {
 		list.remove(value);
+	}
+	
+	public void removeDuplicates() {
+		list.removeDuplicates();
 	}
 	
 	public T removeSelected() {

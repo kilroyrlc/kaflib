@@ -136,6 +136,22 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		return neighbor;
 	}
 	
+	private Set<Integer> generateHaveTargets(final int count) throws Exception {
+		Set<Integer> values = new HashSet<Integer>();
+		for (String name : db.getRandomHaveNames(2 * count)) {
+			for (Integer id : db.getIDs(name)) {
+				if (!db.fullyPopulated(id)) {
+					values.add(id);
+				}
+				if (values.size() >= count) {
+					return values;
+				}
+			}
+		}
+		
+		return values;
+	}
+	
 	/**
 	 * Generates collect targets.
 	 * @param count
@@ -171,7 +187,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 
 			// Add all temp ids not already in the db.
 			for (Integer value : temp) {
-				if (!db.contains(value)) {
+				if (!db.fullyPopulated(value)) {
 					values.add(value);
 				}
 				if (values.size() >= count) {
@@ -198,9 +214,11 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		else if (!count.getText().isEmpty() &&
 				 !min.getText().isEmpty() &&
 				 !max.getText().isEmpty()) {
-			values = generateTargets(Integer.valueOf(count.getText()), 
-								  Integer.valueOf(min.getText()), 
-								  Integer.valueOf(max.getText()));
+			values = generateHaveTargets(Integer.valueOf(count.getText()));
+
+//			values = generateTargets(Integer.valueOf(count.getText()), 
+//								  Integer.valueOf(min.getText()), 
+//								  Integer.valueOf(max.getText()));
 		}
 		else {
 			JOptionPane.showMessageDialog(this, "Must specify value or count/min/max.");
@@ -210,19 +228,17 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		try {
 			progress.register(this, values.size());
 			for (Integer id : values) {
-				if (!db.contains(id)) {
-					if (torAvailable()) {
-						progress.setText("Scraping: " + id + " using tor.");
-					}
-					else {
-						progress.setText("Scraping: " + id + " using your ip.");
-					}
-					
-					scrape(id);
-					if (values.size() > 3) {
-						progress.setText(progress.getText() + " (sleeping)");
-						Thread.sleep(RandomUtils.randomInt(500, 10000));
-					}
+				if (torAvailable()) {
+					progress.setText("Scraping: " + id + " using tor.");
+				}
+				else {
+					progress.setText("Scraping: " + id + " using your ip.");
+				}
+				
+				scrape(id);
+				if (values.size() > 3) {
+					progress.setText(progress.getText() + " (sleeping)");
+					Thread.sleep(RandomUtils.randomInt(500, 10000));
 				}
 				progress.increment(this);
 			}
@@ -235,6 +251,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 			throw e;
 		}
 	}
+	
 	
 	private String replaceColors(final String html) {
 		String temp = html.replaceAll("\\<img[^\\>]+alt=\"", "[");
@@ -294,14 +311,42 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 			pt = elements.get(0).text();
 		}
 		
-		return new Card(
-					id,
-					name,
-					cost,
-					cmc,
-					types,
-					text,
-					pt);
+		Card card = new Card(
+							id,
+							name,
+							cost,
+							cmc,
+							types,
+							text,
+							pt);
+
+		
+		float rating = 0;
+		int votes = 0;
+		
+		elements = document.select(".textRatingValue");
+		if (elements.size() > 1) {
+			throw new Exception("Multiple rating tags: " + html);
+		}
+		if (elements.size() == 1) {
+			rating = Float.valueOf(elements.get(0).text());
+		}
+
+		elements = document.select(".totalVotesValue");
+		if (elements.size() > 1) {
+			throw new Exception("Multiple votes tags: " + html);
+		}
+		if (elements.size() == 1) {
+			votes = Integer.valueOf(elements.get(0).text());
+		}
+
+		if (votes >= 15) {
+			card.setCommunityRating(rating);
+			card.setCommunityVotes(votes);
+		}
+		
+		
+		return card;
 	}
 	
 	private boolean torAvailable() {
