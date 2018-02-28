@@ -37,6 +37,7 @@ import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -433,6 +434,17 @@ public class FileUtils {
 	 */
 	public static File createUniqueFile(final String prefix, final String suffix) throws Exception {
 		return createUniqueFile(new File("."), prefix, suffix);
+	}
+	
+	/**
+	 * Writes the collection to a single-column Excel file.
+	 * @param collection
+	 * @param file
+	 * @throws Exception
+	 */
+	public static <T> void toXLSX(final Collection<T> collection, final File file) throws Exception { 
+		Matrix<T> matrix = Matrix.createMatrix(collection);
+		matrix.toXLSX(file);
 	}
 	
 	/**

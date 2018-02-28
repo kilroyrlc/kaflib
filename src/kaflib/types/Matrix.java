@@ -312,6 +312,11 @@ public class Matrix<T> implements MatrixNavigator<T> {
 								  final Matrix<T> worksheet) throws Exception {
 		toXLSX(file, new Pair<String, Matrix<T>>("main", worksheet));
 	}
+
+	public static void toEmptyXLSX(final File file) throws Exception {
+		Matrix<String> matrix = new Matrix<String>();
+		toXLSX(file, matrix);
+	}
 	
 	/**
 	 * Writes the specified matrices to file as worksheets.  Each object is

@@ -116,10 +116,10 @@ public class FileSelectorComponent extends JComboBox<String> implements ItemList
 
 	@Override
 	public void itemStateChanged(ItemEvent e) {
-		if (listener == null) { 
+		if (listener == null || 
+			e.getStateChange() == ItemEvent.DESELECTED) { 
 			return;
 		}
-		
 		String selected = (String) getSelectedItem();
 		if (selected.equals(last)) {
 			return;

@@ -1,20 +1,22 @@
 package kaflib.gui;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
+import kaflib.utils.GUIUtils;
 
 /**
  * Defines a scrolled list type.
@@ -47,27 +49,25 @@ public class AddRemoveList<T> extends JPanel implements ActionListener,
 		list = new ScrolledList<T>(visibleRows, values);
 		add(list, BorderLayout.CENTER);
 
-		JPanel top;
+		JPanel left = new JPanel();
+		left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+		
 		if (label != null) {
-			top = new JPanel(new GridLayout(2, 1));
-			top.add(new JLabel(label));
-		}
-		else {
-			top = new JPanel(new GridLayout(1, 1));
+			add(new JLabel(label), BorderLayout.NORTH);
 		}
 		
-		JPanel panel = new JPanel(new FlowLayout());
-		add = new JButton("+");
+		add = GUIUtils.getMonospaceBoldButton("+", 16);
+		add.setAlignmentX(Component.CENTER_ALIGNMENT);
 		add.addActionListener(this);
-		panel.add(add);
-		remove = new JButton("-");
+		left.add(add);
+		remove = GUIUtils.getMonospaceBoldButton("-", 16);
+		remove.setAlignmentX(Component.CENTER_ALIGNMENT);
 		remove.addActionListener(this);
-		panel.add(remove);
-		top.add(panel);
+		left.add(remove);
 		
 		list.addSelectionListener(this);
 		
-		add(top, BorderLayout.NORTH);
+		add(left, BorderLayout.WEST);
 	}
 	
 	public void setListener(final AddRemoveListListener<T> listener) throws Exception {
@@ -149,7 +149,10 @@ public class AddRemoveList<T> extends JPanel implements ActionListener,
 			}
 		}
 		else if (e.getSource().equals(remove)) {
-			removeSelected();
+			T item = removeSelected();
+			if (listener != null) {
+				listener.removePressed(item);
+			}
 		}
 		else {
 		}

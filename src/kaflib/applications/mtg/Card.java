@@ -1,23 +1,20 @@
 package kaflib.applications.mtg;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Defines a mtg card.
  */
 public class Card implements Comparable<Card> {
-	private final int id;
 	private final String name;
 	private final String cost;
 	private final String cmc;
 	private final String types;
 	private final String text;
 	private final String pt;
-	private Float community_rating;
-	private Integer community_votes;
-
+	
 	/**
 	 * Create a card.
 	 * @param number
@@ -28,98 +25,21 @@ public class Card implements Comparable<Card> {
 	 * @param text
 	 * @param pt
 	 */
-	public Card(final String number,
+	public Card(
 			final String name,
 			final String cost,
 			final String cmc,
 			final String types,
 			final String text,
 			final String pt) {
-		this.id = Integer.valueOf(number);
 		this.name = name;
 		this.cost = cost;
 		this.cmc = cmc;
 		this.types = types;
 		this.text = text;
 		this.pt = pt;
-		community_rating = null;
-		community_votes = null;
 	}
 	
-	/**
-	 * Create a card.
-	 * @param number
-	 * @param name
-	 * @param cost
-	 * @param cmc
-	 * @param types
-	 * @param text
-	 * @param pt
-	 */
-	public Card(final int number,
-				final String name,
-				final String cost,
-				final String cmc,
-				final String types,
-				final String text,
-				final String pt) {
-		this.id = number;
-		this.name = name;
-		this.cost = cost;
-		this.cmc = cmc;
-		this.types = types;
-		this.text = text;
-		this.pt = pt;
-		community_rating = null;
-		community_votes = null;
-	}
-	
-	/**
-	 * Create a card from a list of column values.
-	 * @param values
-	 * @throws Exception
-	 */
-	public Card(final List<String> values) throws Exception {
-		if (values.size() >= 7) {
-			this.id = Integer.valueOf(values.get(CardDatabase.ID));
-			this.name = values.get(CardDatabase.NAME);
-			this.cost = values.get(CardDatabase.COST);
-			this.cmc = values.get(CardDatabase.CMC);
-			this.types = values.get(CardDatabase.TYPE);
-			this.pt = values.get(CardDatabase.P_T);
-			
-			if (values.size() >= 10 && 
-				!values.get(CardDatabase.RATING).isEmpty() && 
-				!values.get(CardDatabase.VOTES).isEmpty()) {
-				this.community_rating = Float.valueOf(values.get(CardDatabase.RATING));
-				this.community_votes = Integer.valueOf(values.get(CardDatabase.VOTES));
-			}
-			else {
-				this.community_rating = null;
-				this.community_votes = null;
-				
-			}
-			
-			String temp = values.get(CardDatabase.TEXT);
-			temp = temp.replace("<i>", "");
-			temp = temp.replace("</i>", "");
-			this.text = temp;
-			
-		}
-		else if (values.size() == 2) {
-			this.id = Integer.valueOf(values.get(CardDatabase.ID));
-			this.name = values.get(CardDatabase.NAME);
-			this.cost = "";
-			this.cmc = "";
-			this.types = "";
-			this.text = "";
-			this.pt = "";
-		}
-		else {
-			throw new Exception("Incorrect number of values.");
-		}	
-	}
-
 	/**
 	 * Returns whether or not the collection of cards are the same card
 	 * from different editions.
@@ -140,14 +60,6 @@ public class Card implements Comparable<Card> {
 		return true;
 	}
 	
-	public void setCommunityRating(float rating) {
-		community_rating = rating;
-	}
-	
-	public void setCommunityVotes(int votes) {
-		community_votes = votes;
-	}
-	
 	/**
 	 * Returns whether or not two cards are the same (name) but possibly
 	 * from different sets.
@@ -158,16 +70,6 @@ public class Card implements Comparable<Card> {
 		return name.equals(other.getName());
 	}
 	
-	/**
-	 * @return the number
-	 */
-	public int getID() {
-		return id;
-	}
-	
-	public String getIDString() {
-		return String.format("%d", getID());
-	}
 	/**
 	 * @return the name
 	 */
@@ -200,6 +102,11 @@ public class Card implements Comparable<Card> {
 	public String getTypes() {
 		return types;
 	}
+	
+	public Set<Type> getTypeValues() {
+		return Type.getTypes(getTypes());
+	}
+	
 	/**
 	 * @return the text
 	 */
@@ -213,10 +120,6 @@ public class Card implements Comparable<Card> {
 		return pt;
 	}
 	
-	public Float getRating() {
-		return community_rating;
-	}
-	
 	public boolean isInvalid() {
 		return getName().equals(CardDatabase.INVALID);
 	}
@@ -226,52 +129,9 @@ public class Card implements Comparable<Card> {
 			   !getName().equals(CardDatabase.FOREIGN);
 	}
 	
-	public boolean hasRating() {
-		if (community_rating != null && community_votes != null) {
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-	
-	/**
-	 * Returns the card as db values.
-	 * @return
-	 */
-	public List<String> getValues() {
-		List<String> list = new ArrayList<String>(CardDatabase.COLUMNS);
-		for (int i = 0; i < CardDatabase.COLUMNS; i++) {
-			list.add("");
-		}
-		list.set(CardDatabase.ID, getIDString());
-		list.set(CardDatabase.NAME, getName());
-		list.set(CardDatabase.COST, getCost());
-		list.set(CardDatabase.CMC, getCMC());
-		list.set(CardDatabase.TYPE, getTypes());
-		list.set(CardDatabase.TEXT, getText());
-		list.set(CardDatabase.P_T, getPT());
-		
-		if (community_rating != null && community_votes != null) {
-			list.set(CardDatabase.RATING, String.format("%.2f", community_rating));	
-			list.set(CardDatabase.VOTES, String.format("%d", community_votes));	
-		}
-		
-		return list;
-	}
-	
 	public boolean equals(Object o) {
 		if (o instanceof Card) {
 			return equals((Card) o);
-		}
-		else {
-			return false;
-		}
-	}
-	
-	public boolean matches(final String name) {
-		if (getName().equals(name)) {
-			return true;
 		}
 		else {
 			return false;
@@ -285,15 +145,20 @@ public class Card implements Comparable<Card> {
 	 * @return
 	 */
 	public boolean equals(final Card c) {
-		return id == c.getID();
+		if (getName().equals(c.getName())) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 	
 	public int hashCode() {
-		return id;
+		return name.hashCode();
 	}
 
 	public String toString() {
-		return getIDString() + "/" + name + 
+		return name + 
 			   "\n   " + cost +
 			   "\n   " + cmc +
 			   "\n   " + types +
@@ -301,35 +166,6 @@ public class Card implements Comparable<Card> {
 			   "\n   " + pt;
 	}
 	
-
-	public static Card createForeign(final String id) {
-		return createForeign(Integer.valueOf(id));
-	}
-
-	public static Card createInvalid(final String id) {
-		return createInvalid(Integer.valueOf(id));
-	}
-	
-	public static Card createForeign(final int id) {
-		return new Card(id,
-						CardDatabase.FOREIGN,
-						"",
-						"",
-						"",
-						"",
-						"");
-	}
-	
-	public static Card createInvalid(final int id) {
-		return new Card(id,
-						CardDatabase.INVALID,
-						"",
-						"",
-						"",
-						"",
-						"");
-	}
-
 	public enum Classification {
 		LENGENDARY,
 		PLANESWALKER,
@@ -406,6 +242,14 @@ public class Card implements Comparable<Card> {
 				return 0;
 			}
 		}
+	}
+	
+	public static Set<String> getNames(final Collection<Card> cards) {
+		Set<String> names = new HashSet<String>();
+		for (Card card : cards) {
+			names.add(card.getName());
+		}
+		return names;
 	}
 
 }

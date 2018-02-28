@@ -28,8 +28,8 @@ public class CardSet extends CardCollection implements Iterable<Card> {
 		cards.add(card);
 	}
 
-	public void add(final Collection<Card> cards) throws Exception {
-		for (Card card : cards) {
+	public void add(final Collection<CardInstance> cards) throws Exception {
+		for (CardInstance card : cards) {
 			if (!card.isDomestic()) {
 				throw new Exception("Trying to add invalid card:\n" + card);
 			}

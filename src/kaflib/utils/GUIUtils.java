@@ -24,6 +24,7 @@ package kaflib.utils;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -32,6 +33,7 @@ import java.text.NumberFormat;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
@@ -58,6 +60,32 @@ public class GUIUtils {
 		JPanel panel = new JPanel();
 		panel.setBorder(getTitledBorder(title));
 		return panel;
+	}
+	
+	/** 
+	 * Returns a JButton with monospaced text.
+	 * @param text
+	 * @param size
+	 * @return
+	 */
+	public static JButton getMonospaceButton(final String text, final int size) {
+		Font font = new Font(Font.MONOSPACED, Font.PLAIN, size);
+		JButton button = new JButton(text);
+		button.setFont(font);
+		return button;
+	}
+	
+	/** 
+	 * Returns a JButton with monospaced bold text.
+	 * @param text
+	 * @param size
+	 * @return
+	 */
+	public static JButton getMonospaceBoldButton(final String text, final int size) {
+		Font font = new Font(Font.MONOSPACED, Font.BOLD, size);
+		JButton button = new JButton(text);
+		button.setFont(font);
+		return button;
 	}
 	
 	/**
@@ -144,18 +172,67 @@ public class GUIUtils {
 		return new EmptyBorder(width, width, width, width);
 	}
 
+
+	public static File chooseDirectory(final Component parent) {
+		return chooseDirectory(parent, null);
+	}
+	
 	/**
 	 * Prompts the user to choose a directory, returns null if they did not.
 	 * @param parent
 	 * @return
 	 */
-	public static File chooseDirectory(final Component parent) {
-		JFileChooser chooser = new JFileChooser();
+	public static File chooseDirectory(final Component parent,
+									   final File startingDirectory) {
+		JFileChooser chooser;
+		if (startingDirectory != null && 
+			startingDirectory.canRead()) {
+			if (startingDirectory.isDirectory()) {
+				chooser = new JFileChooser(startingDirectory);
+			}
+			else {
+				chooser = new JFileChooser(startingDirectory.getParentFile());
+			}
+		}
+		else {
+			chooser = new JFileChooser();
+		}
 		chooser.setMultiSelectionEnabled(false);
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
 			File file = chooser.getSelectedFile();
 			if (file != null && file.exists() && file.isDirectory()) {
+				return file;
+			}
+			else {
+				return null;
+			}
+		}
+		else {
+			return null;
+		}
+	}
+	
+	public static File chooseFile(final Component parent,
+								  final File startingDirectory) {
+		JFileChooser chooser;
+		if (startingDirectory != null && 
+			startingDirectory.canRead()) {
+			if (startingDirectory.isDirectory()) {
+				chooser = new JFileChooser(startingDirectory);
+			}
+			else {
+				chooser = new JFileChooser(startingDirectory.getParentFile());
+			}
+		}
+		else {
+			chooser = new JFileChooser();
+		}
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+			File file = chooser.getSelectedFile();
+			if (file != null && file.exists()) {
 				return file;
 			}
 			else {

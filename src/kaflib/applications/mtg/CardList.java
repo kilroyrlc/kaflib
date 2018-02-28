@@ -9,6 +9,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import kaflib.utils.FileUtils;
+
 /**
  * Defines a list of card names.
  */
@@ -64,6 +66,10 @@ public class CardList extends CardCollection implements Iterable<Card> {
 		Collections.sort(this.cards);
 	}
 	
+	public int size() {
+		return cards.size();
+	}
+	
 	/**
 	 * Returns a list of all card names.
 	 * @return
@@ -74,6 +80,20 @@ public class CardList extends CardCollection implements Iterable<Card> {
 			list.add(card.getName());
 		}
 		return list;
+	}
+	
+	/**
+	 * Returns the number of lands.
+	 * @return
+	 */
+	public int getLandCount() {
+		int count = 0;
+		for (Card card : cards) {
+			if (card.getTypeValues().contains(Type.LAND)) {
+				count++;
+			}
+		}
+		return count;
 	}
 	
 	/**
@@ -124,17 +144,38 @@ public class CardList extends CardCollection implements Iterable<Card> {
 	 * @return
 	 * @throws Exception
 	 */
-	public static CardList getList(final CardDatabase db, 
-								   final File excelFile) throws Exception {
-		if (!excelFile.exists() || !excelFile.getName().endsWith(".xlsx")) {
-			throw new Exception("Invalid excel file: " + excelFile + ".");
+	public static CardList readXLSX(final CardDatabase db, 
+								   final File file) throws Exception {
+		if (!file.exists() || !file.getName().endsWith(".xlsx")) {
+			throw new Exception("Invalid excel file: " + file + ".");
 		}
 
 		List<Card> list = new ArrayList<Card>();
-		for (String name : CardUtils.readNameList(excelFile)) {
+		for (String name : CardUtils.readNameList(file)) {
 			list.add(db.getCard(name));
 		}
-		return new CardList(list, !excelFile.canWrite());
+		return new CardList(list, !file.canWrite());
+	}
+	
+	/**
+	 * Creates a card list from a collection of names.
+	 * @param db
+	 * @param names
+	 * @return
+	 * @throws Exception
+	 */
+	public static CardList readTXT(final CardDatabase db, 
+								      final File file) throws Exception {
+		if (!file.exists() || !file.getName().endsWith(".txt")) {
+			throw new Exception("Invalid text file: " + file + ".");
+		}
+
+		List<String> lines = FileUtils.readLines(file);
+		List<Card> list = new ArrayList<Card>();
+		for (String name : lines) {
+			list.add(db.getCard(name.trim()));
+		}
+		return new CardList(list, !file.canWrite());
 	}
 
 	@Override
@@ -142,4 +183,12 @@ public class CardList extends CardCollection implements Iterable<Card> {
 		return cards.iterator();
 	}
 	
+	
+	public static CardList create(final Collection<String> names, final CardDatabase db) throws Exception {
+		CardList list = new CardList();
+		for (String name : names) {
+			list.add(db.getCard(name));
+		}
+		return list;
+	}
 }

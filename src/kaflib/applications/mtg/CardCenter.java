@@ -3,6 +3,7 @@ package kaflib.applications.mtg;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -22,6 +23,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+import kaflib.graphics.GraphicsUtils;
 import kaflib.gui.AddRemoveList;
 import kaflib.gui.AddRemoveListListener;
 import kaflib.gui.FileSelectorComponent;
@@ -29,11 +31,12 @@ import kaflib.gui.FileSelectorListener;
 import kaflib.gui.ImageComponent;
 import kaflib.gui.RatingPanel;
 import kaflib.gui.Suggestor;
+import kaflib.types.DemandWorker;
 import kaflib.types.Matrix;
 import kaflib.types.WordTree;
 import kaflib.types.Worker;
-import kaflib.utils.FileUtils;
 import kaflib.utils.GUIUtils;
+import kaflib.utils.RandomUtils;
 import kaflib.utils.StringUtils;
 
 public class CardCenter extends JFrame implements FocusListener, 
@@ -53,6 +56,8 @@ public class CardCenter extends JFrame implements FocusListener,
 	private final JPanel card_list_panel;
 	private final JPanel message_panel;
 
+	private final DemandWorker updater;
+	
 	// Status panel.
 	private final JLabel status;
 	private final JButton save;
@@ -61,7 +66,9 @@ public class CardCenter extends JFrame implements FocusListener,
 	private final FileSelectorComponent card_list_file;
 	private final AddRemoveList<String> card_list;
 	private final JButton generate_html;
+	private final JButton generate_text;
 	private final JButton remove_duplicates;
+	private final JLabel deck_info;
 	
 	// Card panel.
 	private final JTextField search;
@@ -100,20 +107,31 @@ public class CardCenter extends JFrame implements FocusListener,
 		card_list = new AddRemoveList<String>(null, 12);
 		card_list.setListener(this);
 		
-		temp = new JPanel(new FlowLayout());
-		temp.setBorder(new EmptyBorder(4, 4, 4, 4));
+		JPanel list_bottom = new JPanel(new GridLayout(2, 1));
+		
+		
+		JPanel list_buttons = new JPanel(new FlowLayout());
+		list_buttons.setBorder(new EmptyBorder(4, 4, 4, 4));
 		remove_duplicates = new JButton("Remove duplicates");
 		remove_duplicates.addActionListener(this);
 		remove_duplicates.setHorizontalAlignment(SwingConstants.RIGHT);
-		temp.add(remove_duplicates);
+		list_buttons.add(remove_duplicates);
 		generate_html = new JButton("HTML...");
 		generate_html.addActionListener(this);
 		generate_html.setHorizontalAlignment(SwingConstants.RIGHT);
-		temp.add(generate_html);
+		list_buttons.add(generate_html);
+		generate_text = new JButton("Text...");
+		generate_text.addActionListener(this);
+		generate_text.setHorizontalAlignment(SwingConstants.RIGHT);
+		list_buttons.add(generate_text);
+		
+		deck_info = new JLabel();
+		list_bottom.add(deck_info);
+		list_bottom.add(list_buttons);
 		
 		card_list_panel.add(card_list, BorderLayout.CENTER);
 		card_list_panel.add(card_list_file, BorderLayout.NORTH);
-		card_list_panel.add(temp, BorderLayout.SOUTH);
+		card_list_panel.add(list_bottom, BorderLayout.SOUTH);
 		
 		//
 		// Center panel - card and info.
@@ -152,7 +170,7 @@ public class CardCenter extends JFrame implements FocusListener,
 		//
 		status = new JLabel("Ready");
 		status.setForeground(Color.BLUE.darker());
-		status.setText("Read " + db.getNames().size() + " cards.");
+		status.setText("Read " + db.getNames().size() + " cards, " + db.getHaveCount() + " distinct owned.");
 		save = new JButton("Save all");
 		save.addActionListener(this);
 		message_panel.setBorder(new EmptyBorder(6, 6, 6, 6));
@@ -176,12 +194,17 @@ public class CardCenter extends JFrame implements FocusListener,
 		scrape_frame.pack();
 		scrape_frame.setVisible(true);
 
-		
 		write(true);
-		startImageUpdater();
-
+		
+		// Kick off a thread to update the GUI as selections are made.
+		updater = new DemandWorker(100, 5000) {
+			@Override
+			public void processLoop() {
+				updateGUI();
+			}
+		};
 	}
-
+	
 	/**
 	 * Set the image based on the current card name.  This should not be
 	 * done on a UI thread.
@@ -190,8 +213,13 @@ public class CardCenter extends JFrame implements FocusListener,
 	private void setImage() throws Exception {
 		if (current_name != null) {
 			File file = db.getRandomImage(current_name);
+			BufferedImage i = GraphicsUtils.read(file);
+			if (i.getWidth() == none.getWidth() &&
+				i.getHeight() == none.getWidth()) {
+				i = GraphicsUtils.rotate(i, GraphicsUtils.Rotation.CLOCKWISE);
+			}
 			if (file != null) {
-				image.update(file);
+				image.update(i);
 				return;
 			}
 		}
@@ -200,24 +228,58 @@ public class CardCenter extends JFrame implements FocusListener,
 		}
 	}
 	
-	protected void startImageUpdater() {
-		try {		
-			Worker worker = new Worker() {
-				@Override
-				protected void process() throws Exception {
-					try {
-						while (self != null) {
-							setImage();
-							Thread.sleep(5000);
-						}
-					}
-					catch (Exception e) {
-						JOptionPane.showMessageDialog(self, "Unable to update image.");
-						e.printStackTrace();
-					}
+	/**
+	 * This function is called by the updater frequently after a kick() call.
+	 * After a short time with no kicks, the thread finishes.  So:
+	 * User input -> kick (update regularly)
+	 * No user input -> wait a bit longer and then stop
+	 */
+	protected void updateGUI() {
+		try {
+			updateDeckInfo();
+			
+			// Text field is empty.
+			if (search.getText().isEmpty()) {
+				current_name = null;
+				status.setText("");
+				have.setEnabled(false);
+				return;
+			}
+			// Text field contents found in db.  Update card image,
+			// have field, etc.
+			if (db.checkName(search.getText())) {
+				// If the card hasn't changed, do nothing.
+				if (current_name != null && 
+					search.getText() != null &&
+					current_name.equals(search.getText())) {
+					return;
 				}
-			};
-			worker.run();
+				
+				current_name = search.getText();
+				status.setText("Card: " + current_name + ", have: " + db.have(current_name) + ".");
+				have.setEnabled(true);
+				have.setSelected(db.have(current_name));
+				
+				Float rating = db.getRating(current_name);
+				if (rating == null) {
+					community_rating.setValue(0);
+					community_rating.setEnabled(false);
+				}
+				else {		
+					community_rating.setValue((int)(rating * 2) - 1);
+					community_rating.setEnabled(true);
+				}
+				setImage();
+				
+			}
+			// Text field contents not in db.
+			else {
+				status.setText("'" + search.getText() + "' not found.");
+				have.setSelected(false);
+				have.setEnabled(false);
+				current_name = null;
+			}		
+
 		}
 		catch (Exception e) {
 			JOptionPane.showMessageDialog(self, "Unable to update image.");
@@ -269,32 +331,14 @@ public class CardCenter extends JFrame implements FocusListener,
 	public Suggestor getSuggestor() {
 		return suggestor;
 	}
-	
-	private void generateHTML(final File directory, final String name, final List<String> names) throws Exception {
-		CardList list = CardList.getList(db, names);
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("<html>\n<body>\n<table>\n   <tr>\n");
-		int column = 0;
-		for (Card card : list) {
-			File image = db.getImage(card.getName());
-			FileUtils.copy(new File(directory, image.getName()), image);
-			buffer.append("      <td><img src=\"" + 
-						  image.getName() + 
-						  "\" alt=\"" + 
-						  card.getName() + 
-						  "\" border=\"0\" /></td>\n");
-			column++;
-			if (column == 4) {
-				column = 0;
-				buffer.append("   </tr>\n   <tr>\n");
-			}
-		}
-		buffer.append("   </tr>\n</table>\n</body>\n</html>\n");
-		FileUtils.write(new File(directory, name + ".html"), new String(buffer));
-	}
-	
-	private void asyncGenerateHTML(final List<String> names, final String listName) {
-		final File directory = GUIUtils.chooseDirectory(this);
+
+	/**
+	 * Writes an html file for the current list.
+	 * @param names
+	 * @param listName
+	 */
+	private void asyncGenerateText(final List<String> names, final String listName) {
+		final File directory = GUIUtils.chooseDirectory(this, db.getDeckDirectory());
 		if (directory == null) {
 			return;
 		}
@@ -304,7 +348,39 @@ public class CardCenter extends JFrame implements FocusListener,
 				@Override
 				protected void process() throws Exception {
 					try {
-						generateHTML(directory, listName, names);
+						CardUtils.generateText(db, directory, listName, names);
+					}
+					catch (Exception e) {
+						JOptionPane.showMessageDialog(self, "Unable to generate html:\n" + e.getMessage());
+						e.printStackTrace();
+					}
+				}
+			};
+			worker.start();
+		}
+		catch (Exception e) {
+			JOptionPane.showMessageDialog(self, "Unable to spawn thread:\n" + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Writes an html file for the current list.
+	 * @param names
+	 * @param listName
+	 */
+	private void asyncGenerateHTML(final List<String> names, final String listName) {
+		final File directory = GUIUtils.chooseDirectory(this, db.getDeckDirectory());
+		if (directory == null) {
+			return;
+		}
+
+		try {
+			Worker worker = new Worker() {
+				@Override
+				protected void process() throws Exception {
+					try {
+						CardUtils.generateHTML(db, directory, listName, names);
 					}
 					catch (Exception e) {
 						JOptionPane.showMessageDialog(self, "Unable to generate html:\n" + e.getMessage());
@@ -323,9 +399,11 @@ public class CardCenter extends JFrame implements FocusListener,
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		try {
+			// Have toggled.
 			if (e.getSource().equals(have)) {
 				db.setHave(search.getText(), have.isSelected());
 			}
+			// Save pressed.
 			else if (e.getSource().equals(save)) {
 				status.setText("Saving...");
 				Worker worker = new Worker() {
@@ -337,10 +415,11 @@ public class CardCenter extends JFrame implements FocusListener,
 							
 							// Write deck.
 							File deck_file = card_list_file.getSelected();
-							if (deck_file != null && deck_file.canWrite()) {
+							if (deck_file != null && (!deck_file.exists() || deck_file.canWrite())) {
 								Matrix.createMatrix(card_list.get()).toXLSX(deck_file);
 							}
 							
+							card_list_file.refresh();
 							status.setText("Saved.");
 						}
 						catch (Exception e) {
@@ -351,9 +430,16 @@ public class CardCenter extends JFrame implements FocusListener,
 				};
 				worker.start();
 			}
+			// Remove duplicates pressed.
 			else if (e.getSource().equals(remove_duplicates)) {
 				card_list.removeDuplicates();
 			}
+			// Generate text file pressed.
+			else if (e.getSource().equals(generate_text)) {
+				asyncGenerateText(card_list.get(), 
+						StringUtils.truncateAt(card_list_file.getSelected().getName(), ".xlsx"));
+			}
+			// Generate html file pressed.
 			else if (e.getSource().equals(generate_html)) {
 				asyncGenerateHTML(card_list.get(), 
 						StringUtils.truncateAt(card_list_file.getSelected().getName(), ".xlsx"));
@@ -367,48 +453,8 @@ public class CardCenter extends JFrame implements FocusListener,
 		}		
 	}
 	
-	/**
-	 * Updates gui based on a card being found.  Should not be run from the UI thread.
-	 */
-	private void cardFound() {
-		try {
-			have.setSelected(db.have(current_name));
-			
-			Float rating = db.getRating(current_name);
-			if (rating == null) {
-				community_rating.setValue(0);
-				community_rating.setEnabled(false);
-			}
-			else {		
-				community_rating.setValue((int)(rating * 2) - 1);
-				community_rating.setEnabled(true);
-			}
-			setImage();
-		}
-		catch (Exception e) {
-			JOptionPane.showMessageDialog(this, "Unable to update card to: " + current_name + ".");
-			e.printStackTrace();
-		}
-	}
-
 	public void textFocusEvent() {
-		if (search.getText().isEmpty()) {
-			status.setText("");
-			have.setEnabled(false);
-			return;
-		}
-		if (db.checkName(search.getText())) {
-			current_name = search.getText();
-			status.setText(current_name);
-			have.setEnabled(true);
-			cardFound();
-		}
-		else {
-			status.setText("'" + search.getText() + "' not found.");
-			have.setEnabled(false);
-			current_name = null;
-		}
-		
+		kickUpdater();
 	}
 	
 	@Override
@@ -458,12 +504,20 @@ public class CardCenter extends JFrame implements FocusListener,
 			e.printStackTrace();
 		}
 	}
-
+	
 	@Override
 	public String addPressed() {
+		kickUpdater();
 		return current_name;
 	}
 
+	@Override
+	public String removePressed(String item) {
+		kickUpdater();
+		return null;
+	}
+
+	
 	/**
 	 * Updates the card list to the specified file.  This should probably only
 	 * be called from fileSelected() and on a non-ui thread.
@@ -475,11 +529,12 @@ public class CardCenter extends JFrame implements FocusListener,
 			if (!file.exists()) {
 				return;
 			}
-			CardList list = CardList.getList(db, file);
+			CardList list = CardList.readXLSX(db, file);
 			for (Card card : list) {
 				card_list.add(card.getName());
 			}
 			card_list.setOperationsEnabled(!list.isReadOnly());
+			remove_duplicates.setEnabled(!list.isReadOnly());
 		}
 		catch (Exception e) {
 			JOptionPane.showMessageDialog(self, "Unable to write db file.");
@@ -506,16 +561,41 @@ public class CardCenter extends JFrame implements FocusListener,
 
 	@Override
 	public void createSelected() {
-		card_list.clear();		
-		String name = GUIUtils.showTextInputDialog(this, "Enter new deck name:");
-		if (name == null || name.isEmpty()) {
-			return;
+		card_list_file.setEnabled(false);
+		
+		try {
+			Worker worker = new Worker() {
+				@Override
+				protected void process() throws Exception {
+					card_list.clear();		
+					String name = GUIUtils.showTextInputDialog(self, "Enter new deck name:");
+					if (name != null && !name.isEmpty()) {
+						if (!name.endsWith(".xlsx")) {
+							name = name + ".xlsx";
+						}
+						File file = new File(db.getDeckDirectory(), name);
+						if (!file.exists()) {
+							Matrix.toEmptyXLSX(file);
+							card_list_file.refresh();
+							card_list_file.setSelected(name);	
+						}
+						else {
+							JOptionPane.showMessageDialog(self, "Deck already exists: " + file + ".");							
+						}
+					}
+					else {
+						JOptionPane.showMessageDialog(self, "Invalid deck name.");
+					}
+					card_list_file.setEnabled(true);
+				}
+			};
+			worker.run();
 		}
-		if (!name.endsWith(".xlsx")) {
-			name = name + ".xlsx";
+		catch (Exception e) {
+			JOptionPane.showMessageDialog(self, "Unable to kick of async task.");
+			e.printStackTrace();
 		}
-		card_list_file.add(name);
-		card_list_file.setSelected(name);
+
 	}
 
 	@Override
@@ -523,10 +603,33 @@ public class CardCenter extends JFrame implements FocusListener,
 		card_list.clear();
 	}
 
+	private void kickUpdater() {
+		try {
+			if (updater != null) {
+				updater.kick();
+			}
+		}
+		catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "GUI update failed.");
+			e.printStackTrace();
+		}
+	}
+	
+	private void updateDeckInfo() throws Exception {
+		List<String> list = card_list.get();
+		if (list == null || list.size() == 0) {
+			deck_info.setText("");
+			return;
+		}
+		CardList cards = CardList.create(list, db);
+		deck_info.setText(cards.size() + " cards, " + cards.getLandCount() + " lands.");
+	}
+	
 	@Override
 	public void itemSelected(final String item) {
 		search.setText(item);
-		textFocusEvent();
+		kickUpdater();
 	}
+
 
 }

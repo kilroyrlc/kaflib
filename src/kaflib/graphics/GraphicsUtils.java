@@ -23,6 +23,10 @@ import kaflib.utils.CheckUtils;
  */
 public class GraphicsUtils {
 
+	public enum Rotation {CLOCKWISE,
+						  COUNTERCLOCKWISE,
+						  ONE_EIGHTY};
+	
 	/**
 	 * Creates a copy of the buffered image.
 	 * @param input
@@ -64,6 +68,49 @@ public class GraphicsUtils {
 	 */
 	public static int getBlue(final int rgb) throws Exception {
 		return rgb & 0xff;
+	}
+	
+	/**
+	 * Rotates the specified image by a multiple of 90.  This is a hard pixel
+	 * transpose - there's no interpolation.
+	 * @param image
+	 * @param rotation
+	 * @return
+	 * @throws Exception
+	 */
+	public static BufferedImage rotate(final BufferedImage image, 
+									   final Rotation rotation) throws Exception {
+		if (rotation == Rotation.CLOCKWISE) {
+			BufferedImage output = new BufferedImage(image.getHeight(), image.getWidth(), image.getType());
+			for (int i = 0; i < image.getWidth(); i++) {
+				for (int j = 0; j < image.getHeight(); j++) {
+					output.setRGB(output.getWidth() - j - 1, i, image.getRGB(i, j));
+				}
+			}
+			return output;
+		}
+		else if (rotation == Rotation.COUNTERCLOCKWISE) {
+			BufferedImage output = new BufferedImage(image.getHeight(), image.getWidth(), image.getType());
+			for (int i = 0; i < image.getWidth(); i++) {
+				for (int j = 0; j < image.getHeight(); j++) {
+					output.setRGB(j, output.getHeight() - i - 1, image.getRGB(i, j));
+				}
+			}
+			return output;			
+		}
+		else if (rotation == Rotation.ONE_EIGHTY) {
+			BufferedImage output = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
+			for (int i = 0; i < image.getWidth(); i++) {
+				for (int j = 0; j < image.getHeight(); j++) {
+					output.setRGB(output.getWidth() - i - 1, output.getHeight() - j - 1, image.getRGB(i, j));
+				}
+			}
+			return output;
+		}
+		else {
+			throw new Exception("Unsupported rotation: " + rotation + ".");
+		}
+		
 	}
 	
 	/**

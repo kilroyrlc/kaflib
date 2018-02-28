@@ -2,21 +2,24 @@ package kaflib.applications.mtg;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import kaflib.graphics.GraphicsUtils;
+import kaflib.types.Directory;
 import kaflib.types.Matrix;
 import kaflib.utils.CheckUtils;
 import kaflib.utils.FileUtils;
 import kaflib.utils.RandomUtils;
 import kaflib.utils.StringUtils;
 
-public class CardDatabase {
+public class CardDatabase implements Iterable<CardInstance> {
 
 	public static final File DEFAULT_ROOT = new File("Z:\\data\\games\\mtg");
 	private final File root_directory;
@@ -24,26 +27,29 @@ public class CardDatabase {
 	private final File deck_directory;
 	private final File default_card;
 		
-	public static final String DB_NAME = "cards.xlsx";
-	public static final int COLUMNS = 10;
-	public static final int ID = 0;
-	public static final int NAME = 1;
-	public static final int COST = 2;
-	public static final int CMC = 3;
-	public static final int TYPE = 4;
-	public static final int TEXT = 5;
-	public static final int P_T = 6;
-	public static final int HAVE = 7;
-	public static final int RATING = 8;
-	public static final int VOTES = 9;
+	public static final String DB_NAME = "cards.xlsx";	
+	public static final String HAVE_NAME = "haves.xlsx";
+	private static final int COLUMNS = 10;
+	private static final int ID = 0;
+	private static final int NAME = 1;
+	private static final int COST = 2;
+	private static final int CMC = 3;
+	private static final int TYPE = 4;
+	private static final int TEXT = 5;
+	private static final int P_T = 6;
+	private static final int RESERVED = 7;
+	private static final int RATING = 8;
+	private static final int VOTES = 9;
 	
 	public static final String INVALID = "invalid";
 	public static final String FOREIGN = "foreign";
 	
 	
 	private final File db_file;
-	private final Map<Integer, Card> cards;
-	private final Map<String, Boolean> have;
+	private final File have_file;
+	private final Map<Integer, CardInstance> cards;
+	private final Set<String> have;
+	private final Map<String, Card> name_index;
 
 	public CardDatabase() throws Exception {
 		this(DEFAULT_ROOT);
@@ -64,46 +70,74 @@ public class CardDatabase {
 		}
 		default_card = new File(image_directory, "none.png");
 		
-		cards = new HashMap<Integer, Card>();
-		have = new HashMap<String, Boolean>();
-		
-		Matrix<String> matrix;
+		cards = new HashMap<Integer, CardInstance>();
+		have = new HashSet<String>();
+		name_index = new HashMap<String, Card>();
 		
 		db_file = new File(root_directory, DB_NAME); 
-		if (db_file.exists()) {
-			matrix = FileUtils.readXLSXSheet(db_file, false);
+		have_file = new File(root_directory, HAVE_NAME); 
+		readDBs();
+	}
 
-			for (int i = 0; i < matrix.getRowCount(); i++) {
-				Card card = new Card(matrix.getRow(i));
-				cards.put(card.getID(), card);
+	private final void readDBs() throws Exception {
+		Matrix<String> matrix;
+
+		// Read card db.
+		if (!db_file.exists()) {
+			return;
+		}
+		matrix = FileUtils.readXLSXSheet(db_file, false);
+
+		for (int i = 0; i < matrix.getRowCount(); i++) {
+			CardInstance instance = parseCard(matrix.getRow(i));
+			cards.put(instance.getID(), instance);
+			
+			if (instance.isDomestic()) {
+				Card card = instance.getCard();
 				
-				if (card.isDomestic()) {
-					CheckUtils.check(card.getName(), "card: " + card);
-					if (matrix.hasValue(i, HAVE) &&
-						matrix.get(i, HAVE) != null && 
-						matrix.get(i, HAVE).equals("yes")) {
-						have.put(card.getName(), true);
-					}
-					else {
-						if (!have.containsKey(card.getName())) {
-							have.put(card.getName(), false);
-						}		
-					}
-				}
-				
+				CheckUtils.check(card.getName(), "card: " + instance);
+				name_index.put(card.getName(), card);
 			}
 		}
-
+		
+		// Read list of owned cards.
+		if (!have_file.exists()) {
+			return;
+		}
+		matrix = FileUtils.readXLSXSheet(have_file, false);
+		
+		for (int i = 0; i < matrix.getRowCount(); i++) {
+			String name = matrix.get(i, 0);
+			if (name == null || name.isEmpty()) {
+				continue;
+			}
+			if (!name_index.containsKey(name)) {
+				throw new Exception("Have: " + name + " not found in db.");
+			}
+			have.add(name);
+		}
 	}
 	
 	public Set<String> getNames() {
-		return have.keySet();
+		return name_index.keySet();
 	}
 	
 	public boolean contains(final int id) {
 		return cards.containsKey(id);
 	}
 
+	public int getMaxValid() {
+		int max = 1;
+		for (Integer id : cards.keySet()) {
+			if (id > max) {
+				if (cards.get(id).isDomestic()) {
+					max = id;
+				}
+			}
+		}
+		return max;
+	}
+	
 	public boolean fullyPopulated(final int id) {
 		// Card ids not tracked are not fully populated.
 		if (!contains(id)) {
@@ -123,11 +157,11 @@ public class CardDatabase {
 	}
 	
 	public void addInvalid(final int id) {
-		cards.put(id, Card.createInvalid(id));
+		cards.put(id, CardInstance.createInvalid(id));
 	}
 
 	public void addForeign(final int id) {
-		cards.put(id, Card.createForeign(id));
+		cards.put(id, CardInstance.createForeign(id));
 	}
 	
 	public File getDefaultCard() {
@@ -142,39 +176,93 @@ public class CardDatabase {
 			return null;
 		}
 	}
-
-	public void setHave(final String name, final boolean value) throws Exception {
-		if (!have.containsKey(name)) {
-			throw new Exception("No: " + name + ".");
+	
+	/**
+	 * Sets whether or not the card is owned.
+	 * @param card
+	 * @param value
+	 * @throws Exception
+	 */
+	public void setHave(final Card card, final boolean value) throws Exception {
+		String name = card.getName();
+		if (value == true) {
+			if (!have.contains(name)) {
+				have.add(name);
+			}
 		}
 		else {
-			have.put(name, value);
-		}
-	}
-	
-	public Boolean have(final String name) {
-		if (have.containsKey(name)) {
-			return have.get(name);
-		}
-		else {
-			return null;
-		}
-	}
-	
-	public void add(final Card card) throws Exception {
-		cards.put(card.getID(), card);
-		if (card.isDomestic()) {
-			if (!have.containsKey(card.getName())) {
-				have.put(card.getName(), false);
+			if (have.contains(name)) {
+				have.remove(name);
 			}
 		}
 	}
+
+	/**
+	 * Sets whether or not the card is owned.
+	 * @param name
+	 * @param value
+	 * @throws Exception
+	 */
+	public void setHave(final String name, final boolean value) throws Exception {
+		if (!name_index.containsKey(name)) {
+			throw new Exception("Can't find: " + name + ".");
+		}
+		setHave(name_index.get(name), value);
+	}
 	
+	public int getHaveCount() {
+		return have.size();
+	}
+	
+	/**
+	 * Returns whether or not the card is owned.
+	 * @param name
+	 * @return
+	 */
+	public boolean have(final String name) {
+		if (have.contains(name)) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	/**
+	 * Adds the specified card index to the instance set, the have set, 
+	 * and the index set.
+	 * @param instance
+	 * @throws Exception
+	 */
+	public void add(final Collection<CardInstance> instances) throws Exception {
+		for (CardInstance instance : instances) {
+			add(instance);
+		}
+	}
+	
+	/**
+	 * Adds the specified card index to the instance set, the have set, 
+	 * and the index set.
+	 * @param instance
+	 * @throws Exception
+	 */
+	public void add(final CardInstance instance) throws Exception {
+		cards.put(instance.getID(), instance);
+		if (instance.isDomestic()) {
+			name_index.put(instance.getName(), instance.getCard());
+		}
+	}
+	
+	/**
+	 * Removes the specified id if it is invalid.
+	 * @param id
+	 * @throws Exception
+	 */
 	public void removeInvalid(final String id) throws Exception {
 		if (!cards.keySet().contains(id)) {
 			return;
 		}
-		Card card = cards.get(id);
+		CardInstance card = cards.get(id);
 		if (card.isDomestic()) {
 			return;
 		}
@@ -189,49 +277,75 @@ public class CardDatabase {
 	 * @return
 	 */
 	public boolean checkName(final String name) {
-		return have.containsKey(name);
+		if (!name_index.containsKey(name)) {
+			return false;
+		}
+		else {
+			return true;
+		}
 	}
 
-	public String getName(final String name) {
-		for (int id : cards.keySet()) {
-			if (cards.get(id).getName().toLowerCase().equals(name.toLowerCase())) {
-				return cards.get(id).getName();
+	/**
+	 * Does a lowercase match of the supplied name to a tracked card name.
+	 * @param name
+	 * @return
+	 */
+	public String matchName(final String name) {
+		for (String indexed : name_index.keySet()) {
+			if (indexed.toLowerCase().equals(name.toLowerCase())) {
+				return indexed;
 			}
 		}
 		return null;
 	}
 
+	/**
+	 * Returns the card matching the given name, or null if it is not found.
+	 * @param name
+	 * @return
+	 * @throws Exception
+	 */
+	public Card getCard(final String name) throws Exception {
+		if (!name_index.containsKey(name)) {
+			return null;
+		}
+		else {
+			return name_index.get(name);
+		}
+	}
+	
 	/**
 	 * Returns a random card id in the have list.
 	 * @return
 	 * @throws Exception
 	 */
 	public Integer getRandomHaveID() throws Exception {
-		int start = RandomUtils.randomInt(have.size());
-		int i = 0;
-		for (String name : have.keySet()) {
-			if (i < start) {
-				i++;
-			}
-			else {
-				if (have.get(name)) {
-					return RandomUtils.getRandom(getCards(name)).getID();
-				}
-			}
+		if (have.size() == 0) {
+			return null;
 		}
-		return null;
+		String name = RandomUtils.getRandom(have);
+		return RandomUtils.getRandom(getCardInstances(name)).getID();
 	}
 	
 	/**
-	 * Gets a random set of haves.
+	 * Gets a random set of haved cards.
 	 * @param count
 	 * @return
 	 * @throws Exception
 	 */
 	public Set<String> getRandomHaveNames(final int count) throws Exception {
-		return RandomUtils.getRandom(have.keySet(), count);
+		return RandomUtils.getRandom(getHaves(), count);
 	}
 	
+	/**
+	 * Returns all names where have is true.
+	 * @return
+	 * @throws Exception
+	 */
+	public Set<String> getHaves() throws Exception {
+		return have;
+	}
+		
 	public int getRandomID(final boolean domesticOnly) throws Exception {
 		while (true) {
 			int id = RandomUtils.getRandom(cards.keySet());
@@ -241,9 +355,14 @@ public class CardDatabase {
 		}
 	}
 	
-	public File getImage(final String name) {
+	public File getImage(final String name) throws Exception {
 		for (int id : cards.keySet()) {
-			if (cards.get(id).getName().toLowerCase().equals(name.toLowerCase())) {
+			CardInstance card = cards.get(id);
+			if (card == null || card.isInvalidOrForeign()) {
+				continue;
+			}
+			
+			if (card.getName().toLowerCase().equals(name.toLowerCase())) {
 				File file = new File(image_directory, id + ".png");
 				if (file.exists()) {
 					return file;
@@ -305,12 +424,10 @@ public class CardDatabase {
 	 */
 	public File getRandomImage(final String name) throws Exception {
 		Set<File> files = new HashSet<File>();
-		for (int id : cards.keySet()) {
-			if (cards.get(id).matches(name)) {
-				File file = new File(image_directory, cards.get(id).getIDString() + ".png");
-				if (file.exists()) {
-					files.add(file);
-				}
+		for (CardInstance instance : getCardInstances(name)) {
+			File file = new File(image_directory, instance.getIDString() + ".png");
+			if (file.exists()) {
+				files.add(file);
 			}
 		}
 		if (files.size() > 0) {
@@ -328,10 +445,10 @@ public class CardDatabase {
 	 * @throws Exception
 	 */
 	public Float getRating(final String name) throws Exception {
-		Set<Card> cards = getCards(name);
+		Set<CardInstance> cards = getCardInstances(name);
 		float value = (float) 0.0;
 		int count = 0;
-		for (Card card : cards) {
+		for (CardInstance card : cards) {
 			if (card.hasRating()) {
 				value += card.getRating();
 				count++;
@@ -345,24 +462,6 @@ public class CardDatabase {
 	}
 	
 	/**
-	 * Return the card matching the name.  The ID will be arbitrary.
-	 * @param name
-	 * @return
-	 * @throws Exception
-	 */
-	public Card getCard(final String name) throws Exception {
-		Set<Card> cards = getCards(name);
-		if (cards.size() == 0) {
-			return null;
-		}
-		
-		if (!Card.match(cards)) {
-			throw new Exception("Cards do not match: " + StringUtils.concatenate(cards, "\n"));
-		}
-		return cards.iterator().next();
-	}
-
-	/**
 	 * Returns all card IDs matching the name.
 	 * @param name
 	 * @return
@@ -375,7 +474,6 @@ public class CardDatabase {
 			}
 		}
 		return matches;
-		
 	}
 	
 	/**
@@ -383,14 +481,13 @@ public class CardDatabase {
 	 * @param name
 	 * @return
 	 */
-	public Set<Card> getCards(final String name) {
-		Set<Card> matches = new HashSet<Card>();
+	public Set<CardInstance> getCardInstances(final String name) {
+		Set<CardInstance> matches = new HashSet<CardInstance>();
 		for (int id : getIDs(name)) {
 			matches.add(cards.get(id));
 		}
 		return matches;
 	}
-	
 
 	public void write() throws Exception {
 		write(null);
@@ -408,6 +505,10 @@ public class CardDatabase {
 		return deck_directory;
 	}
 	
+	public Directory getTempDirectory() throws Exception {
+		return new Directory(root_directory, "temp");
+	}
+	
 	/**
 	 * Writes the db to an excel file.
 	 * @throws Exception
@@ -420,27 +521,15 @@ public class CardDatabase {
 		
 		Matrix<String> matrix = new Matrix<String>();
 		for (int id : cards.keySet()) {
-			Card card = cards.get(id);
+			CardInstance instance = cards.get(id);
 			
-			List<String> values = card.getValues();
-			if (card.isDomestic()) {
-				if (!have.containsKey(card.getName())) {
-					throw new Exception("No have listing for: " + card);
-				}
-				if (have.get(card.getName())) {
-					values.set(HAVE, new String("yes"));
-				}
-				else {
-					values.set(HAVE, new String("no"));
-				}
-			}
-			else {
-				values.set(HAVE, new String("n/a"));
-			}
-
+			List<String> values = getValues(instance);
+			values.set(RESERVED, "");
 			matrix.addRow(values);
 		}
 		matrix.toXLSX(output_file);
+		
+		FileUtils.toXLSX(have, have_file);
 	}
 	
 	/**
@@ -474,4 +563,79 @@ public class CardDatabase {
 		return histogram;
 	}
 	
+	public static CardInstance parseCard(final List<String> values) throws Exception {
+		CardInstance card;
+		
+		if (values.size() >= 7) {
+			String text = values.get(TEXT);
+			text = text.replace("<i>", "");
+			text = text.replace("</i>", "");
+			
+			card = new CardInstance(Integer.valueOf(values.get(ID)),
+					values.get(NAME),
+					values.get(COST),
+					values.get(CMC),
+					values.get(TYPE),
+					text,
+					values.get(P_T));
+			
+			
+			if (values.size() >= 10 && 
+				!values.get(CardDatabase.RATING).isEmpty() && 
+				!values.get(CardDatabase.VOTES).isEmpty()) {
+				card.setCommunityRating(Float.valueOf(values.get(RATING)));
+				card.setCommunityVotes(Integer.valueOf(values.get(VOTES)));
+			}
+		}
+		else if (values.size() == 2) {
+			if (values.get(NAME).equals(INVALID)) {
+				card = CardInstance.createInvalid(Integer.valueOf(values.get(ID)));
+			}
+			else if (values.get(NAME).equals(FOREIGN)) {
+				card = CardInstance.createForeign(Integer.valueOf(values.get(ID)));
+			}
+			else {
+				throw new Exception("Invalid row:\n" + StringUtils.concatenate(values, "\n"));
+			}
+		}
+		else {
+			throw new Exception("Incorrect number of values.");
+		}	
+		return card;
+	}
+	
+	public static List<String> getValues(final CardInstance instance) throws Exception {
+		List<String> list = new ArrayList<String>(CardDatabase.COLUMNS);
+		for (int i = 0; i < CardDatabase.COLUMNS; i++) {
+			list.add("");
+		}
+		list.set(ID, instance.getIDString());
+		if (instance.isInvalid()) {
+			list.set(NAME, INVALID);
+			return list;
+		}
+		if (instance.isForeign()) {
+			list.set(NAME, FOREIGN);
+			return list;
+		}
+	
+		list.set(NAME, instance.getName());
+		list.set(COST, instance.getCost());
+		list.set(CMC, instance.getCMC());
+		list.set(TYPE, instance.getTypes());
+		list.set(TEXT, instance.getText());
+		list.set(P_T, instance.getPT());
+		
+		if (instance.hasRating()) {
+			list.set(RATING, String.format("%.2f", instance.getRating()));	
+			list.set(VOTES, String.format("%d", instance.getVotes()));	
+		}
+		
+		return list;
+	}
+
+	@Override
+	public Iterator<CardInstance> iterator() {
+		return cards.values().iterator();
+	}
 }
