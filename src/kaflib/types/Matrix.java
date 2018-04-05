@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -219,6 +220,11 @@ public class Matrix<T> implements MatrixNavigator<T> {
 	 */
 	public void addRow(final List<T> row) {
 		matrix.add(new ArrayList<T>(row));
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void addRow(final T... row) {
+		matrix.add(new ArrayList<T>(Arrays.asList(row)));
 	}
 	
 	/**

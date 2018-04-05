@@ -27,8 +27,8 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import kaflib.types.CachedWordTree;
-import kaflib.types.WordTree;
+import kaflib.types.CachedWordTrie;
+import kaflib.types.WordTrie;
 
 /**
  * Derived from Dave.
@@ -41,7 +41,7 @@ public class Suggestor {
 	private final Window container;
 	private JPanel suggestion_panel;
 	private JWindow suggestion_popup;
-	private WordTree suggestions;
+	private WordTrie suggestions;
 	private int tW;
 	private int tH;
 	
@@ -80,7 +80,7 @@ public class Suggestor {
 
 	public Suggestor(final JTextField textField, 
 			 		 final Window mainWindow, 
-			 		 final WordTree suggestions,
+			 		 final WordTrie suggestions,
 			 		 final boolean justKeyEvents) {
 		this(textField, 
 			 mainWindow, 
@@ -94,7 +94,7 @@ public class Suggestor {
 	
 	public Suggestor(final JTextField textField, 
 					 final Window mainWindow, 
-					 final WordTree suggestions, 
+					 final WordTrie suggestions, 
 					 final Color popUpBackground, 
 					 final Color textColor, 
 					 final Color suggestionFocusedColor, 
@@ -274,14 +274,14 @@ public class Suggestor {
 	 * @param suggestions
 	 */
 	public void setSuggestions(final Collection<String> suggestions) throws Exception {
-		this.suggestions = new CachedWordTree(suggestions, WORD_TREE_DEFAULT_CACHE_SIZE);
+		this.suggestions = new CachedWordTrie(suggestions, WORD_TREE_DEFAULT_CACHE_SIZE);
 	}
 	
 	/**
 	 * Updates the suggestions word tree.
 	 * @param suggestions
 	 */
-	public void setSuggestions(final CachedWordTree suggestions) {
+	public void setSuggestions(final CachedWordTrie suggestions) {
 		this.suggestions = suggestions;
 	}
 
@@ -336,7 +336,7 @@ public class Suggestor {
 	
 	    	        JTextField f = new JTextField(16);
 	
-	    	        CachedWordTree tree = new CachedWordTree(64);
+	    	        CachedWordTrie tree = new CachedWordTrie(64);
 	    	        String string = new String("hammer of the gods will drive my ship to new lands fight the horde sing and cry valhallah i am coming");
 	    	        tree.insert(Arrays.asList(string.split("\\s")));
 	    	        tree.accessed("horde");

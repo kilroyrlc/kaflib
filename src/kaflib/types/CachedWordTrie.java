@@ -15,7 +15,7 @@ import kaflib.utils.TypeUtils;
 /**
  * Defines a subtype of WordTree where a cache of recent values is maintained.
  */
-public class CachedWordTree extends WordTree implements Serializable {
+public class CachedWordTrie extends WordTrie implements Serializable {
 
 	private static final long serialVersionUID = 3L;
 	private Map<String, Integer> cache;
@@ -26,7 +26,7 @@ public class CachedWordTree extends WordTree implements Serializable {
 	 * Create the tree with the specified cache size.
 	 * @param cacheSize
 	 */
-	public CachedWordTree(final int cacheSize) {
+	public CachedWordTrie(final int cacheSize) {
 		super();
 		cache = new HashMap<String, Integer>(cacheSize);
 		cache_size = cacheSize;
@@ -37,7 +37,7 @@ public class CachedWordTree extends WordTree implements Serializable {
 	 * Create the tree with the specified cache size.
 	 * @param cacheSize
 	 */
-	public CachedWordTree(final Collection<String> initialValues,
+	public CachedWordTrie(final Collection<String> initialValues,
 						  final int cacheSize) throws Exception {
 		super(initialValues);
 		cache = new HashMap<String, Integer>(cacheSize);

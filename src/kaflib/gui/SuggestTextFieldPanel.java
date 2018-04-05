@@ -3,7 +3,7 @@ package kaflib.gui;
 import java.awt.Color;
 import java.awt.Window;
 
-import kaflib.types.WordTree;
+import kaflib.types.WordTrie;
 
 /**
  * Defines a panel with a label and a text field with auto suggest.
@@ -11,7 +11,7 @@ import kaflib.types.WordTree;
 public class SuggestTextFieldPanel extends TextFieldPanel {
 
 	private static final long serialVersionUID = 187L;
-	final WordTree words;
+	final WordTrie words;
 	final Suggestor suggestor;
 	
 	/**
@@ -24,7 +24,7 @@ public class SuggestTextFieldPanel extends TextFieldPanel {
 	protected SuggestTextFieldPanel(final String label, 
 									final int width, 
 									final Window window,
-									final WordTree words) {
+									final WordTrie words) {
 		super(label, width);
 		this.words = words;
 		
@@ -43,7 +43,7 @@ public class SuggestTextFieldPanel extends TextFieldPanel {
 	 * Return the word tree.
 	 * @return
 	 */
-	public WordTree getWordTree() {
+	public WordTrie getWordTree() {
 		return words;
 	}
 

@@ -14,7 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import kaflib.gui.Suggestor;
-import kaflib.types.WordTree;
+import kaflib.types.WordTrie;
 
 public class Query {
 	
@@ -32,11 +32,8 @@ public class Query {
 			field.addFocusListener(new FocusListener() {
 				@Override
 				public void focusGained(FocusEvent e) {
-					Boolean value = db.have(field.getText());
-					if (value == null) {
-						label.setText("No '" + field.getText() + "'.");
-					}
-					else if (value == true) {
+					boolean value = db.have(field.getText());
+					if (value == true) {
 						label.setText("Have '" + field.getText() + "'.");
 					}
 					else {
@@ -49,7 +46,7 @@ public class Query {
 				}
 			});
 			
-			WordTree tree = new WordTree(db.getNames());
+			WordTrie tree = new WordTrie(db.getNames());
 			new Suggestor(field, 
 							  frame, 
 							  tree,
@@ -64,11 +61,8 @@ public class Query {
 				public void actionPerformed(ActionEvent e) {
 					try {
 						db.setHave(field.getText(), true);
-						Boolean value = db.have(field.getText());
-						if (value == null) {
-							label.setText("No '" + field.getText() + "'.");
-						}
-						else if (value == true) {
+						boolean value = db.have(field.getText());
+						if (value == true) {
 							label.setText("Have '" + field.getText() + "'.");
 							field.setText("");
 						}

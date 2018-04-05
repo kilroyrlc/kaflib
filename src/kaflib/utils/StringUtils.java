@@ -78,6 +78,37 @@ public class StringUtils {
 	}
 	
 	/**
+	 * Appends value to buffer if buffer is empty.
+	 * @param buffer
+	 * @param value
+	 * @return
+	 */
+	public static StringBuffer appendIfEmpty(final StringBuffer buffer, final String value) {
+		if (buffer.length() == 0) {
+			buffer.append(value);
+			return buffer;
+		}
+		else {
+			return buffer;
+		}
+	}
+	
+	/**
+	 * Checks if the given string is in the array.
+	 * @param search
+	 * @param list
+	 * @return
+	 */
+	public static boolean contains(final String search, final String... list) {
+		for (String check : list) {
+			if (check.equals(search)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
 	 * Resizes the string to either pad out to the specified length or truncate
 	 * with "..." indicating truncation.
 	 * @param string
@@ -87,6 +118,24 @@ public class StringUtils {
 	 */
 	public static String resize(final String string, final int length) throws Exception {
 		return resize(string, length, ' ');
+	}
+	
+	/**
+	 * Returns the specified number of ___-separated lines lines.
+	 * @param string
+	 * @param lineCount
+	 * @return
+	 * @throws Exception
+	 */
+	public static String getLines(final String string, final int lineCount, final String separator) throws Exception {
+		int index = 0;
+		for (int i = 0; i < lineCount; i++) {
+			index = string.indexOf(separator, index) + separator.length();
+			if (index < 0) {
+				return string;
+			}
+		}
+		return string.substring(0, index);
 	}
 	
 	/**
@@ -120,6 +169,44 @@ public class StringUtils {
 	}
 	
 	/**
+	 * Truncates the string if it exceeds the specified length.
+	 * @param string
+	 * @param length
+	 * @return
+	 * @throws Exception
+	 */
+	public static String truncateIf(final String string, 
+									final int length, 
+									final boolean useElipses,
+									final boolean fromStart) throws Exception {
+		CheckUtils.check(string, "string");
+		if (useElipses && string.length() > 4 && length < 4) {
+			throw new Exception("Cannot resize down to less than 4.");
+		}
+		if (string.length() > length) {
+			if (fromStart) {
+				if (useElipses) {
+					return string.substring(0, length - 3) + "...";
+				}
+				else {
+					return string.substring(0, length);
+				}
+			}
+			else {
+				if (useElipses) {
+					return "..." + string.substring(string.length() - length - 3);
+				}
+				else {
+					return string.substring(string.length() - length);
+				}
+			}
+		}
+		else {
+			return string;
+		}
+	}
+
+	/**
 	 * Truncates the string with '...' if it exceeds the specified length.
 	 * @param string
 	 * @param length
@@ -127,18 +214,9 @@ public class StringUtils {
 	 * @throws Exception
 	 */
 	public static String truncateIf(final String string, final int length) throws Exception {
-		CheckUtils.check(string, "string");
-		if (string.length() > 4 && length < 4) {
-			throw new Exception("Cannot resize down to less than 4.");
-		}
-		if (string.length() > length) {
-			return string.substring(0, length - 3) + "...";
-		}
-		else {
-			return string;
-		}
+		return truncateIf(string, length, true, true);
 	}
-
+	
 	/**
 	 * Returns the toString() of each item in the collection, separated by
 	 * specified separator string.

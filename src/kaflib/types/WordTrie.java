@@ -30,7 +30,7 @@ import kaflib.utils.StringUtils;
  *      
  * The obvious application is autocomplete.
  */
-public class WordTree implements Serializable {
+public class WordTrie implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private final Node root;
@@ -39,7 +39,7 @@ public class WordTree implements Serializable {
 	/**
 	 * Creates an empty word tree.
 	 */
-	public WordTree() {
+	public WordTrie() {
 		root = new Node();
 		hash = 0;
 	}
@@ -47,7 +47,7 @@ public class WordTree implements Serializable {
 	/**
 	 * Creates a word tree with initial values.
 	 */
-	public WordTree(final Collection<String> initialValues) throws Exception {
+	public WordTrie(final Collection<String> initialValues) throws Exception {
 		root = new Node();
 		for (String word : initialValues) {
 			root.insert(word);
@@ -134,7 +134,7 @@ public class WordTree implements Serializable {
 	 */
 	public static void main(String args[]) {
 		try {
-			WordTree tree = new WordTree();
+			WordTrie tree = new WordTrie();
 			System.out.println("Adding {bat, cat, cart, cert}.");
 			tree.insert("bat");
 			tree.insert("cat");

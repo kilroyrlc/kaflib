@@ -33,10 +33,9 @@ import kaflib.gui.RatingPanel;
 import kaflib.gui.Suggestor;
 import kaflib.types.DemandWorker;
 import kaflib.types.Matrix;
-import kaflib.types.WordTree;
+import kaflib.types.WordTrie;
 import kaflib.types.Worker;
 import kaflib.utils.GUIUtils;
-import kaflib.utils.RandomUtils;
 import kaflib.utils.StringUtils;
 
 public class CardCenter extends JFrame implements FocusListener, 
@@ -72,7 +71,7 @@ public class CardCenter extends JFrame implements FocusListener,
 	
 	// Card panel.
 	private final JTextField search;
-	private final WordTree tree;
+	private final WordTrie tree;
 	private final Suggestor suggestor;
 	private final JCheckBox have;
 	private final RatingPanel community_rating;
@@ -138,7 +137,7 @@ public class CardCenter extends JFrame implements FocusListener,
 		//
 		search = new JTextField(32);
 		search.addFocusListener(this);
-		tree = new WordTree(db.getNames());
+		tree = new WordTrie(db.getNames());
 		suggestor = new Suggestor(search, 
 								  this, 
 								  tree,
@@ -321,7 +320,7 @@ public class CardCenter extends JFrame implements FocusListener,
 	/**
 	 * @return the tree
 	 */
-	public WordTree getTree() {
+	public WordTrie getTree() {
 		return tree;
 	}
 

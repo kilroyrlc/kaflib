@@ -2,7 +2,6 @@ package kaflib.applications.mtg;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -14,7 +13,6 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +33,7 @@ import org.jsoup.select.Elements;
 import kaflib.graphics.GraphicsUtils;
 import kaflib.gui.ImageComponent;
 import kaflib.gui.ProgressLabel;
-import kaflib.types.WordTree;
+import kaflib.types.WordTrie;
 import kaflib.types.Worker;
 import kaflib.utils.FileUtils;
 import kaflib.utils.GUIUtils;
@@ -47,7 +45,7 @@ import kaflib.utils.StringUtils;
  */
 public class CollectorPanel extends JPanel implements KeyListener, ActionListener {
 	private static final long serialVersionUID = 1L;
-	private final WordTree tree;
+	private final WordTrie tree;
 	
 	private final JPanel self;
 	private final JFormattedTextField count;
@@ -80,7 +78,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 	private final ImageComponent image;
 	private final CardDatabase db;
 	
-	public CollectorPanel(final CardDatabase db, final WordTree tree) throws Exception {	
+	public CollectorPanel(final CardDatabase db, final WordTrie tree) throws Exception {	
 		super(new FlowLayout());
 		this.db = db;
 		tor_available = null;
@@ -177,7 +175,8 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		return neighbor;
 	}
 	
-	private Set<Integer> generateHaveTargets(final int count) throws Exception {
+	/*
+	 private Set<Integer> generateHaveTargets(final int count) throws Exception {
 		Set<Integer> values = new HashSet<Integer>();
 		for (String name : db.getRandomHaveNames(2 * count)) {
 			for (Integer id : db.getIDs(name)) {
@@ -192,7 +191,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		
 		return values;
 	}
-	
+	*/
 	/**
 	 * Generates collect targets.
 	 * @param count

@@ -30,7 +30,7 @@ public class FileList<T> implements Serializable, Iterable<File> {
 		
 		for (File file : this.directory.listFiles()) {
 			if (file.isDirectory()) {
-				directories.put(Directory.create(file), new FileList<T>(Directory.create(file)));
+				directories.put(new Directory(file), new FileList<T>(new Directory(file)));
 			}
 			else {
 				files.put(file, null);

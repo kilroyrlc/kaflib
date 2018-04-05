@@ -43,7 +43,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
+import kaflib.types.Directory;
 import kaflib.types.Matrix;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -125,6 +127,21 @@ public class FileUtils {
 		}
 		workbook.close();
 		return matrices;
+	}
+	
+	public static String changeType(final String path, final String newExtension) throws Exception {
+		int index = path.lastIndexOf('.');
+		if (newExtension.contains(".")) {
+			throw new Exception("No '.' in extension.");
+		}
+		
+		if (index < 0) {
+			return path + "." + newExtension;
+		}
+		else {
+			return path.substring(0, index) + "." + newExtension;
+		}
+		
 	}
 	
 	/**
@@ -313,6 +330,13 @@ public class FileUtils {
 		PrintWriter writer = new PrintWriter(new FileOutputStream(file, true));
 		writer.write(text);
 		writer.close();
+	}
+	
+	public static File appendToFilename(final File file, final String text) throws Exception {
+		File directory = file.getParentFile();
+		String extension = FileUtils.getExtension(file);
+		String name = FileUtils.getFilenameWithoutExtension(file);
+		return new File(directory, name + text + "." + extension);
 	}
 
 	/**
@@ -509,6 +533,22 @@ public class FileUtils {
 		}
 	}
 
+	public static void gUnzip(final File gzip, final File output) throws Exception {
+		GZIPInputStream in = new GZIPInputStream(new FileInputStream(gzip));
+		
+		createIf(output);
+		FileOutputStream out = new FileOutputStream(output);
+
+		byte[] bytes = new byte[2048];
+		int length;
+
+		while ((length = in.read(bytes)) != -1) {
+			out.write(bytes, 0, length);
+		}
+		in.close();
+		out.close();
+	}
+	
 	/**
 	 * Extracts the zip file to the specified directory.
 	 * @param zipFile
@@ -572,6 +612,23 @@ public class FileUtils {
 			return null;
 		}
 		return name.substring(name.lastIndexOf('.') + 1);
+	}
+	
+	public static String append(final String directory, final String path) {
+		if (directory.endsWith("/")) {
+			return directory + path;
+		}
+		else {
+			return directory + "/" + path;
+		}
+	}
+	
+	public static String getFilenameWithoutExtension(final File file) throws Exception {
+		String name = file.getName();
+		if (name == null || name.lastIndexOf('.') < 0) {
+			return name;
+		}
+		return name.substring(0, name.lastIndexOf('.'));
 	}
 	
 	/**
@@ -745,6 +802,11 @@ public class FileUtils {
         outstream.close();
 	}
 	
+	public static void copyTo(final Directory destination, final File source) throws Exception {
+		File destination_file = new File(destination, source.getName());
+		copy(destination_file, source);
+	}
+	
 	/**
 	 * Reads the input file into a byte array.
 	 * 
@@ -813,6 +875,22 @@ public class FileUtils {
 		return getRecursive(root, null);
 	}
 	
+	
+	public static Set<Directory> getLeaves(final Directory root) throws Exception {
+		Set<Directory> leaves = new HashSet<Directory>();
+		if (root.isLeaf()) {
+			leaves.add(root);
+			return leaves;
+		}
+		
+		for (File file : root.listFiles()) {
+			if (file.isDirectory()) {
+				leaves.addAll(getLeaves(new Directory(file)));
+			}
+		}
+		return leaves;
+	}
+	
 	/**
 	 * Returns all files under the specified root directory/file ending
 	 * with the specified extension.
@@ -864,6 +942,45 @@ public class FileUtils {
 			}
 		}
 		return count;
+	}
+	
+
+	public static String getRelativePath(final File from, final File to) throws Exception {
+		return getRelativePath(from, to, File.separator);
+	}
+	
+	public static String getRelativePath(final File from, final File to, final String outputSeparator) throws Exception {
+		String from_tokens[] = from.getAbsolutePath().split("\\" + File.separator);
+		String to_tokens[] = to.getAbsolutePath().split("\\" + File.separator);
+		if (!from_tokens[0].equals(to_tokens[0])) {
+			throw new Exception("Files share no path root:\n" + from + "\n" + to);
+		}
+		int i = 0;
+		while(from_tokens[i].equals(to_tokens[i])) {
+			i++;
+		}
+		StringBuffer path = new StringBuffer();
+		for (int j = i; j < from_tokens.length; j++) {
+			path.append("..");
+			path.append(outputSeparator);
+		}
+		for (int j = i; j < to_tokens.length - 1; j++) {
+			path.append(to_tokens[j]);
+			path.append(outputSeparator);
+		}
+		path.append(to_tokens[to_tokens.length - 1]);
+		return new String(path);
+	}
+	
+	public static void main(String args[]) {
+		try {
+			//File from = new File("C:\\data\\code\\kilroy\\source\\tags");
+			//File to = new File("C:\\data\\code\\kilroy\\source\\archive\\2009\\06\\2c349a_b_t130.jpg");
+			//System.out.println(FileUtils.appendToFilename(to, "blah"));
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 }
