@@ -28,7 +28,7 @@ public class Rectangle extends Shape {
 		}
 		
 	}
-
+	
 	/**
 	 * Returns whether or not the given point lies within this rectangle 
 	 * (inclusive).

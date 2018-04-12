@@ -287,4 +287,40 @@ public class GUIUtils {
 		}
 	}
 	
+	public static void layoutKeyPanels(final JPanel panel, 
+			final List<Pair<JComponent, JPanel>> components, 
+			final float keyPct) throws Exception {
+		panel.setLayout(new GridBagLayout());
+
+		GridBagConstraints constraints;
+
+		float weight = 0;
+		float weight_increment = Math.min(((float) 0.7) / components.size(), (float) 0.1);
+		int row = 0;
+		for (Pair<JComponent, JPanel> line : components) {
+
+			constraints = new GridBagConstraints();
+			constraints.fill = GridBagConstraints.NONE;
+			constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+			constraints.weightx = keyPct;
+			constraints.weighty = weight;
+			constraints.gridx = 0;
+			constraints.gridy = row;
+			constraints.insets = new Insets(3, 3, 3, 3);
+			panel.add(line.getFirst(), constraints);
+
+			constraints = new GridBagConstraints();
+			constraints.fill = GridBagConstraints.HORIZONTAL;
+			constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+			constraints.weightx = 1 - keyPct;
+			constraints.weighty = weight;
+			constraints.gridx = GridBagConstraints.RELATIVE;
+			constraints.gridy = row;
+			constraints.insets = new Insets(3, 3, 3, 3);
+			panel.add(line.getSecond(), constraints);
+			weight += weight_increment;
+			row++;
+		}
+	}
+	
 }

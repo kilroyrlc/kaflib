@@ -1,7 +1,5 @@
 package kaflib.graphics;
 
-import java.awt.image.BufferedImage;
-
 import kaflib.types.Coordinate;
 import kaflib.types.Matrix;
 import kaflib.types.RandomStack;
@@ -16,21 +14,24 @@ public class ImageTraverser extends Worker {
 		               RANDOMLY
 					  };
 	
+	private final int width;
+	private final int height;
 	private final Traversable client;
-	private final BufferedImage image;
 	private final Order order;
 	private Matrix<Boolean> visited;
 	
 	public ImageTraverser(final Traversable client,
-						  final BufferedImage image, 
+						  final int width,
+						  final int height,
 			              final Order order) throws Exception {
 		this.client = client;
-		this.image = image;
+		this.width = width;
+		this.height = height;
 		this.order = order;
 		
 		visited = new Matrix<Boolean>();
-		for (int i = 0; i < image.getHeight(); i++) {
-			for (int j = 0; j < image.getWidth(); j++) {
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
 				visited.set(i, j, false);
 			}
 		}	
@@ -50,8 +51,8 @@ public class ImageTraverser extends Worker {
 	}
 
 	private void traverseLinearly() throws Exception {
-		for (int i = 0; i < image.getHeight(); i++) {
-			for (int j = 0; j < image.getWidth(); j++) {
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
 				if (!visited.get(i, j)) {
 					client.visit(j, i);
 					visited.set(i, j, true);
@@ -62,8 +63,8 @@ public class ImageTraverser extends Worker {
 	
 	private void traverseRandomly() throws Exception {
 		RandomStack<Coordinate> stack = new RandomStack<Coordinate>();
-		for (int i = 0; i < image.getHeight(); i++) {
-			for (int j = 0; j < image.getWidth(); j++) {
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
 				stack.push(new Coordinate(j, i));
 			}
 		}
@@ -84,7 +85,7 @@ public class ImageTraverser extends Worker {
 	 * @param y
 	 * @throws Exception
 	 */
-	protected void visited(final int x, final int y) throws Exception {
+	public void visited(final int x, final int y) throws Exception {
 		visited.set(y, x, true);
 	}
 	

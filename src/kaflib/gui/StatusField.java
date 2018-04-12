@@ -292,7 +292,7 @@ public class StatusField extends JPanel {
 			field.getProgressBar().release(handle0);
 
 			field.setText("Waiting on second thread.");
-			worker.blockUntilDone(-1);
+			worker.blockUntilDone(null);
 			
 			field.setText("Done.");
 			

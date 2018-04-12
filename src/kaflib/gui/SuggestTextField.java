@@ -3,12 +3,14 @@ package kaflib.gui;
 import java.awt.Color;
 import java.awt.Window;
 
+import javax.swing.JTextField;
+
 import kaflib.types.WordTrie;
 
 /**
  * Defines a panel with a label and a text field with auto suggest.
  */
-public class SuggestTextFieldPanel extends TextFieldPanel {
+public class SuggestTextField extends JTextField {
 
 	private static final long serialVersionUID = 187L;
 	final WordTrie words;
@@ -21,14 +23,14 @@ public class SuggestTextFieldPanel extends TextFieldPanel {
 	 * @param window
 	 * @param words
 	 */
-	protected SuggestTextFieldPanel(final String label, 
+	public SuggestTextField(final String label, 
 									final int width, 
 									final Window window,
 									final WordTrie words) throws Exception {
 		super(label, width);
 		this.words = words;
 		
-        suggestor = new Suggestor(getField(), 
+        suggestor = new Suggestor(this, 
 			        			  window, 
 			        			  this.words, 
 			        			  Color.WHITE.brighter(), 

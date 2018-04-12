@@ -1,6 +1,7 @@
 package kaflib.gui;
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Window;
@@ -29,6 +30,7 @@ import javax.swing.event.DocumentListener;
 
 import kaflib.types.CachedWordTrie;
 import kaflib.types.WordTrie;
+import kaflib.utils.CheckUtils;
 
 /**
  * Derived from Dave.
@@ -81,7 +83,7 @@ public class Suggestor {
 	public Suggestor(final JTextField textField, 
 			 		 final Window mainWindow, 
 			 		 final WordTrie suggestions,
-			 		 final boolean justKeyEvents) {
+			 		 final boolean justKeyEvents) throws Exception {
 		this(textField, 
 			 mainWindow, 
 			 suggestions, 
@@ -99,11 +101,14 @@ public class Suggestor {
 					 final Color textColor, 
 					 final Color suggestionFocusedColor, 
 					 final float opacity,
-					 final boolean justKeyEvents) {
+					 final boolean justKeyEvents) throws Exception {
 		this.text_field = textField;
 		this.suggestionsTextColor = textColor;
 		this.container = mainWindow;
 		this.suggestionFocusedColor = suggestionFocusedColor;
+		
+		CheckUtils.check(text_field, "field");
+		CheckUtils.check(container, "container");
 		
 		if (justKeyEvents) {
 			text_field.addKeyListener(keyListener);
@@ -246,6 +251,26 @@ public class Suggestor {
 		tH += label.getPreferredSize().height;
 	}
 
+	private int getAbsoluteX() {
+		int value = text_field.getX();
+		Container parent = text_field.getParent();
+		while (parent != null && !parent.equals(container)) {
+			value += parent.getX();
+			parent = parent.getParent();
+		}
+		return value;
+	}
+	
+	private int getAbsoluteY() {
+		int value = text_field.getY();
+		Container parent = text_field.getParent();
+		while (parent != null && !parent.equals(container)) {
+			value += parent.getY();
+			parent = parent.getParent();
+		}
+		return value;
+	}
+	
 	private void showPopUpWindow() {
 		suggestion_popup.getContentPane().add(suggestion_panel);
 		suggestion_popup.setMinimumSize(new Dimension(text_field.getWidth(), 30));
@@ -254,12 +279,15 @@ public class Suggestor {
 
 		int windowX = 0;
 		int windowY = 0;
-
-		windowX = container.getX() + text_field.getX() + 5;
+		
+		//windowX = container.getX() + text_field.getX() + 5;
+		windowX = getAbsoluteX();
 		if (suggestion_panel.getHeight() > suggestion_popup.getMinimumSize().height) {
-			windowY = container.getY() + text_field.getY() + text_field.getHeight() + suggestion_popup.getMinimumSize().height;
+			//windowY = container.getY() + text_field.getY() + text_field.getHeight() + suggestion_popup.getMinimumSize().height;
+			windowY = getAbsoluteY() + text_field.getHeight();
 		} else {
-			windowY = container.getY() + text_field.getY() + text_field.getHeight() + suggestion_popup.getHeight();
+			//windowY = container.getY() + text_field.getY() + text_field.getHeight() + suggestion_popup.getHeight();
+			windowY = getAbsoluteY() + text_field.getHeight();
 		}
 
 		suggestion_popup.setLocation(windowX, windowY);

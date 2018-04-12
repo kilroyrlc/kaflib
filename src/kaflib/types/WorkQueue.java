@@ -96,7 +96,7 @@ public class WorkQueue extends Worker {
 		while (workers.size() > 0) {
 			Worker worker = workers.remove(0);
 			worker.start();
-			worker.blockUntilDone(-1);
+			worker.blockUntilDone(null);
 			completed++;
 		}
 	}
@@ -113,7 +113,7 @@ public class WorkQueue extends Worker {
 		
 		for (WorkQueue queue : queues) {
 			if (!queue.isDone()) {
-				queue.blockUntilDone(-1);
+				queue.blockUntilDone(null);
 			}
 		}
 	}

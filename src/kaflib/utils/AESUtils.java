@@ -51,6 +51,12 @@ public class AESUtils {
 			doubleEncrypt(file, extension, outer, inner);
 		}
 	}
+
+	public static void doubleEncrypt(final File file,
+			 final String extension,
+			 final KeyPair keys) throws Exception {
+		doubleEncrypt(file, extension, keys.getOuter(), keys.getInner());
+	}
 	
 	public static void doubleEncrypt(final File file,
 									 final String extension,
@@ -66,7 +72,6 @@ public class AESUtils {
 		temp.delete();
 		file.delete();
 	}
-
 				
 	public static void doubleDecrypt(final Set<File> files,
 			 						 final String extension,
@@ -84,20 +89,39 @@ public class AESUtils {
 		}
 	}
 	
-	public static void doubleDecrypt(final File file,
+
+	public static File doubleDecrypt(final File file,
+			 						 final boolean keepOriginal,
+									 final String extension,
+									 final KeyPair keys) throws Exception {
+		return doubleDecrypt(file, keepOriginal, extension, keys.getOuter(), keys.getInner());
+	}
+
+
+	public static File doubleDecrypt(final File file,
+									 final String extension,
+									 final SecretKey outerKey, 
+									 final SecretKey innerKey) throws Exception {
+		return doubleDecrypt(file, false, extension, outerKey, innerKey);
+	}
+
+	public static File doubleDecrypt(final File file,
+									 final boolean keepOriginal,
 									 final String extension,
 									 final SecretKey outerKey, 
 									 final SecretKey innerKey) throws Exception {
 		if (!file.getName().endsWith(extension)) {
 			System.out.println("Skipping non-encrypted file: " + file + ".");
-			return;
+			return null;
 		}
-		
 		File temp = decrypt(file, false, extension, innerKey);
-		decrypt(temp, true, null, outerKey);
+		File output = decrypt(temp, true, null, outerKey);
 		
 		temp.delete();
-		file.delete();
+		if (!keepOriginal) {
+			file.delete();
+		}
+		return output;
 	}
 	
 	

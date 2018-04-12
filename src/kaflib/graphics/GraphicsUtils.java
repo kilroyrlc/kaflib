@@ -5,24 +5,27 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
-import kaflib.types.Percent;
+import kaflib.types.Coordinate;
 import kaflib.utils.CheckUtils;
 
 /**
  * Graphics utilites.
  */
 public class GraphicsUtils {
-
+	
 	public enum Rotation {CLOCKWISE,
 						  COUNTERCLOCKWISE,
 						  ONE_EIGHTY};
@@ -38,6 +41,15 @@ public class GraphicsUtils {
 		boolean alpha = model.isAlphaPremultiplied();
 		WritableRaster raster = input.copyData(null);
 		return new BufferedImage(model, raster, alpha, null);	
+	}
+
+	public static int getAlpha(final int argb) throws Exception {
+		return (argb >> 24) & 0xff;
+	}
+
+	
+	public static String getARGBString(final int argb) throws Exception {
+		return String.format("#%08x", argb);
 	}
 	
 	/**
@@ -133,60 +145,68 @@ public class GraphicsUtils {
         return true;
 	}
 	
+	public static int addLayer(final int baseARGB, final int layerARGB) throws Exception {
+		double alpha = getAlpha(layerARGB) / 255;
+		return getARGB(getAlpha(baseARGB),
+					   (int) (getRed(layerARGB) * alpha + getRed(baseARGB) * (1 - alpha)),
+					   (int) (getGreen(layerARGB) * alpha + getGreen(baseARGB) * (1 - alpha)),
+					   (int) (getBlue(layerARGB) * alpha + getBlue(baseARGB) * (1 - alpha)));			   
+	}
+
+	public static Map<Integer, List<Integer>> getNeighbors(final BufferedImage image, final Coordinate location, final int radius) throws Exception {
+		int width = image.getWidth();
+		int height = image.getHeight();
+		Map<Integer, List<Integer>> values = new HashMap<Integer, List<Integer>>();
+		
+		for (int i = Math.max(0, location.getX() - radius); i < Math.min(width, location.getX() + radius); i++) {
+			for (int j = Math.max(0, location.getY() - radius); j < Math.min(height, location.getY() + radius); j++) {
+				int distance = location.getDistance(new Coordinate(i, j));
+				if (!values.containsKey(distance)) {
+					values.put(distance, new ArrayList<Integer>());
+				}
+				if (distance <= radius) {
+					values.get(distance).add(image.getRGB(i, j));
+				}
+			}
+		}		
+		return values;
+	}
+	
+
 	/**
-	 * Blends r, g, and b into originalRGB by the specified percent.
+	 * Uses x and y as a centerpoint, returns a rectangle of the specified
+	 * width and height, truncating if the edge of the image is reached.
+	 * @param x
+	 * @param y
+	 * @param w
+	 * @param h
+	 * @param image
+	 * @return
+	 * @throws Exception
+	 */
+	public static Rectangle getRectangle(final int x, final int y, final int w, final int h, final BufferedImage image) throws Exception {
+		int startX = Math.max(0, x - (w / 2));
+		int startY = Math.min(image.getWidth() - 1, x + (w / 2));
+		
+		return new Rectangle(new Coordinate(startX, startY), 
+						     new Coordinate(Math.min(image.getWidth() - startX, w), 
+						    		 		Math.min(image.getHeight() - startY,  h)));
+	}
+
+	/**
+	 * Returns the r/g/b channels as a single value.
 	 * @param r
 	 * @param g
 	 * @param b
-	 * @param percent
-	 * @param originalRGB
 	 * @return
 	 * @throws Exception
 	 */
-	public static int blendRGB(int r, int g, int b, 
-							   final Percent percent, final int originalRGB) throws Exception {
-		return getRGB(Math.min(0xff, Math.max(0, r + percent.of(r - getRed(originalRGB)))),
-					  Math.min(0xff, Math.max(0, g + percent.of(g - getGreen(originalRGB)))),
-					  Math.min(0xff, Math.max(0, b + percent.of(b - getBlue(originalRGB)))));
-	}	
-	
-	/**
-	 * Blends r, g, and b into originalRGB by the specified percent.
-	 * @param blend
-	 * @param percent
-	 * @param original
-	 * @return
-	 * @throws Exception
-	 */
-	public static int blendRGB(final int blend, final Percent percent, final int original) throws Exception {
-		return blendRGB(getRed(blend), getGreen(blend), getBlue(blend), percent, original);
+	public static int getRGB(final int r, final int g, final int b) throws Exception {
+		return getRGB(0xff, r, g, b);
 	}
-	
-	/**
-	 * Averages the two pixel values.
-	 * @param rgb_a
-	 * @param rgb_b
-	 * @return
-	 * @throws Exception
-	 */
-	public static int averageRGB(final int rgb_a, final int rgb_b) throws Exception {
-		return getRGB((getRed(rgb_a) + getRed(rgb_b)) / 2,
-					(getGreen(rgb_a) + getGreen(rgb_b)) / 2,
-					(getBlue(rgb_a) + getBlue(rgb_b)) / 2);
-	}
-	
-	/**
-	 * Returns the color distance of each channel between the given pixels.
-	 * @param rgb_a
-	 * @param rgb_b
-	 * @return
-	 * @throws Exception
-	 */
-	public static int getDistance(final int rgb_a, final int rgb_b) throws Exception { 
-		return Math.abs(getRed(rgb_a) - getRed(rgb_b)) +
-			   Math.abs(getGreen(rgb_a) - getGreen(rgb_b)) +
-			   Math.abs(getBlue(rgb_a) - getBlue(rgb_b));
-							
+
+	public static int getRGB(final double r, final double g, final double b) throws Exception {
+		return getRGB(0xff, (int) r, (int) g, (int) b);
 	}
 	
 	/**
@@ -197,13 +217,23 @@ public class GraphicsUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static int getRGB(final int r, final int g, final int b) throws Exception {
-		int rgb = r & 0xff;
+	public static int getRGB(final int a, final int r, final int g, final int b) throws Exception {
+		int rgb = a & 0xff;
+		rgb = rgb << 8;
+		rgb = rgb | (r & 0xff);
 		rgb = rgb << 8;
 		rgb = rgb | (g & 0xff);
 		rgb = rgb << 8;
 		rgb = rgb | (b & 0xff);
 		return rgb;
+	}
+
+	public static int getARGB(final int a, final int rgb) throws Exception {
+		return getARGB(a, getRed(rgb), getGreen(rgb), getBlue(rgb));
+	}
+	
+	public static int getARGB(final int a, final int r, final int g, final int b) throws Exception {
+		return getRGB(a, r, g, b);
 	}
 	
 	/**
@@ -215,6 +245,18 @@ public class GraphicsUtils {
 	public static BufferedImage read(final File file) throws Exception {
 		return ImageIO.read(file);
 	}
+	
+
+	/**
+	 * Reads the specified stream to a buffered image.
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static BufferedImage read(final byte bytes[]) throws Exception {
+		ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+		return ImageIO.read(stream);
+	}	
 
 	/**
 	 * Reads the specified stream to a buffered image.

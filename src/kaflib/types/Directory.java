@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import kaflib.utils.FileUtils;
+
 /**
  * Defines a directory subtype of File that ensures it's always a directory.
  */
@@ -56,6 +58,31 @@ public class Directory extends File {
 			}
 		}
 		return false;
+	}	
+	
+	public Set<File> listImages() throws Exception {
+		Set<File> files = new HashSet<File>();
+		for (File file : listFiles()) {
+			if (!file.isDirectory() && FileUtils.isImageFile(file)) {
+				files.add(file);
+			}
+		}
+		return files;
+	}
+	
+	public Set<File> list(final String extension) throws Exception {
+		String ext = extension;
+		if (!ext.startsWith(".")) {
+			ext = "." + ext;
+		}
+		
+		Set<File> files = new HashSet<File>();
+		for (File file : listFiles()) {
+			if (!file.isDirectory() && file.getName().endsWith(ext)) {
+				files.add(file);
+			}
+		}
+		return files;
 	}
 	
 	/**

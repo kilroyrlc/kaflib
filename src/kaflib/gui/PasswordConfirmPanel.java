@@ -2,18 +2,22 @@ package kaflib.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
+import javax.crypto.SecretKey;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.border.EmptyBorder;
 
 import kaflib.types.Worker;
+import kaflib.utils.AESUtils;
 
 /**
  * Defines a simple panel that prompts the user to enter their password twice.
@@ -132,6 +136,23 @@ public class PasswordConfirmPanel extends JPanel implements KeyListener, FocusLi
 		field_b.setText("");
 	}
 	
+
+	public SecretKey getKey() throws Exception {
+		if (!match()) {
+			return null;
+		}
+		
+		return AESUtils.generateKey(getA(), 
+				getA().substring(0, AESUtils.SALT_LENGTH).getBytes("UTF-8"));
+	}
+
+	public SecretKey getKey(final byte salt[]) throws Exception {
+		if (!match()) {
+			return null;
+		}
+		return AESUtils.generateKey(getA(), salt);
+	}
+	
 	public String getText() {
 		if (match()) {
 			return getA();
@@ -199,4 +220,13 @@ public class PasswordConfirmPanel extends JPanel implements KeyListener, FocusLi
 	public void keyReleased(KeyEvent e) {
 	}
 	
+	public static SecretKey promptForPassword(final Component parent) throws Exception {
+		final PasswordConfirmPanel panel = new PasswordConfirmPanel("Password");
+		if (JOptionPane.showConfirmDialog(parent, panel) == JOptionPane.OK_OPTION) {
+			return panel.getKey();
+		}
+		else {
+			return null;
+		}
+	}
 }

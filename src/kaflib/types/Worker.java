@@ -95,11 +95,13 @@ public abstract class Worker extends Thread {
 	 * @param timeout
 	 * @throws Exception
 	 */
-	public void blockUntilDone(long timeout) throws Exception {
+	public void blockUntilDone(Long timeout) throws Exception {
 		long start = System.currentTimeMillis();
 		while (!isDone()) {
 			sleeper.sleep();
-			if (timeout > 0 && System.currentTimeMillis() - start >= timeout) {
+			if (timeout != null &&
+				timeout > 0 && 
+				System.currentTimeMillis() - start >= timeout) {
 				throw new Exception("Timed out waiting for worker " + 
 									toString() + " to finish.");
 			}
@@ -171,9 +173,9 @@ public abstract class Worker extends Thread {
 	 * @param timeout
 	 * @throws Exception
 	 */
-	public static void waitUntilDone(final Collection<? extends Worker> workers, final long timeoutMS) throws Exception {
+	public static void waitUntilDone(final Collection<? extends Worker> workers, final Long timeoutMS) throws Exception {
 		Sleeper sleeper = null;
-		if (timeoutMS > 0) {
+		if (timeoutMS != null && timeoutMS > 0) {
 			sleeper = new Sleeper(250, timeoutMS / 2);
 			sleeper.setTimeout(timeoutMS);
 		}

@@ -33,7 +33,7 @@ import kaflib.utils.TypeUtils;
  */
 public class FileCrypto {
 	
-	private static final String DEFAULT_FILE_EXTENSION = "oo2";
+	public static final String DEFAULT_FILE_EXTENSION = "oo2";
 	
 	private final JFrame main_frame;
 	private final JPanel main_panel;
@@ -269,7 +269,6 @@ public class FileCrypto {
 		if (!checkPasswords()) {
 			return;
 		}
-		
 		
 		// Ensure only one runs at a time.
 		Integer lock = mutex.lock();

@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.Set;
 
 import kaflib.utils.CheckUtils;
+import kaflib.utils.RandomUtils;
 
 public class Coordinate {
 
@@ -37,6 +38,11 @@ public class Coordinate {
 		
 		return (int) Math.sqrt(((other.getX() - x) * (other.getX() - x)) +
 							  ((other.getY() - y) * (other.getY() - y)));
+	}
+	
+	public int getRisePlusRun(final Coordinate other) throws Exception {
+		CheckUtils.check(other, "other coord");
+		return Math.abs(other.getX() - x) + Math.abs(other.getY() - y);
 	}
 	
 	public int getX() {
@@ -89,6 +95,22 @@ public class Coordinate {
 			else {
 				return Direction.Cardinal.WEST;
 			}
+		}
+	}
+
+	public boolean isWithin(final int width, final int height) {
+		if (x < 0 || x >= width || y < 0 || y >= height) {
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+	
+	public void checkWithin(final int width, final int height) throws Exception {
+		if (!isWithin(width, height)) {
+			throw new Exception("Invalid coordinate " + toString() + 
+								" for w: " + width + " and h: " + height + ".");
 		}
 	}
 	
@@ -223,6 +245,16 @@ public class Coordinate {
 		return new Coordinate(this);
 	}
 	
+	public Coordinate getRandomAdjacent() throws Exception {
+		int new_x = x + RandomUtils.randomInt(-1, 1);
+		int new_y = y + RandomUtils.randomInt(-1, 1);
+		while (new_x == x && new_y == y) {
+			new_x = x + RandomUtils.randomInt(-1, 1);
+			new_y = y + RandomUtils.randomInt(-1, 1);			
+		}
+		
+		return new Coordinate(new_x, new_y);
+	}
 	
 	public Set<Coordinate> getNeighbors() {
 		Set<Coordinate> neighbors = new HashSet<Coordinate>();

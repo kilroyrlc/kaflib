@@ -53,6 +53,12 @@ public class MathUtils {
 		}
 		return sum;
 	}
+
+	public static int average(final Collection<Integer> values) throws Exception {
+		CheckUtils.checkNonEmpty(values, "values");
+		int sum = sum(values);
+		return sum / values.size();
+	}
 	
 	/**
 	 * Gets a list of random numbers of the specified size, max value is

@@ -91,7 +91,18 @@ public class WordTrie implements Serializable {
 	 * @return
 	 * @throws Exception
 	 */
-	public Set<String> get(final int maxSize) throws Exception {
+	public Set<String> get() throws Exception {
+		return get(null, null);
+	}
+	
+	
+	/**
+	 * Returns up to maxSize values from the tree.
+	 * @param maxSize
+	 * @return
+	 * @throws Exception
+	 */
+	public Set<String> get(final Integer maxSize) throws Exception {
 		return get(null, maxSize);
 	}
 	
@@ -102,7 +113,7 @@ public class WordTrie implements Serializable {
 	 * @return
 	 * @throws Exception
 	 */
-	public Set<String> get(final String prefix, final int maxSize) throws Exception {
+	public Set<String> get(final String prefix, final Integer maxSize) throws Exception {
 		Set<String> words;
 		if (prefix == null) {
 			words = root.getAll(new String(), maxSize);
@@ -209,7 +220,7 @@ class Node implements Serializable {
 	 * @throws Exception
 	 */
 	public Set<String> getAll(final String word, 
-							   final int maxSize) throws Exception {
+							   final Integer maxSize) throws Exception {
 		Set<String> list = new HashSet<String>();
 		
 		// No more specifier, return the whole subtree.
@@ -221,7 +232,7 @@ class Node implements Serializable {
 				}
 				for (String string : sublist) {
 					list.add("" + letter + string);
-					if (list.size() > maxSize) {
+					if (maxSize != null && list.size() > maxSize) {
 						return list;
 					}
 				}

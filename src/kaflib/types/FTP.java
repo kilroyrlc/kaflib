@@ -210,7 +210,8 @@ public class FTP {
 			// Dirlist not provided, query.
 			else {
 				FTPFile remote = ftp.mlistFile(path);
-				if (remote.isFile() && 
+				if (remote != null && 
+					remote.isFile() && 
 					remote.getSize() == file.length()) {
 					return true;
 				}

@@ -30,6 +30,7 @@ public class ImageEditor {
 	 * @throws Exception
 	 */
 	public ImageEditor(final File image) throws Exception {
+		this();
 		this.image = new ThumbCropComponent(image);
 	}
 	
@@ -40,6 +41,7 @@ public class ImageEditor {
 	 * @throws Exception
 	 */
 	public ImageEditor(final BufferedImage image) throws Exception {
+		this();
 		this.image = new ThumbCropComponent(image);
 	}
 
@@ -50,6 +52,7 @@ public class ImageEditor {
 	 * @throws Exception
 	 */
 	public ImageEditor() throws Exception {
+		frame = new JFrame();
 		this.image = new ThumbCropComponent();
 	}
 	
@@ -66,7 +69,6 @@ public class ImageEditor {
 	 * @throws Exception
 	 */
 	public void show() throws Exception {
-		frame = new JFrame();
 		panel = new JPanel(new BorderLayout());
 		
 		this.image.setThumbnailAspect((float) 0.85);
@@ -102,7 +104,8 @@ public class ImageEditor {
 			panel.add(new JLabel("Label b"));
 			panel.add(new JLabel("Label c"));
 			
-			new ImageEditor(new File("flag.jpg"));
+			ImageEditor editor = new ImageEditor(new File("flag.jpg"));
+			editor.show();
 		}
 		catch (Exception e) {
 			e.printStackTrace();

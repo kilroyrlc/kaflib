@@ -507,6 +507,7 @@ public class CardCenter extends JFrame implements FocusListener,
 	@Override
 	public String addPressed() {
 		kickUpdater();
+		search.setText("");
 		return current_name;
 	}
 
