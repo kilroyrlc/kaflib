@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import kaflib.types.Coordinate;
+import kaflib.utils.TypeUtils;
 
 /**
  * Contains a set of coordinates comprising a selection area.
@@ -17,6 +18,16 @@ public class Selection {
 	
 	public Selection() {
 		coordinates = new HashSet<Coordinate>();
+	}
+
+	public Selection(final Coordinate coordinate) {
+		this();
+		coordinates.add(coordinate);
+	}
+	
+	public Selection(final Collection<Coordinate> coordinates) {
+		this();
+		this.coordinates.addAll(coordinates);
 	}
 	
 	public void add(final Coordinate coordinate) {
@@ -74,6 +85,48 @@ public class Selection {
 			}
 		}
 		return count;
+	}
+	
+	/**
+	 * Adds all connected points that meet the threshold capacity.
+	 * @param threshold
+	 * @throws Exception
+	 */
+	public void addAllConnected(final Canvas canvas,
+								final Opacity threshold) throws Exception {
+		Set<Coordinate> processed = new HashSet<Coordinate>();
+		Set<Coordinate> process = new HashSet<Coordinate>();
+		process.addAll(coordinates);
+		
+		while (process.size() > 0) {
+			Coordinate c = TypeUtils.getItem(process);
+			processed.add(c);
+			process.remove(c);
+			
+			for (Coordinate d : c.getNeighbors()) {
+				if (process.contains(d) || processed.contains(d) ||
+					!canvas.isValid(d)) {
+					continue;
+				}
+				if (canvas.get(d).getOpacity().compareTo(threshold) >= 0) {
+					add(d);
+				}
+				processed.add(d);
+			}
+		}
+	}
+	
+	public Selection getBorder() throws Exception {
+		Set<Coordinate> border = new HashSet<Coordinate>();
+		for (Coordinate coordinate : coordinates) {
+			for (Coordinate n : coordinate.getNeighbors()) {
+				if (!coordinates.contains(n)) {
+					border.add(coordinate);
+					break;
+				}
+			}
+		}
+		return new Selection(border);
 	}
 	
 	/**
@@ -170,7 +223,16 @@ public class Selection {
 		return selection;
 	}
 	
-	
+	/**
+	 * Wiggles a star pattern around a radius of adjustment, returns the star
+	 * with the greatest number of opaque pixels.
+	 * @param starting
+	 * @param radius
+	 * @param adjustment
+	 * @param canvas
+	 * @return
+	 * @throws Exception
+	 */
 	public static final Selection getMostOpaqueStar(final Coordinate starting,
 													final int radius,
 												 	final int adjustment,
@@ -194,6 +256,28 @@ public class Selection {
 			}
 		}
 		return best_selection;
+	}
+	
+	public static List<Selection> getAllSelections(final Canvas canvas,
+										    	   final Opacity threshold) throws Exception {
+		List<Selection> list = new ArrayList<Selection>();
+		Set<Coordinate> traversed = new HashSet<Coordinate>();
+		for (int i = 0; i < canvas.getWidth(); i++) {
+			for (int j = 0; j < canvas.getHeight(); j++) {
+				Coordinate coordinate = new Coordinate(i, j);
+				Pixel pixel = canvas.get(coordinate);
+				if (pixel == null ||
+					traversed.contains(coordinate) ||
+					pixel.getOpacity().compareTo(threshold) < 0) {
+					continue;
+				}
+				Selection selection = new Selection(coordinate);
+				selection.addAllConnected(canvas, threshold);
+				list.add(selection);
+				traversed.addAll(selection.getCoordinates());
+			}
+		}
+		return list;
 	}
 	
 }

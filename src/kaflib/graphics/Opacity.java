@@ -3,7 +3,7 @@ package kaflib.graphics;
 import kaflib.types.Percent;
 import kaflib.types.Byte;
 
-public class Opacity {
+public class Opacity implements Comparable<Opacity> {
 	private final Byte value;
 
 	public static final int OPAQUE = 	  		0xff;
@@ -47,6 +47,19 @@ public class Opacity {
 	
 	public String toString() {
 		return value.toString();
+	}
+
+	@Override
+	public int compareTo(Opacity o) {
+		if (value.getValue() > o.getInt()) {
+			return 1;
+		}
+		else if (value.getValue() < o.getInt()) {
+			return -1;
+		}
+		else {
+			return 0;
+		}
 	}
 	
 }

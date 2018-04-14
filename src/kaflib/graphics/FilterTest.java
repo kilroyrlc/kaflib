@@ -55,7 +55,7 @@ public class FilterTest {
 //			System.out.println("Filter success.");
 //			outputImage.update(filter.getResult().toBufferedImage());
 //		}
-		canvas = CompositeTransforms.blendThenEdge(canvas);
+		canvas = CompositeTransforms.temp(canvas);
 		if (canvas != null) {
 			outputImage.update(canvas.toBufferedImage());
 		}

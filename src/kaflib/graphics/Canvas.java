@@ -111,8 +111,17 @@ public class Canvas {
 	}
 	
 	public Pixel get(final Coordinate location) throws Exception {
-		location.checkWithin(getWidth(), getHeight());
-		return pixels[location.getX()][location.getY()];
+		return get(location.getX(), location.getY());
+	}
+	
+	public Pixel get(int x, int y) throws Exception {
+		CheckUtils.checkRange(x, 0, pixels.length - 1, "x value");
+		CheckUtils.checkRange(y, 0, pixels[0].length - 1, "y value");
+		if (pixels[x][y] == null) {
+			return new Pixel(Pixel.TRANSPARENT_BLACK);
+		}
+		
+		return pixels[x][y];
 	}
 	
 	public Coordinate getRandomLocation() {
@@ -152,16 +161,7 @@ public class Canvas {
 		pixels[x][y] = value;
 	}
 	
-	public Pixel get(int x, int y) throws Exception {
-		CheckUtils.checkRange(x, 0, pixels.length);
-		CheckUtils.checkRange(y, 0, pixels[0].length);
-		if (pixels[x][y] == null) {
-			return new Pixel(Pixel.TRANSPARENT_BLACK);
-		}
-		
-		return pixels[x][y];
-	}
-	
+
 	/**
 	 * Applies one canvas to this one, using the opacity of the parameter to
 	 * determine how to blend.  The opacity of this layer remains as-is, and
@@ -190,4 +190,5 @@ public class Canvas {
 	    }
 	    return image;
 	}
+
 }

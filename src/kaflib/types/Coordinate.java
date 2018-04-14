@@ -256,6 +256,10 @@ public class Coordinate {
 		return new Coordinate(new_x, new_y);
 	}
 	
+	/**
+	 * Returns the eight neighbors of the specified coordinate.
+	 * @return
+	 */
 	public Set<Coordinate> getNeighbors() {
 		Set<Coordinate> neighbors = new HashSet<Coordinate>();
 		neighbors.add(new Coordinate(getX() - 1, getY() - 1));

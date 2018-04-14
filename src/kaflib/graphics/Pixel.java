@@ -2,6 +2,8 @@ package kaflib.graphics;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import kaflib.types.Byte;
@@ -10,7 +12,7 @@ import kaflib.utils.MathUtils;
 /**
  * Defines an argb value with knowledge of its position.
  */
-public class Pixel {
+public class Pixel implements Comparable<Pixel> {
 	private Opacity opacity;
 	private Byte r;
 	private Byte g;
@@ -20,6 +22,9 @@ public class Pixel {
 	public static final int TRANSPARENT_WHITE = 0x00ffffff;
 	public static final int OPAQUE_BLACK = 		0xff000000;
 	public static final int OPAQUE_WHITE =	 	0xffffffff;
+	public static final int OPAQUE_RED =	 	0xffff0000;
+	public static final int OPAQUE_GREEN =	 	0xff00ff00;
+	public static final int OPAQUE_BLUE =	 	0xff0000ff;
 	
 	public Pixel() throws Exception {
 		opacity = new Opacity();
@@ -94,6 +99,12 @@ public class Pixel {
 		this.opacity = opacity;
 	}
 
+	public double getLuminance() {
+		return 0.2126 * (double) r.getValue() +
+			   0.7152 * (double) g.getValue() + 
+			   0.7220 * (double) b.getValue();
+	}
+	
 	/**
 	 * @return the r
 	 */
@@ -199,7 +210,34 @@ public class Pixel {
 		
 	}
 	
+	public Opacity getMedianOpacity(List<Pixel> pixels) throws Exception { 
+		Collections.sort(pixels, new Comparator<Pixel>(){
+			@Override
+			public int compare(Pixel o1, Pixel o2) {
+				return o1.getOpacity().compareTo(o2.getOpacity());
+			}});
+		return pixels.get(pixels.size() / 2).getOpacity();
+	}
+	
+	public Pixel getMedianByLuminance(List<Pixel> pixels) throws Exception {
+		Collections.sort(pixels);
+		return pixels.get(pixels.size() / 2);
+	}
+	
 	public String toString() {
 		return "#" + opacity.toString() + r.toString() + g.toString() + b.toString();
+	}
+
+	@Override
+	public int compareTo(Pixel o) {
+		if (getLuminance() > o.getLuminance()) {
+			return 1;
+		}
+		else if (getLuminance() < o.getLuminance()) {
+			return -1;
+		}
+		else {
+			return 0;
+		}
 	}
 }
