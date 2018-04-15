@@ -13,18 +13,48 @@ import kaflib.utils.RandomUtils;
 
 public class Coordinate {
 
-	private int x;
-	private int y;
+	private final boolean positive_domain;
+	private final int x;
+	private final int y;
+	private final int hash_code;
 	
+	/**
+	 * Creates a coordinate.
+	 * @param x
+	 * @param y
+	 */
 	public Coordinate(final int x, final int y) {
 		this.x = x;
 		this.y = y;
+		this.positive_domain = !(x < 0 | y < 0);
+		hash_code = toString().hashCode();
+	}
+	
+	
+	public Coordinate(final int x, final int y, final boolean positive) throws Exception {
+		this.positive_domain = positive;
+
+		if (positive_domain) {
+			CheckUtils.checkNonNegative(x, "x");
+			CheckUtils.checkNonNegative(x, "y");
+		}
+		
+		this.x = x;
+		this.y = y;
+
+		hash_code = toString().hashCode();
 	}
 	
 
+	/**
+	 * Creates a coordinate copy.
+	 * @param coordinate
+	 */
 	public Coordinate(final Coordinate coordinate) {
 		this.x = coordinate.getX();
 		this.y = coordinate.getY();
+		this.positive_domain = coordinate.getPositiveDomain();
+		hash_code = toString().hashCode();
 	}
 	
 	/**
@@ -33,11 +63,29 @@ public class Coordinate {
 	 * @return
 	 * @throws Exception
 	 */
-	public int getDistance(Coordinate other) throws Exception {
+	public int getDistance(final Coordinate other) throws Exception {
 		CheckUtils.check(other, "other coord");
 		
-		return (int) Math.sqrt(((other.getX() - x) * (other.getX() - x)) +
-							  ((other.getY() - y) * (other.getY() - y)));
+		return (int) Math.sqrt(getDistanceSquared(other));
+	}
+	
+	public boolean getPositiveDomain() {
+		return positive_domain;
+	}
+	
+	/**
+	 * Returns (x2 - x1)^2 | (y2 - y1)^2.  So, distance without the final
+	 * square root.  I want to say this is good enough for a relative distance
+	 * calculation because if root(a) < root(b), a < b.  Right?
+	 * @param other
+	 * @return
+	 * @throws Exception
+	 */
+	public int getDistanceSquared(Coordinate other) throws Exception {
+		CheckUtils.check(other, "other coord");
+		
+		return ((other.getX() - x) * (other.getX() - x)) +
+ 			   ((other.getY() - y) * (other.getY() - y));
 	}
 	
 	public int getRisePlusRun(final Coordinate other) throws Exception {
@@ -255,21 +303,38 @@ public class Coordinate {
 		
 		return new Coordinate(new_x, new_y);
 	}
-	
+
+	public Set<Coordinate> getNeighbors() throws Exception {
+		return getNeighbors(1, 1);
+	}
+
 	/**
-	 * Returns the eight neighbors of the specified coordinate.
+	 * Returns the neighbors of the this point with a square dx/dy distance.
+	 * @param dx
+	 * @param dy
 	 * @return
+	 * @throws Exception
 	 */
-	public Set<Coordinate> getNeighbors() {
+	public Set<Coordinate> getNeighbors(final int dx, final int dy) throws Exception {
 		Set<Coordinate> neighbors = new HashSet<Coordinate>();
-		neighbors.add(new Coordinate(getX() - 1, getY() - 1));
-		neighbors.add(new Coordinate(getX() - 1, getY() + 1));
-		neighbors.add(new Coordinate(getX() + 1, getY() - 1));
-		neighbors.add(new Coordinate(getX() + 1, getY() + 1));
-		neighbors.add(new Coordinate(getX() - 1, getY()));
-		neighbors.add(new Coordinate(getX() + 1, getY()));
-		neighbors.add(new Coordinate(getX(), getY() - 1));
-		neighbors.add(new Coordinate(getX(), getY() + 1));
+		int max = Integer.MAX_VALUE;
+		int min = Integer.MIN_VALUE;
+		if (positive_domain) {
+			min = 0;
+		}
+		int startx = Math.max(min, getX() - dx);
+		int starty = Math.max(min, getY() - dy);
+		int endx = Math.min(max, getX() + dx);
+		int endy = Math.min(max, getY() + dy);
+		
+		for (int i = startx; i <= endx; i++) {
+			for (int j = starty; j <= endy; j++) {
+				if (i == getX() && j == getY()) {
+					continue;
+				}
+				neighbors.add(new Coordinate(i, j, positive_domain));
+			}
+		}
 		return neighbors;
 	}
 	
@@ -297,7 +362,7 @@ public class Coordinate {
 	}
 	
 	public int hashCode() {
-		return toString().hashCode();
+		return hash_code;
 	}
 	
 	public boolean equals(Object o) {
@@ -315,6 +380,67 @@ public class Coordinate {
 	
 	public String toString() {
 		return "(" + x + ", " + y + ")";
+	}
+	
+	
+	/**
+	 * Returns the average x and y.
+	 * @param coordinates
+	 * @return
+	 * @throws Exception
+	 */
+	public static Coordinate getCentroid(final Collection<Coordinate> coordinates) throws Exception {
+		int x = 0;
+		int y = 0;
+		
+		for (Coordinate coordinate : coordinates) {
+			CheckUtils.checkAddOverflow(coordinate.getX(), x);
+			CheckUtils.checkAddOverflow(coordinate.getY(), y);
+			
+			x += coordinate.getX();
+			y += coordinate.getY();
+		}
+		return new Coordinate(x / coordinates.size(), y / coordinates.size());
+	}
+	
+	public static int getMinX(final Collection<Coordinate> coordinates) throws Exception {
+		int x = Integer.MAX_VALUE;
+		for (Coordinate coordinate : coordinates) {
+			if (coordinate.getX() < x) {
+				x = coordinate.getX();
+			}
+		}
+		return x;
+	}
+	
+	public static int getMaxX(final Collection<Coordinate> coordinates) throws Exception {
+		int x = Integer.MIN_VALUE;
+		for (Coordinate coordinate : coordinates) {
+			if (coordinate.getX() > x) {
+				x = coordinate.getX();
+			}
+		}
+		return x;
+	}
+	
+	public static int getMinY(final Collection<Coordinate> coordinates) throws Exception {
+		int y = Integer.MAX_VALUE;
+		for (Coordinate coordinate : coordinates) {
+			if (coordinate.getY() < y) {
+				y = coordinate.getY();
+			}
+		}
+		return y;
+	}
+	
+	public static int getMaxY(final Collection<Coordinate> coordinates) throws Exception {
+		int y = Integer.MIN_VALUE;
+		for (Coordinate coordinate : coordinates) {
+			if (coordinate.getY() > y) {
+				y = coordinate.getY();
+			}
+		}
+		return y;
 	}
 	
 }

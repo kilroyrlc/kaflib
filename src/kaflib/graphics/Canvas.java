@@ -92,7 +92,7 @@ public class Canvas {
 		return coordinate.isWithin(getWidth(), getHeight());
 	}
 	
-	public Pixel getAverage(final Set<Coordinate> coordinates) throws Exception {
+	public Pixel getAverage(final Collection<Coordinate> coordinates) throws Exception {
 		Set<Pixel> pixels = new HashSet<Pixel>();
 		for (Coordinate coordinate : coordinates) {
 			if (isValid(coordinate)) {
@@ -102,12 +102,38 @@ public class Canvas {
 		return Pixel.getAverage(pixels);
 	}
 	
+	public Pixel getMedianByLuminance(final Collection<Coordinate> coordinates) throws Exception {
+		List<Pixel> pixels = new ArrayList<Pixel>();
+		for (Coordinate coordinate : coordinates) {
+			if (isValid(coordinate)) {
+				pixels.add(get(coordinate));
+			}
+		}
+		return Pixel.getMedianByLuminance(pixels);
+	}
+	
 	/**
 	 * Returns a random pixel value.
 	 * @return
 	 */
 	public Pixel getRandom() throws Exception {
 		return get(getRandomLocation());
+	}
+	
+	public boolean isNull(final Coordinate location) throws Exception {
+		return isNull(location.getX(), location.getY());
+	}
+	
+	
+	public boolean isNull(int x, int y) throws Exception {
+		CheckUtils.checkRange(x, 0, pixels.length - 1, "x value");
+		CheckUtils.checkRange(y, 0, pixels[0].length - 1, "y value");
+		if (pixels[x][y] == null) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 	
 	public Pixel get(final Coordinate location) throws Exception {
@@ -124,7 +150,7 @@ public class Canvas {
 		return pixels[x][y];
 	}
 	
-	public Coordinate getRandomLocation() {
+	public Coordinate getRandomLocation() throws Exception {
 		return new Coordinate(RandomUtils.randomInt(getWidth()), 
 							  RandomUtils.randomInt(getHeight()));
 	}

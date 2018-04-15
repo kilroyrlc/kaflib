@@ -422,4 +422,25 @@ public class CheckUtils {
 		}
 	}
 	
+	public static void checkAddOverflow(final int left, final int right) throws Exception {
+	    if (right < 0 && right != Integer.MIN_VALUE) {
+	    	checkSubOverflow(left, -right);
+	    } 
+	    else {
+	        if ((~(left ^ right) & (left ^ (left + right))) < 0) {
+	        	throw new Exception("Will overflow: " + left + " + " + right + ".");
+	        }
+	    }
+	}
+	
+	public static void checkSubOverflow(final int left, final int right) throws Exception {
+	    if (right < 0) {
+	        checkAddOverflow(left, -right);
+	    }
+	    else {
+	        if (((left ^ right) & (left ^ (left - right))) < 0) {
+	        	throw new Exception("Will overflow: " + left + " - " + right + ".");
+	        }
+	    }
+	}
 }

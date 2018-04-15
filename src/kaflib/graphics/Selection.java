@@ -7,46 +7,49 @@ import java.util.List;
 import java.util.Set;
 
 import kaflib.types.Coordinate;
-import kaflib.utils.TypeUtils;
 
 /**
  * Contains a set of coordinates comprising a selection area.
  */
-public class Selection {
+public class Selection extends SelectionCore {
 
-	private final Set<Coordinate> coordinates;
-	
+	/**
+	 * Creates an empty selection.
+	 */
 	public Selection() {
-		coordinates = new HashSet<Coordinate>();
+		super();
 	}
 
-	public Selection(final Coordinate coordinate) {
+	/**
+	 * Creates a selection with a single starting coordinate.
+	 * @param coordinate
+	 * @throws Exception
+	 */
+	public Selection(final Coordinate coordinate) throws Exception {
+		super(coordinate);
+	}
+	
+	/**
+	 * Creates a selection with a collection of starting coordinates.
+	 * @param coordinates
+	 * @throws Exception
+	 */
+	public Selection(final Collection<Coordinate> coordinates) throws Exception {
 		this();
-		coordinates.add(coordinate);
+		add(coordinates);
 	}
 	
-	public Selection(final Collection<Coordinate> coordinates) {
-		this();
-		this.coordinates.addAll(coordinates);
-	}
-	
-	public void add(final Coordinate coordinate) {
-		coordinates.add(coordinate);
-	}
-	
-	public void add(final Collection<Coordinate> coordinates) {
-		for (Coordinate coordinate : coordinates) {
-			add(coordinate);
-		}
-	}
-	
-	public Set<Coordinate> getCoordinates() {
-		return coordinates;
-	}
-	
+	/**
+	 * Returns the average difference between each pixel and the average pixel
+	 * value.
+	 * @param canvas
+	 * @return
+	 * @throws Exception
+	 */
 	public int getAverageDelta(final Canvas canvas) throws Exception {
-		return canvas.getAverageDelta(coordinates);
+		return canvas.getAverageDelta(getCoordinates());
 	}
+	
 	
 	/**
 	 * Gets all pixels within delta of value.
@@ -59,7 +62,7 @@ public class Selection {
 								 final Pixel value,
 								 final Integer delta) throws Exception {
 		List<Pixel> pixels = new ArrayList<Pixel>();
-		for (Coordinate coordinate : coordinates) {
+		for (Coordinate coordinate : getCoordinates()) {
 			if (canvas.isValid(coordinate) && 
 				canvas.get(coordinate).getDelta(value) < delta) {
 				pixels.add(canvas.get(coordinate));
@@ -68,17 +71,10 @@ public class Selection {
 		return pixels;
 	}
 	
-	public Pixel getAverage(final Canvas canvas) throws Exception {
-		return canvas.getAverage(coordinates);
-	}
-	
-	public String toString() {
-		return new String("Selection of " + coordinates.size() + " pixels.");
-	}
 	
 	public int opaquePixels(final Canvas canvas) throws Exception {
 		int count = 0;
-		for (Coordinate coordinate : coordinates) {
+		for (Coordinate coordinate : getCoordinates()) {
 			if (canvas.isValid(coordinate) && 
 				canvas.get(coordinate).isOpaque()) {
 				count++;
@@ -92,41 +88,45 @@ public class Selection {
 	 * @param threshold
 	 * @throws Exception
 	 */
-	public void addAllConnected(final Canvas canvas,
-								final Opacity threshold) throws Exception {
-		Set<Coordinate> processed = new HashSet<Coordinate>();
-		Set<Coordinate> process = new HashSet<Coordinate>();
-		process.addAll(coordinates);
+	public void addNeighbors(final Canvas canvas,
+							 final Opacity threshold) throws Exception {
 		
-		while (process.size() > 0) {
-			Coordinate c = TypeUtils.getItem(process);
-			processed.add(c);
-			process.remove(c);
-			
-			for (Coordinate d : c.getNeighbors()) {
-				if (process.contains(d) || processed.contains(d) ||
-					!canvas.isValid(d)) {
-					continue;
-				}
-				if (canvas.get(d).getOpacity().compareTo(threshold) >= 0) {
-					add(d);
-				}
-				processed.add(d);
+		Set<Coordinate> add_list = new HashSet<Coordinate>();
+		for (Coordinate c : getNeighbors()) {
+			if (canvas.isValid(c) &&
+				canvas.get(c).getOpacity().compareTo(threshold) >= 0) {
+				add_list.add(c);
 			}
 		}
+		add(add_list);
+		
 	}
-	
-	public Selection getBorder() throws Exception {
-		Set<Coordinate> border = new HashSet<Coordinate>();
-		for (Coordinate coordinate : coordinates) {
-			for (Coordinate n : coordinate.getNeighbors()) {
-				if (!coordinates.contains(n)) {
-					border.add(coordinate);
-					break;
-				}
+
+	/**
+	 * Returns the closest neighbor pixel by rgb average.
+	 * @param canvas
+	 * @return
+	 * @throws Exception
+	 */
+	public Coordinate getClosestRGBNeighbor(final Canvas canvas, 
+											final Integer deltaThreshold) throws Exception {
+		Pixel average = getAverage(canvas);
+		Coordinate coordinate = null;
+		int delta = Integer.MAX_VALUE;
+		for (Coordinate c : getNeighbors()) {
+			if (!canvas.isValid(c)) {
+				continue;
+			}
+			if (deltaThreshold != null && 
+				average.getDelta(canvas.get(c)) > deltaThreshold) {
+				continue;
+			}
+			if (average.getDelta(canvas.get(c)) < delta) {
+				delta = average.getDelta(canvas.get(c));
+				coordinate = c;
 			}
 		}
-		return new Selection(border);
+		return coordinate;
 	}
 	
 	/**
@@ -143,7 +143,7 @@ public class Selection {
 		for (int i = center.getX() - radius; i < center.getX() + radius; i++) {
 			for (int j = center.getY() - radius; j < center.getY() + radius; j++) {
 				Coordinate point = new Coordinate(i, j);
-				if (point.getDistance(center) <= radius) {
+				if (point.getDistanceSquared(center) <= radius) {
 					selection.add(point);
 				}
 			}
@@ -272,7 +272,7 @@ public class Selection {
 					continue;
 				}
 				Selection selection = new Selection(coordinate);
-				selection.addAllConnected(canvas, threshold);
+				selection.addNeighbors(canvas, threshold);
 				list.add(selection);
 				traversed.addAll(selection.getCoordinates());
 			}

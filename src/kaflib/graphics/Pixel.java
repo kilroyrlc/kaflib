@@ -8,6 +8,7 @@ import java.util.List;
 
 import kaflib.types.Byte;
 import kaflib.utils.MathUtils;
+import kaflib.utils.RandomUtils;
 
 /**
  * Defines an argb value with knowledge of its position.
@@ -34,10 +35,7 @@ public class Pixel implements Comparable<Pixel> {
 	}
 
 	public Pixel(final boolean opaque, final int rgb) throws Exception {
-		int value = 0;
-		if (opaque) {
-			value = 0xff;
-		}
+		int value = rgb;
 		
 		b = new Byte(value & 0xff);
 		value = value >> 8;
@@ -45,7 +43,32 @@ public class Pixel implements Comparable<Pixel> {
 		value = value >> 8;
 		r = new Byte(value & 0xff);
 		value = value >> 8;
-		opacity = new Opacity(value & 0xff);
+		if (!opaque) {
+			opacity = new Opacity(value & 0xff);
+		}
+		else {
+			opacity = new Opacity(Opacity.OPAQUE);
+		}
+	}
+	
+	public Pixel(final boolean opaque,
+				 final Byte red,
+				 final Byte green,
+				 final Byte blue) throws Exception {
+		this.opacity = new Opacity(Opacity.OPAQUE);
+		r = red;
+		g = green;
+		b = blue;
+	}
+	
+	public Pixel(final boolean opaque,
+				 final int red,
+				 final int green,
+				 final int blue) throws Exception {
+		this.opacity = new Opacity(Opacity.OPAQUE);
+		r = new Byte(red);
+		g = new Byte(green);
+		b = new Byte(blue);
 	}
 	
 	public Pixel(final int opacity,
@@ -67,6 +90,13 @@ public class Pixel implements Comparable<Pixel> {
 		r = new Byte(value & 0xff);
 		value = value >> 8;
 		opacity = new Opacity(value & 0xff);
+	}
+	
+	public Pixel(final Pixel pixel) {
+		opacity = pixel.getOpacity();
+		r = new Byte(pixel.getR());
+		g = new Byte(pixel.getG());
+		b = new Byte(pixel.getB());
 	}
 
 	/**
@@ -103,6 +133,18 @@ public class Pixel implements Comparable<Pixel> {
 		return 0.2126 * (double) r.getValue() +
 			   0.7152 * (double) g.getValue() + 
 			   0.7220 * (double) b.getValue();
+	}
+	
+	public void lighten(final Byte value) {
+		r.addOrMax(value);
+		g.addOrMax(value);
+		b.addOrMax(value);
+	}
+	
+	public void darken(final Byte value) {
+		r.subOrMin(value);
+		g.subOrMin(value);
+		b.subOrMin(value);
 	}
 	
 	/**
@@ -198,6 +240,10 @@ public class Pixel implements Comparable<Pixel> {
 		List<Integer> b = new ArrayList<Integer>();
 		List<Integer> o = new ArrayList<Integer>();
 		for (Pixel pixel : pixels) {
+			if (pixel == null || 
+				pixel.isTransparent()) {
+				continue;
+			}
 			r.add(pixel.getR().getValue());
 			g.add(pixel.getG().getValue());
 			b.add(pixel.getB().getValue());
@@ -219,9 +265,27 @@ public class Pixel implements Comparable<Pixel> {
 		return pixels.get(pixels.size() / 2).getOpacity();
 	}
 	
-	public Pixel getMedianByLuminance(List<Pixel> pixels) throws Exception {
+	public static Pixel getMedianByLuminance(final List<Pixel> pixels) throws Exception {
 		Collections.sort(pixels);
 		return pixels.get(pixels.size() / 2);
+	}
+	
+	public static Pixel getMedianByRGB(final Collection<Pixel> pixels) throws Exception {
+		List<Byte> r = new ArrayList<Byte>();
+		List<Byte> g = new ArrayList<Byte>();
+		List<Byte> b = new ArrayList<Byte>();
+		for (Pixel pixel : pixels) {
+			if (pixel != null && pixel.isOpaque()) {
+				r.add(pixel.getR());
+				g.add(pixel.getG());
+				b.add(pixel.getB());
+			}
+		}
+		
+		Collections.sort(r);
+		Collections.sort(g);
+		Collections.sort(b);
+		return new Pixel(true, r.get(r.size() / 2), g.get(g.size() / 2), b.get(b.size() / 2));
 	}
 	
 	public String toString() {
@@ -240,4 +304,9 @@ public class Pixel implements Comparable<Pixel> {
 			return 0;
 		}
 	}
+	
+	public static Pixel getRandomOpaque() throws Exception {
+		return new Pixel(true, RandomUtils.randomInt());
+	}
+	
 }

@@ -2,10 +2,10 @@ package kaflib.graphics.transform;
 
 import kaflib.graphics.Canvas;
 import kaflib.graphics.Pixel;
+import kaflib.types.Byte;
 import kaflib.graphics.Selection;
 import kaflib.graphics.Transform;
 import kaflib.graphics.IndependentTransform;
-import kaflib.graphics.Opacity;
 
 /**
  * A set of transform combinations that have an interesting result.
@@ -75,32 +75,30 @@ public class CompositeTransforms {
 	
 	public static Canvas temp(final Canvas input) throws Exception {
 		Canvas canvas = input;
-		Transform filter = new AverageFilter(canvas, 7, AverageFilter.DELTA_MED);
-		filter.start();
-		IndependentTransform.Status status = filter.waitUntilFinished(null);
-		if (status != IndependentTransform.Status.SUCCESS) {
-			System.out.println("Filter failure.");
-			System.out.println(filter.getMessages());
-			return null;
-		}
-		canvas = filter.getResult();
+//		Transform filter = new AverageFilter(canvas, 7, AverageFilter.DELTA_MED);
+//		filter.start();
+//		IndependentTransform.Status status = filter.waitUntilFinished(null);
+//		if (status != IndependentTransform.Status.SUCCESS) {
+//			System.out.println("Filter failure.");
+//			System.out.println(filter.getMessages());
+//			return null;
+//		}
+//		canvas = filter.getResult();
 		
-		filter = new EdgeFilter(canvas, new Pixel(Pixel.OPAQUE_BLACK), 3, EdgeFilter.DELTA_LOW, true);
-		filter.start();
-		status = filter.waitUntilFinished(null);
-		if (status != IndependentTransform.Status.SUCCESS) {
-			System.out.println("Filter failure.");
-			System.out.println(filter.getMessages());
-			return null;
-		}
-		canvas = filter.getResult();
+		RegionSelections selections = new RegionSelections(canvas, 60, 75, 1, RegionSelections.DELTA_MED);
+		selections.start();
+		selections.blockUntilDone(null);
 
-		for (Selection selection : Selection.getAllSelections(canvas, new Opacity(Opacity.OPAQUE))) {
-			canvas.set(selection.getCoordinates(), new Pixel(Pixel.OPAQUE_BLUE));
-			Selection border = selection.getBorder();
-			canvas.set(border.getCoordinates(), new Pixel(Pixel.OPAQUE_RED));
+		for (Selection selection : selections.getSelections()) {
+			Pixel average = selection.getAverage(canvas);
+			canvas.set(selection.getCoordinates(), average);
+			if (selection.size() > 30) {
+				Pixel border = new Pixel(average);
+				border.darken(new Byte(0x10));
+				canvas.set(selection.getBorder(), border);
+			}
 		}
-		
+
 		return canvas;
 	}
 	

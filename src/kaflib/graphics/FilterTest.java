@@ -66,8 +66,9 @@ public class FilterTest {
 	
 	public static void main(String args[]) {
 		try {
-			FilterTest editor = new FilterTest(new File("flag.jpg"));
-			//FilterTest editor = new FilterTest(new File("small.jpg"));
+			//FilterTest editor = new FilterTest(new File("flag.jpg"));
+			FilterTest editor = new FilterTest(new File("flag_medium.jpg"));
+			//FilterTest editor = new FilterTest(new File("flag_small.jpg"));
 			editor.process();
 		}
 		catch (Exception e) {

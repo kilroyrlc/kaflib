@@ -15,6 +15,10 @@ public class Byte implements Comparable<Byte> {
 		value = 0;
 	}
 	
+	public Byte(final Byte value) {
+		this.value = value.getValue();
+	}
+	
 	public Byte(final int value) throws Exception {
 		set(value);
 	}
@@ -40,6 +44,20 @@ public class Byte implements Comparable<Byte> {
 								(value + other.getValue()) + ".");
 		}		
 		value += other.getValue();
+	}
+	
+	public void addOrMax(final Byte other) {
+		value += other.getValue();
+		if (value > 255) {
+			value = 255;
+		}
+	}
+	
+	public void subOrMin(final Byte other) {
+		value -= other.getValue();
+		if (value < 0) {
+			value = 0;
+		}
 	}
 	
 	/**
