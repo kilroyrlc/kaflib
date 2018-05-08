@@ -7,12 +7,21 @@ import java.util.List;
 import java.util.Set;
 
 import kaflib.types.Coordinate;
+import kaflib.types.Pair;
+import kaflib.utils.CheckUtils;
+import kaflib.utils.StringUtils;
 
 /**
  * Contains a set of coordinates comprising a selection area.
  */
 public class Selection extends SelectionCore {
 
+	public enum Approach {
+		RGB,
+		OPACITY,
+		LUMINANCE
+	}
+	
 	/**
 	 * Creates an empty selection.
 	 */
@@ -58,10 +67,10 @@ public class Selection extends SelectionCore {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<Pixel> getWithin(final Canvas canvas,
-								 final Pixel value,
+	public List<RGBPixel> getWithin(final Canvas canvas,
+								 final RGBPixel value,
 								 final Integer delta) throws Exception {
-		List<Pixel> pixels = new ArrayList<Pixel>();
+		List<RGBPixel> pixels = new ArrayList<RGBPixel>();
 		for (Coordinate coordinate : getCoordinates()) {
 			if (canvas.isValid(coordinate) && 
 				canvas.get(coordinate).getDelta(value) < delta) {
@@ -71,6 +80,87 @@ public class Selection extends SelectionCore {
 		return pixels;
 	}
 	
+	/**
+	 * Returns whether or not the selection contains the specified coordinate.
+	 * @param coordinate
+	 * @return
+	 */
+	public boolean contains(final Coordinate coordinate) {
+		return getCoordinates().contains(coordinate);
+	}
+
+//	public int getValue
+//	if (approach == Approach.RGB) {
+//		
+//	}
+//	else if (approach == Approach.OPACITY) {
+//		
+//	}
+//	else if (approach == Approach.LUMINANCE) {
+//		
+//	}
+//	else {
+//		throw new Exception("Approach not implemented: " + approach + ".");
+//	}
+	
+	/**
+	 * Returns whether this selection has shared coordinates with another.
+	 * @param other
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean overlaps(final Selection other) throws Exception {
+		// No bounding box overlap, no need to check.
+		if (getBoundingBox() != null &&
+			other.getBoundingBox() != null &&
+			!getBoundingBox().overlaps(other.getBoundingBox())) {
+			return false;
+		}
+		// See if any coordinates are shared.
+		for (Coordinate coordinate : getCoordinates()) {
+			if (other.contains(coordinate)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Returns whether this selection is adjacent to another.  Overlapping
+	 * selections do not prevent adjacency but do not constitute adjacency.
+	 * @param other
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean isAdjacent(final Selection other) throws Exception {
+		CheckUtils.check(other, "other selection");
+		
+		// No bounding box adjacency, no need to check.
+		if (getBoundingBox() != null &&
+			other.getBoundingBox() != null &&
+		    !getBoundingBox().isAdjacentOrOverlapping(other.getBoundingBox())) {
+			return false;
+		}
+		
+		// See if any border coordinates are adjacent to the other.
+		for (Coordinate coordinate : getBorder()) {
+			if (other.isAdjacent(coordinate)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+
+	/**
+	 * Checks if the coordinate is adjacent to the selection.
+	 * @param coordinate
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean isAdjacent(final Coordinate coordinate) throws Exception {
+		return getNeighbors().contains(coordinate);
+	}
 	
 	public int opaquePixels(final Canvas canvas) throws Exception {
 		int count = 0;
@@ -81,6 +171,17 @@ public class Selection extends SelectionCore {
 			}
 		}
 		return count;
+	}
+	
+	public List<Selection> getAdjacentSelections(final Collection<Selection> selections) throws Exception {
+		List<Selection> neighbors = new ArrayList<Selection>();
+		
+		for (Selection selection : selections) {
+			if (isAdjacent(selection)) {
+				neighbors.add(selection);
+			}
+		}
+		return neighbors;
 	}
 	
 	/**
@@ -110,7 +211,7 @@ public class Selection extends SelectionCore {
 	 */
 	public Coordinate getClosestRGBNeighbor(final Canvas canvas, 
 											final Integer deltaThreshold) throws Exception {
-		Pixel average = getAverage(canvas);
+		RGBPixel average = getAverage(canvas);
 		Coordinate coordinate = null;
 		int delta = Integer.MAX_VALUE;
 		for (Coordinate c : getNeighbors()) {
@@ -128,6 +229,69 @@ public class Selection extends SelectionCore {
 		}
 		return coordinate;
 	}
+	
+	/**
+	 * Displays a super cool text representation of the selection.
+	 * @return
+	 * @throws Exception
+	 */
+	public String toMatrix() throws Exception {
+		Set<Coordinate> coordinates = getCoordinates();
+		int x_start = Coordinate.getMinX(coordinates);
+		int y_start = Coordinate.getMinY(coordinates);
+		int x_size = Math.max(Coordinate.getMaxX(coordinates) - x_start, 1) + 4;
+		int y_size = Math.max(Coordinate.getMaxY(coordinates) - y_start, 1) + 4;
+		CheckUtils.checkPositive(x_start, "x start");
+		CheckUtils.checkPositive(y_start, "y start");
+		CheckUtils.checkPositive(x_size, "x size");
+		CheckUtils.checkPositive(y_size, "y size");
+		
+		char values[][] = new char[x_size][y_size];
+		
+		for (int i = 0; i < x_size; i++) {
+			for (int j = 0; j < y_size; j++) {
+				values[i][j] = ' ';
+			}
+		}
+		for (Coordinate coordinate : coordinates) {
+			values[coordinate.getX() - x_start + 2][coordinate.getY() - y_start + 2] = 'o';
+		}
+		for (Coordinate coordinate : getBorder()) {
+			values[coordinate.getX() - x_start + 2][coordinate.getY() - y_start + 2] = 'x';
+		}
+		for (Coordinate coordinate : getNeighbors()) {
+			values[coordinate.getX() - x_start + 2][coordinate.getY() - y_start + 2] = '*';
+		}
+		if (getStart() != null) {
+			values[getStart().getX() - x_start + 2][getStart().getY() - y_start + 2] = '%';
+		}
+
+		StringBuffer buffer = new StringBuffer();
+		for (int i = 0; i < x_size; i++) {
+			for (int j = 0; j < y_size; j++) {
+				buffer.append(values[i][j] + " ");
+			}
+			buffer.append("\n");
+		}
+		return new String(buffer);
+	}
+	
+
+	
+	public String toString() {
+		if (getCoordinates().size() == 0) {
+			return new String("Uninitialized selection.");
+		}
+		try {
+			return "Coords: " + StringUtils.concatenate(getCoordinates(), " ", true) + 
+				   "\nBorder: " + StringUtils.concatenate(getBorder(), " ", true) + 
+				   "\nNghbrs: " + StringUtils.concatenate(getNeighbors(), " ", true); 
+		}
+		catch (Exception e) {
+			return new String("Unable to create string: " + e.getMessage());
+		}
+	}
+	
 	
 	/**
 	 * Returns a selection that is a circle.
@@ -223,6 +387,7 @@ public class Selection extends SelectionCore {
 		return selection;
 	}
 	
+	
 	/**
 	 * Wiggles a star pattern around a radius of adjustment, returns the star
 	 * with the greatest number of opaque pixels.
@@ -265,7 +430,7 @@ public class Selection extends SelectionCore {
 		for (int i = 0; i < canvas.getWidth(); i++) {
 			for (int j = 0; j < canvas.getHeight(); j++) {
 				Coordinate coordinate = new Coordinate(i, j);
-				Pixel pixel = canvas.get(coordinate);
+				RGBPixel pixel = canvas.get(coordinate);
 				if (pixel == null ||
 					traversed.contains(coordinate) ||
 					pixel.getOpacity().compareTo(threshold) < 0) {
@@ -280,6 +445,64 @@ public class Selection extends SelectionCore {
 		return list;
 	}
 	
+	/**
+	 * Removes and reassigns each pixel in the selection.
+	 * @param canvas
+	 * @param selection
+	 * @param selections
+	 * @param approach
+	 * @throws Exception
+	 */
+	public static void dissolveLu(final Canvas canvas,
+								final Selection selection,
+								final Collection<Selection> selections,
+								final Approach approach) throws Exception {
+		List<Pair<Selection, Integer>> adjacent = new ArrayList<Pair<Selection, Integer>>();
+		
+		
+		for (Selection s : selection.getAdjacentSelections(selections)) {
+			
+			
+			//adjacent.add(new Pair<Selection, Integer>(s, value));
+		}
+		
+		
+		
+		while (selection.size() > 0) {
+			for (Coordinate coordinate : selection.getBorder()) {
+				
+			}
+		}
+	}
+	
+//	public static Selection findBestMatch(final Canvas canvas,
+//										  final Coordinate coordinate,
+//										  final Collection<Selection> selections,
+//										  final Approach approach) throws Exception {
+//		Selection choice = null;
+//		Integer value = null;
+//		for (Selection selection : selections) {
+//			if (!selection.isAdjacent(coordinate)){
+//				continue;
+//			}
+//			
+//			if (approach == Approach.RGB) {
+//				
+//			}
+//			else if (approach == Approach.OPACITY) {
+//				
+//			}
+//			else if (approach == Approach.LUMINANCE) {
+//				
+//			}
+//			else {
+//				throw new Exception("Approach not implemented: " + approach + ".");
+//			}
+//		}
+//		
+//	}
+	
 }
+
 
 

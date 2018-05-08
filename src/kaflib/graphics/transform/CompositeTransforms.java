@@ -1,7 +1,7 @@
 package kaflib.graphics.transform;
 
 import kaflib.graphics.Canvas;
-import kaflib.graphics.Pixel;
+import kaflib.graphics.RGBPixel;
 import kaflib.types.Byte;
 import kaflib.graphics.Selection;
 import kaflib.graphics.Transform;
@@ -49,7 +49,7 @@ public class CompositeTransforms {
 		}
 		canvas = filter.getResult();
 		
-		filter = new EdgeFilter(canvas, new Pixel(Pixel.OPAQUE_BLACK), 3, EdgeFilter.DELTA_LOW, true);
+		filter = new EdgeFilter(canvas, new RGBPixel(RGBPixel.OPAQUE_BLACK), 3, EdgeFilter.DELTA_LOW, true);
 		filter.start();
 		status = filter.waitUntilFinished(null);
 		if (status != IndependentTransform.Status.SUCCESS) {
@@ -59,7 +59,7 @@ public class CompositeTransforms {
 		}
 		canvas = filter.getResult();
 
-		filter = new BrushTransform(canvas, 3, new Pixel(Pixel.OPAQUE_BLACK));
+		filter = new BrushTransform(canvas, 3, new RGBPixel(RGBPixel.OPAQUE_BLACK));
 		filter.start();
 		status = filter.waitUntilFinished(null);
 		if (status != IndependentTransform.Status.SUCCESS) {
@@ -90,10 +90,10 @@ public class CompositeTransforms {
 		selections.blockUntilDone(null);
 
 		for (Selection selection : selections.getSelections()) {
-			Pixel average = selection.getAverage(canvas);
+			RGBPixel average = selection.getAverage(canvas);
 			canvas.set(selection.getCoordinates(), average);
 			if (selection.size() > 30) {
-				Pixel border = new Pixel(average);
+				RGBPixel border = new RGBPixel(average);
 				border.darken(new Byte(0x10));
 				canvas.set(selection.getBorder(), border);
 			}

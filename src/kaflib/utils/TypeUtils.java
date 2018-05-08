@@ -82,7 +82,7 @@ public class TypeUtils {
 	 */
 	@SafeVarargs
 	public static <T> List<T> getList(final T... values) {
-		List<T> list = new ArrayList<T>();
+		List<T> list = new ArrayList<T>(values.length);
 		for (T t : values) {
 			list.add(t);
 		}
@@ -97,7 +97,7 @@ public class TypeUtils {
 	 */
 	@SafeVarargs
 	public static <T> List<T> prepend(final List<T> suffix, final T... values) {
-		List<T> list = new ArrayList<T>();
+		List<T> list = new ArrayList<T>(values.length + suffix.size());
 		for (T t : values) {
 			list.add(t);
 		}

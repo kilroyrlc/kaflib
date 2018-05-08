@@ -11,16 +11,31 @@ import kaflib.utils.CheckUtils;
 public class Byte implements Comparable<Byte> {
 	private int value;
 	
+	public static final Byte FF = new Byte(0xff);
+	
 	public Byte() {
 		value = 0;
+	}
+	
+	public Byte(final double value) {
+		this((int) value);
 	}
 	
 	public Byte(final Byte value) {
 		this.value = value.getValue();
 	}
 	
-	public Byte(final int value) throws Exception {
-		set(value);
+	public Byte(final int value) {
+		this.value = value & 0xff;
+	}
+	
+	public Byte(final int value, final boolean checkOverflow) throws Exception {
+		if (checkOverflow) {
+			set(value);
+		}
+		else {
+			this.value = value & 0xff;
+		}
 	}
 	
 	public Byte(final Percent percent) {
@@ -149,5 +164,18 @@ public class Byte implements Comparable<Byte> {
 		return values.get(values.size() / 2);
 	}
 
+	public static int or(final Byte msb, 
+						 final Byte smsb, 
+						 final Byte slsb, 
+						 final Byte lsb) {
+		int value = msb.getValue();
+		value = value << 8;
+		value = value | smsb.getValue();
+		value = value << 8;
+		value = value | slsb.getValue();
+		value = value << 8;
+		value = value | lsb.getValue();
+		return value;
+	}
 
 }

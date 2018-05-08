@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import kaflib.utils.FileUtils;
+import kaflib.utils.RandomUtils;
 
 /**
  * Defines a directory subtype of File that ensures it's always a directory.
@@ -69,17 +70,34 @@ public class Directory extends File {
 		}
 		return files;
 	}
+
+	public File getRandom(final String... extensions) throws Exception {
+		Set<File> files = list(extensions);
+		if (files.size() == 0) {
+			return null;
+		}
+		return RandomUtils.getRandom(files);
+	}
 	
-	public Set<File> list(final String extension) throws Exception {
-		String ext = extension;
-		if (!ext.startsWith(".")) {
-			ext = "." + ext;
+	public Set<File> list(final String... extensions) throws Exception {
+		List<String> ext = new ArrayList<String>();
+		for (String extension : extensions) {
+			if (!extension.startsWith(".")) {
+				ext.add("." + extension);
+			}
+			else {
+				ext.add(extension);
+			}
 		}
 		
 		Set<File> files = new HashSet<File>();
 		for (File file : listFiles()) {
-			if (!file.isDirectory() && file.getName().endsWith(ext)) {
-				files.add(file);
+			if (!file.isDirectory()) {
+				for (String extension : ext) {
+					if (file.getName().endsWith(extension)) {
+						files.add(file);
+					}
+				}
 			}
 		}
 		return files;

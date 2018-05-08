@@ -4,7 +4,7 @@ package kaflib.graphics.transform;
 import java.util.List;
 
 import kaflib.graphics.Canvas;
-import kaflib.graphics.Pixel;
+import kaflib.graphics.RGBPixel;
 import kaflib.graphics.Selection;
 import kaflib.graphics.IndependentTransform;
 import kaflib.types.Coordinate;
@@ -36,10 +36,10 @@ public class AverageFilter extends IndependentTransform {
 	@Override
 	protected void visit(Coordinate coordinate) throws Exception {
 		Selection selection = Selection.getStar(coordinate, size);
-		Pixel value;
+		RGBPixel value;
 		if (delta != null && delta > 0) {
-			List<Pixel> pixels = selection.getWithin(getInput(), getInput().get(coordinate), delta);
-			value = Pixel.getAverage(pixels);
+			List<RGBPixel> pixels = selection.getWithin(getInput(), getInput().get(coordinate), delta);
+			value = RGBPixel.getAverage(pixels);
 		}
 		else {
 			value = selection.getAverage(getInput());

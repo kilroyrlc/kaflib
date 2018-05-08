@@ -293,6 +293,15 @@ public class Coordinate {
 		return new Coordinate(this);
 	}
 	
+	public boolean isAdjacent(final Coordinate coordinate) throws Exception {
+		if (getNeighbors().contains(coordinate)) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
 	public Coordinate getRandomAdjacent() throws Exception {
 		int new_x = x + RandomUtils.randomInt(-1, 1);
 		int new_y = y + RandomUtils.randomInt(-1, 1);
@@ -316,7 +325,7 @@ public class Coordinate {
 	 * @throws Exception
 	 */
 	public Set<Coordinate> getNeighbors(final int dx, final int dy) throws Exception {
-		Set<Coordinate> neighbors = new HashSet<Coordinate>();
+		Set<Coordinate> neighbors = new HashSet<Coordinate>((dx + 2) * (dy + 2));
 		int max = Integer.MAX_VALUE;
 		int min = Integer.MIN_VALUE;
 		if (positive_domain) {
@@ -403,7 +412,7 @@ public class Coordinate {
 		return new Coordinate(x / coordinates.size(), y / coordinates.size());
 	}
 	
-	public static int getMinX(final Collection<Coordinate> coordinates) throws Exception {
+	public static int getMinX(final Collection<Coordinate> coordinates) {
 		int x = Integer.MAX_VALUE;
 		for (Coordinate coordinate : coordinates) {
 			if (coordinate.getX() < x) {
@@ -413,7 +422,7 @@ public class Coordinate {
 		return x;
 	}
 	
-	public static int getMaxX(final Collection<Coordinate> coordinates) throws Exception {
+	public static int getMaxX(final Collection<Coordinate> coordinates) {
 		int x = Integer.MIN_VALUE;
 		for (Coordinate coordinate : coordinates) {
 			if (coordinate.getX() > x) {
@@ -423,7 +432,7 @@ public class Coordinate {
 		return x;
 	}
 	
-	public static int getMinY(final Collection<Coordinate> coordinates) throws Exception {
+	public static int getMinY(final Collection<Coordinate> coordinates) {
 		int y = Integer.MAX_VALUE;
 		for (Coordinate coordinate : coordinates) {
 			if (coordinate.getY() < y) {
@@ -433,7 +442,7 @@ public class Coordinate {
 		return y;
 	}
 	
-	public static int getMaxY(final Collection<Coordinate> coordinates) throws Exception {
+	public static int getMaxY(final Collection<Coordinate> coordinates) {
 		int y = Integer.MIN_VALUE;
 		for (Coordinate coordinate : coordinates) {
 			if (coordinate.getY() > y) {

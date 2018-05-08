@@ -67,6 +67,10 @@ public class Percent implements Serializable {
 		value = newValue;
 	}
 	
+	/**
+	 * Returns an integer value of the percent.  E.g. 20%, 65%, 120%.
+	 * @return
+	 */
 	public int get() {
 		return value;
 	}

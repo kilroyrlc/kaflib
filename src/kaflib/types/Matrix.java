@@ -61,6 +61,13 @@ public class Matrix<T> implements MatrixNavigator<T> {
 		columnLabels = null;
 	}
 	
+	public Matrix(final int rows, final int columns) {
+		matrix = new ArrayList<ArrayList<T>>(columns);
+		for (int i = 0; i < rows; i++) {
+			matrix.set(i, new ArrayList<T>(rows));
+		}
+	}
+	
 	/**
 	 * Creates a matrix with the specified column labels.
 	 * @param columnLabels

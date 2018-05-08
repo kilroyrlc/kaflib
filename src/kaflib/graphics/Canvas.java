@@ -17,10 +17,10 @@ import kaflib.utils.RandomUtils;
  * as transparent black.  This is 
  */
 public class Canvas {
-	private final Pixel pixels[][];
+	private final RGBPixel pixels[][];
 
 	public Canvas(final Canvas image) throws Exception {
-		pixels = new Pixel[image.getWidth()][image.getHeight()];
+		pixels = new RGBPixel[image.getWidth()][image.getHeight()];
 	    for (int i = 0; i < pixels.length; i++) {
 	    	for (int j = 0; j < pixels[0].length; j++) {
 	    		pixels[i][j] = image.get(i, j);
@@ -29,10 +29,10 @@ public class Canvas {
 	}
 	
 	public Canvas(final BufferedImage image) throws Exception {
-		pixels = new Pixel[image.getWidth()][image.getHeight()];
+		pixels = new RGBPixel[image.getWidth()][image.getHeight()];
 	    for (int i = 0; i < pixels.length; i++) {
 	    	for (int j = 0; j < pixels[0].length; j++) {
-	    		pixels[i][j] = new Pixel(image.getRGB(i, j));
+	    		pixels[i][j] = new RGBPixel(image.getRGB(i, j));
 	    	}
 	    }
 	}
@@ -40,7 +40,7 @@ public class Canvas {
 	public Canvas(final int width, final int height) throws Exception {
 		CheckUtils.checkPositive(width, "width");
 		CheckUtils.checkPositive(height, "height");
-		pixels = new Pixel[width][height];
+		pixels = new RGBPixel[width][height];
 	}
 	
 	public void checkDimensions(final Canvas other) throws Exception {
@@ -52,8 +52,8 @@ public class Canvas {
 		}
 	}
 	
-	public List<Pixel> get(final Collection<Coordinate> coordinates) throws Exception {
-		List<Pixel> pixels = new ArrayList<Pixel>();
+	public List<RGBPixel> get(final Collection<Coordinate> coordinates) throws Exception {
+		List<RGBPixel> pixels = new ArrayList<RGBPixel>();
 		for (Coordinate coordinate : coordinates) {
 			if (!isValid(coordinate)) {
 				continue;
@@ -71,8 +71,8 @@ public class Canvas {
 	 * @throws Exception
 	 */
 	public int getAverageDelta(final Collection<Coordinate> coordinates) throws Exception {
-		List<Pixel> pixels = get(coordinates);
-		Pixel average = Pixel.getAverage(pixels);
+		List<RGBPixel> pixels = get(coordinates);
+		RGBPixel average = RGBPixel.getAverage(pixels);
 		return average.getDelta(pixels);
 	}
 	
@@ -92,31 +92,31 @@ public class Canvas {
 		return coordinate.isWithin(getWidth(), getHeight());
 	}
 	
-	public Pixel getAverage(final Collection<Coordinate> coordinates) throws Exception {
-		Set<Pixel> pixels = new HashSet<Pixel>();
+	public RGBPixel getAverage(final Collection<Coordinate> coordinates) throws Exception {
+		Set<RGBPixel> pixels = new HashSet<RGBPixel>();
 		for (Coordinate coordinate : coordinates) {
 			if (isValid(coordinate)) {
 				pixels.add(get(coordinate));
 			}
 		}
-		return Pixel.getAverage(pixels);
+		return RGBPixel.getAverage(pixels);
 	}
 	
-	public Pixel getMedianByLuminance(final Collection<Coordinate> coordinates) throws Exception {
-		List<Pixel> pixels = new ArrayList<Pixel>();
+	public RGBPixel getMedianByLuminance(final Collection<Coordinate> coordinates) throws Exception {
+		List<RGBPixel> pixels = new ArrayList<RGBPixel>();
 		for (Coordinate coordinate : coordinates) {
 			if (isValid(coordinate)) {
 				pixels.add(get(coordinate));
 			}
 		}
-		return Pixel.getMedianByLuminance(pixels);
+		return RGBPixel.getMedianByLuminance(pixels);
 	}
 	
 	/**
 	 * Returns a random pixel value.
 	 * @return
 	 */
-	public Pixel getRandom() throws Exception {
+	public RGBPixel getRandom() throws Exception {
 		return get(getRandomLocation());
 	}
 	
@@ -136,15 +136,15 @@ public class Canvas {
 		}
 	}
 	
-	public Pixel get(final Coordinate location) throws Exception {
+	public RGBPixel get(final Coordinate location) throws Exception {
 		return get(location.getX(), location.getY());
 	}
 	
-	public Pixel get(int x, int y) throws Exception {
+	public RGBPixel get(int x, int y) throws Exception {
 		CheckUtils.checkRange(x, 0, pixels.length - 1, "x value");
 		CheckUtils.checkRange(y, 0, pixels[0].length - 1, "y value");
 		if (pixels[x][y] == null) {
-			return new Pixel(Pixel.TRANSPARENT_BLACK);
+			return new RGBPixel(RGBPixel.TRANSPARENT_BLACK);
 		}
 		
 		return pixels[x][y];
@@ -167,20 +167,20 @@ public class Canvas {
 		return pixels[0].length;
 	}
 
-	public void set(final Coordinate coordinate, final Pixel value) throws Exception {
+	public void set(final Coordinate coordinate, final RGBPixel value) throws Exception {
 		if (!isValid(coordinate)) {
 			return;
 		}
 		pixels[coordinate.getX()][coordinate.getY()] = value;
 	}
 	
-	public void set(final Set<Coordinate> coordinates, final Pixel value) throws Exception {
+	public void set(final Set<Coordinate> coordinates, final RGBPixel value) throws Exception {
 		for (Coordinate coordinate : coordinates) {
 			set(coordinate, value);
 		}
 	}
 	
-	public void set(int x, int y, Pixel value) throws Exception {
+	public void set(int x, int y, RGBPixel value) throws Exception {
 		CheckUtils.check(value, "pixel value");
 		CheckUtils.checkRange(x, 0, pixels.length);
 		CheckUtils.checkRange(y, 0, pixels[0].length);

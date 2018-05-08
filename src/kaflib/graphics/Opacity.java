@@ -6,13 +6,13 @@ import kaflib.types.Byte;
 public class Opacity implements Comparable<Opacity> {
 	private final Byte value;
 
-	public static final int OPAQUE = 	  		0xff;
-	public static final int THREE_QUARTER =		0xbe;
-	public static final int HALF =		 		0x7f;
-	public static final int QUARTER =	 		0x3f;
-	public static final int TRANSPARENT = 		0x00;
+	public static final Opacity OPAQUE = 	  		new Opacity(new Byte(0xff));
+	public static final Opacity THREE_QUARTER =		new Opacity(new Byte(0xbe));
+	public static final Opacity HALF =		 		new Opacity(new Byte(0x7f));
+	public static final Opacity QUARTER =	 		new Opacity(new Byte(0x3f));
+	public static final Opacity TRANSPARENT = 		new Opacity(new Byte(0x00));
 	
-	public Opacity() throws Exception {
+	public Opacity() {
 		this.value = new Byte(0xff);
 	}
 	
@@ -20,7 +20,7 @@ public class Opacity implements Comparable<Opacity> {
 		this.value = new Byte(value);
 	}
 
-	public Opacity(final Byte value) throws Exception {
+	public Opacity(final Byte value) {
 		this.value = value;
 	}
 

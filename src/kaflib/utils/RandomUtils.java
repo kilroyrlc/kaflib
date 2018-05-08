@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Utilities for generating random values of different types.
@@ -136,6 +137,19 @@ public class RandomUtils {
 		return min + randomLong(max - min);
 	}
 	
+	/**
+	 * Returns a random long at least min, <= max.
+	 * @param bound
+	 * @return
+	 */
+	public static double randomDouble(final double min, final double max) throws Exception {
+		if (max <= min) {
+			throw new Exception("Invalid max <= min.");
+		}
+		
+		return ThreadLocalRandom.current().nextDouble(min, max);
+	}
+
 	/**
 	 * Generates an n-length string of random digits.  This could be
 	 * implemented using format strings but would probably not handle

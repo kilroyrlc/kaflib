@@ -19,16 +19,22 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
 import kaflib.types.Coordinate;
+import kaflib.types.Byte;
 import kaflib.utils.CheckUtils;
 
 /**
  * Graphics utilites.
  */
 public class GraphicsUtils {
+
+	public static final double LUMINANCE_R = 0.2126;
+	public static final double LUMINANCE_G = 0.7152;
+	public static final double LUMINANCE_B = 0.0722;
 	
 	public enum Rotation {CLOCKWISE,
 						  COUNTERCLOCKWISE,
 						  ONE_EIGHTY};
+						  
 	
 	/**
 	 * Creates a copy of the buffered image.
@@ -58,8 +64,8 @@ public class GraphicsUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static int getRed(final int rgb) throws Exception {
-		return (rgb >> 16) & 0xff;
+	public static Byte getRed(final int rgb) throws Exception {
+		return new Byte((rgb >> 16) & 0xff);
 	}
 	
 	/**
@@ -68,8 +74,8 @@ public class GraphicsUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static int getGreen(final int rgb) throws Exception {
-		return (rgb >> 8) & 0xff;
+	public static Byte getGreen(final int rgb) throws Exception {
+		return new Byte((rgb >> 8) & 0xff);
 	}
 	
 	/**
@@ -78,8 +84,25 @@ public class GraphicsUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static int getBlue(final int rgb) throws Exception {
-		return rgb & 0xff;
+	public static Byte getBlue(final int rgb) throws Exception {
+		return new Byte(rgb & 0xff);
+	}
+	
+	public static BufferedImage createRGB(final int width, final int height) throws Exception {
+		return new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+	}
+	
+	/**
+	 * Converts a 0.0-1.0 luminance value to rgb.
+	 * @param luminance
+	 * @return
+	 * @throws Exception
+	 */
+	public static int normalizedLuminanceToRGB(final double luminance) throws Exception {
+		double absolute = luminance * 255;
+		return getARGB(new Byte(absolute * LUMINANCE_R),
+					   new Byte(absolute * LUMINANCE_G),
+					   new Byte(absolute * LUMINANCE_B));
 	}
 	
 	/**
@@ -145,13 +168,13 @@ public class GraphicsUtils {
         return true;
 	}
 	
-	public static int addLayer(final int baseARGB, final int layerARGB) throws Exception {
-		double alpha = getAlpha(layerARGB) / 255;
-		return getARGB(getAlpha(baseARGB),
-					   (int) (getRed(layerARGB) * alpha + getRed(baseARGB) * (1 - alpha)),
-					   (int) (getGreen(layerARGB) * alpha + getGreen(baseARGB) * (1 - alpha)),
-					   (int) (getBlue(layerARGB) * alpha + getBlue(baseARGB) * (1 - alpha)));			   
-	}
+//	public static int addLayer(final int baseARGB, final int layerARGB) throws Exception {
+//		double alpha = getAlpha(layerARGB) / 255;
+//		return getARGB(getAlpha(baseARGB),
+//					   (int) (getRed(layerARGB) * alpha + getRed(baseARGB) * (1 - alpha)),
+//					   (int) (getGreen(layerARGB) * alpha + getGreen(baseARGB) * (1 - alpha)),
+//					   (int) (getBlue(layerARGB) * alpha + getBlue(baseARGB) * (1 - alpha)));			   
+//	}
 
 	public static Map<Integer, List<Integer>> getNeighbors(final BufferedImage image, final Coordinate location, final int radius) throws Exception {
 		int width = image.getWidth();
@@ -201,14 +224,10 @@ public class GraphicsUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static int getRGB(final int r, final int g, final int b) throws Exception {
-		return getRGB(0xff, r, g, b);
+	public static int getARGB(final Byte r, final Byte g, final Byte b) throws Exception {
+		return getARGB(Byte.FF, r, g, b);
 	}
 
-	public static int getRGB(final double r, final double g, final double b) throws Exception {
-		return getRGB(0xff, (int) r, (int) g, (int) b);
-	}
-	
 	/**
 	 * Returns the r/g/b channels as a single value.
 	 * @param r
@@ -217,23 +236,33 @@ public class GraphicsUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static int getRGB(final int a, final int r, final int g, final int b) throws Exception {
-		int rgb = a & 0xff;
-		rgb = rgb << 8;
-		rgb = rgb | (r & 0xff);
-		rgb = rgb << 8;
-		rgb = rgb | (g & 0xff);
-		rgb = rgb << 8;
-		rgb = rgb | (b & 0xff);
-		return rgb;
-	}
-
-	public static int getARGB(final int a, final int rgb) throws Exception {
-		return getARGB(a, getRed(rgb), getGreen(rgb), getBlue(rgb));
+	public static int getARGB(final Byte a, final Byte r, final Byte g, final Byte b) throws Exception {
+		return Byte.or(a, r, g, b);
 	}
 	
-	public static int getARGB(final int a, final int r, final int g, final int b) throws Exception {
-		return getRGB(a, r, g, b);
+	
+	/**
+	 * Returns a 0-255
+	 * @param r
+	 * @param g
+	 * @param b
+	 * @return
+	 */
+	public static Byte getLuminance(final Byte r, final Byte g, final Byte b) {
+		return new Byte(LUMINANCE_R * (double) r.getValue() +
+						LUMINANCE_G * (double) g.getValue() + 
+						LUMINANCE_B * (double) b.getValue());
+	}
+		
+	public static Byte getLuminance(final int rgb) throws Exception {
+		Byte r = getRed(rgb);
+		Byte g = getGreen(rgb);
+		Byte b = getBlue(rgb);
+		return getLuminance(r, g, b);
+	}
+	
+	public static double getNormalizedLuminance(final int rgb) throws Exception {
+		return ((double) getLuminance(rgb).getValue()) / 255;
 	}
 	
 	/**
@@ -288,6 +317,44 @@ public class GraphicsUtils {
 	    return bimage;
 	}
 
+	public static BufferedImage cascadeHorizontal(final BufferedImage... images) throws Exception {
+		if (images.length == 0) {
+			return null;
+		}
+		if (images.length == 1) {
+			return images[0];
+		}
+		
+		int height = images[0].getHeight();
+		int width = 0;
+		for (BufferedImage image : images) {
+			if (image == null) {
+				continue;
+			}
+			
+			if (image.getHeight() != height) {
+				throw new Exception("Images must be equal height.");
+			}
+			width += image.getWidth();
+		}
+		
+	    BufferedImage cascade = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+	
+	    Graphics2D graphics = cascade.createGraphics();
+	    int index = 0;
+	    for (BufferedImage image : images) {
+			if (image == null) {
+				continue;
+			}
+	    	graphics.drawImage(image, index, 0, null);
+	    	index += image.getWidth();
+	    }
+	    graphics.dispose();
+	
+	    return cascade;
+		
+	}
+	
 	/**
 	 * Scales the image up.
 	 * @param image
@@ -317,16 +384,41 @@ public class GraphicsUtils {
 	}
 	
 	/**
+	 * Fills the image to the defined shape.
+	 * @param image
+	 * @param width
+	 * @param height
+	 * @return
+	 * @throws Exception
+	 */
+	public static BufferedImage fill(final BufferedImage image, final int width, final int height) throws Exception {
+		double width_factor = (double) image.getWidth() / (double) width;
+		double height_factor = (double) image.getHeight() / (double) height;
+		double scale = 1 / Math.min(width_factor, height_factor);
+		while ((int) ((double) image.getWidth() * scale) < width ||
+			   (int) ((double) image.getHeight() * scale) < height) {
+			scale += 0.01;
+		}
+		
+		BufferedImage scaled = getScaled(image, scale);
+		return getCropped(scaled, width, height);
+	}
+	
+	/**
 	 * Scales the image.
 	 * @param image
 	 * @param factor
 	 * @return
 	 */
 	public static BufferedImage getScaled(final BufferedImage image, float factor) {
+		return getScaled(image, new Double(factor));
+	}
+
+	public static BufferedImage getScaled(final BufferedImage image, double factor) {
 		
 		return GraphicsUtils.toBufferedImage(
-				image.getScaledInstance((int) (image.getWidth() / factor), 
-										(int) (image.getHeight() / factor), 
+				image.getScaledInstance((int) (image.getWidth() * factor), 
+										(int) (image.getHeight() * factor), 
 										Image.SCALE_SMOOTH), image.getType());
 	}
 	
@@ -384,6 +476,22 @@ public class GraphicsUtils {
 		return new ImageIcon(image);
 	}
 	
+	public static BufferedImage getCropped(final BufferedImage image,
+										   final int width,
+										   final int height) throws Exception {
+		CheckUtils.checkPositive(width);
+		CheckUtils.checkPositive(height);
+		int dx = image.getWidth() - width;
+		int dy = image.getHeight() - height;
+		if (dx < 0 || dy < 0) {
+			throw new Exception("Attempting to crop to larger area: " + image.getWidth() + 
+								" -> " + width + " by " + image.getHeight() + " -> " + height + ".");
+		}
+		
+		return getCropped(image, dx / 2, dy / 2, width, height);
+		
+	}
+	
 	/**
 	 * Returns a cropped version of this image.
 	 * @param image
@@ -404,7 +512,7 @@ public class GraphicsUtils {
 		CheckUtils.checkPositive(width);
 		CheckUtils.checkPositive(height);
 		
-		if (x + width >= image.getWidth() || y + height >= image.getHeight()) {
+		if (x + width > image.getWidth() || y + height > image.getHeight()) {
 			throw new Exception("Invalid crop (" + x + ", " + y + ") " + width + "x" + height + 
 					            " for " + image.getWidth() + "x" + image.getHeight());
 		}
@@ -575,7 +683,7 @@ public class GraphicsUtils {
 		List<Integer> pixels = new ArrayList<Integer>();
 		
 		for (int i = 0; i < image.getHeight(); i++) {
-			pixels.add(getRed(image.getRGB(x, i)));
+			pixels.add(getLuminance((image.getRGB(x, i))).getValue());
 			
 			if (pixels.size() == 11) {
 				pixels.remove(0);
@@ -600,7 +708,7 @@ public class GraphicsUtils {
 		List<Integer> pixels = new ArrayList<Integer>();
 		
 		for (int i = 0; i < image.getWidth(); i++) {
-			pixels.add(getRed(image.getRGB(i, y)));
+			pixels.add(getLuminance(image.getRGB(i, y)).getValue());
 			
 			if (pixels.size() == 11) {
 				pixels.remove(0);

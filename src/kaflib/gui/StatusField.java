@@ -125,7 +125,7 @@ public class StatusField extends JPanel {
 	 * @return
 	 * @throws Exception
 	 */
-	public ProgressLabel getProgressBar() throws Exception {
+	public ProgressLabel getProgressBar() {
 		return text;
 	}
 	

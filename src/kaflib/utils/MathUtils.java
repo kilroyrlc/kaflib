@@ -102,6 +102,26 @@ public class MathUtils {
 	}
 	
 	/**
+	 * Normalizes the value from 0.0 to 1.0.
+	 * @param value
+	 * @param max
+	 * @return
+	 */
+	public static double normalize(final int value, final int max) {
+		return value / (max - 1);
+	}
+	
+	/**
+	 * Normalizes the value from -0.5 to 0.5.
+	 * @param value
+	 * @param max
+	 * @return
+	 */
+	public static double normalizeAroundZero(final int value, final int max) {
+		return ((double) value / (double) max - 1) - 0.5;
+	}
+	
+	/**
 	 * Returns the minimum positive value of the two supplied, null if both are
 	 * negative.
 	 * @param a
@@ -131,6 +151,32 @@ public class MathUtils {
 	public static Integer max(final Collection<Integer> values) {
 		Integer max = null;
 		for (Integer value : values) {
+			if (value == null) {
+				continue;
+			}
+			if (max == null || value > max) {
+				max = value;
+			}
+		}
+		return max;
+	}
+
+	public static Double min(final Double... values) {
+		Double max = null;
+		for (Double value : values) {
+			if (value == null) {
+				continue;
+			}
+			if (max == null || value < max) {
+				max = value;
+			}
+		}
+		return max;
+	}
+	
+	public static Double max(final Double... values) {
+		Double max = null;
+		for (Double value : values) {
 			if (value == null) {
 				continue;
 			}

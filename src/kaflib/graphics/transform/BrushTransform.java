@@ -2,7 +2,7 @@ package kaflib.graphics.transform;
 
 import kaflib.graphics.Canvas;
 import kaflib.graphics.DependentTransform;
-import kaflib.graphics.Pixel;
+import kaflib.graphics.RGBPixel;
 import kaflib.graphics.Selection;
 import kaflib.types.Coordinate;
 
@@ -13,11 +13,11 @@ import kaflib.types.Coordinate;
 public class BrushTransform extends DependentTransform {
 
 	private final int radius;
-	private final Pixel color;
+	private final RGBPixel color;
 	
 	protected BrushTransform(final Canvas input, 
 							 final int radius,
-							 final Pixel color) throws Exception {
+							 final RGBPixel color) throws Exception {
 		super(input);
 		this.radius = radius;
 		this.color = color;
@@ -33,14 +33,14 @@ public class BrushTransform extends DependentTransform {
 	}
 
 	private void processPixel(final Coordinate coordinate) throws Exception {
-		Pixel pixel = getOutput().get(coordinate);
+		RGBPixel pixel = getOutput().get(coordinate);
 		// Ignore transparent.
 		if (pixel.isTransparent()) {
 			return;
 		}
 		// Semi-transparent, set to transparent.
 		if (!pixel.isOpaque()) {
-			getOutput().set(coordinate, new Pixel(Pixel.OPAQUE_BLACK));
+			getOutput().set(coordinate, new RGBPixel(RGBPixel.OPAQUE_BLACK));
 		}
 		
 		Selection selection = Selection.getMostOpaqueStar(coordinate, radius, radius / 2, getOutput());

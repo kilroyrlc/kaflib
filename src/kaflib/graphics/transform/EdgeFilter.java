@@ -2,7 +2,7 @@ package kaflib.graphics.transform;
 
 
 import kaflib.graphics.Canvas;
-import kaflib.graphics.Pixel;
+import kaflib.graphics.RGBPixel;
 import kaflib.graphics.Selection;
 import kaflib.graphics.IndependentTransform;
 import kaflib.types.Coordinate;
@@ -18,10 +18,10 @@ public class EdgeFilter extends IndependentTransform {
 	private final int size;
 	private final int delta;
 	private final boolean edges_only;
-	private final Pixel edge_color;
+	private final RGBPixel edge_color;
 	
 	public EdgeFilter(final Canvas input,
-					  final Pixel color,
+					  final RGBPixel color,
 					  final int size,
 					  final int delta,
 					  final boolean edgesOnly) throws Exception {

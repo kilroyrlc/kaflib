@@ -168,6 +168,35 @@ public class CheckUtils {
 			}
 		}
 	}
+	
+	/**
+	 * Verifies that the supplied collection is non-null and non-empty.
+	 * @param collection
+	 * @throws Exception
+	 */
+	public static <T> void checkSize(final Collection<T> collection, final int minSize) throws Exception {
+		checkSize(collection, minSize, null);
+	}
+
+	/**
+	 * Verifies that the supplied collection is non-null and non-empty.
+	 * @param collection
+	 * @throws Exception
+	 */
+	public static <T> void checkSize(final Collection<T> collection,
+									 final int minSize,
+								     final String description) throws Exception {
+		check(collection, description);
+		if (collection.size() < minSize) {
+			if (description == null) {
+				throw new Exception("Collection size < minimum (" + minSize + ".");
+			}
+			else {
+				throw new Exception("Collection size < minimum (" + minSize + "; " + 
+									description + ".");
+			}
+		}
+	}
 
 	/**
 	 * Throws if the given value is < 1.

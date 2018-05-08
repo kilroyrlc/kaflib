@@ -4,13 +4,14 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import kaflib.types.Box;
 import kaflib.types.Coordinate;
-import kaflib.utils.CheckUtils;
-import kaflib.utils.StringUtils;
 
 /**
- * Defines core functionality of the selection class.  This is focused on
- * caching ensuring coherence.
+ * Defines core functionality of the selection class.  This may be bad design
+ * but it's meant to bottleneck any mutators to this class so that the 
+ * bookkeeping involved with keeping the border/neighbor/centroid caches
+ * from getting messed up.
  */
 public abstract class SelectionCore {
 	private static final int DEFAULT_MAP_SIZE = 24;
@@ -19,6 +20,7 @@ public abstract class SelectionCore {
 	private final Set<Coordinate> neighbors;
 	private final Coordinate start;
 	private Coordinate centroid;
+	private Box bounding_box;
 	
 	public SelectionCore() {
 		coordinates = new HashSet<Coordinate>(DEFAULT_MAP_SIZE);
@@ -26,6 +28,7 @@ public abstract class SelectionCore {
 		neighbors = new HashSet<Coordinate>(DEFAULT_MAP_SIZE);
 		centroid = null;
 		start = null;
+		bounding_box = null;
 	}
 	
 	public SelectionCore(final Coordinate coordinate) throws Exception {
@@ -44,7 +47,7 @@ public abstract class SelectionCore {
 	public final void add(final Coordinate coordinate) throws Exception  {
 		add(coordinate, true);
 	}
-	
+/*	
 	private final void add(final Coordinate coordinate, 
 						   final boolean computeCentroid) throws Exception  {
 		// Add the coordinate to the set.
@@ -86,6 +89,111 @@ public abstract class SelectionCore {
 		if (computeCentroid) {
 			computeCentroid();
 		}
+		
+		if (coordinates.size() > 1) {
+			if (bounding_box == null) {
+				bounding_box = Box.getBoundingBoxIf(coordinates);
+			}
+			else {
+				bounding_box = Box.getBoundingBox(bounding_box, coordinate);
+			}
+		}
+	}
+	*/
+	protected final void add(final Coordinate coordinate, 
+			final boolean computeCentroid) throws Exception  {
+		// Add the coordinate to the set.
+		coordinates.add(coordinate);
+
+		for (Coordinate c : coordinate.getNeighbors()) {
+			refresh(c);
+		}
+
+		// Recompute the centroid.  This must be done, however it can be
+		// flagged off for bulk operations.  They must do it once all values
+		// have been added.
+		if (computeCentroid) {
+			computeCentroid();
+		}
+
+		updateBoundingBox(coordinate, true);
+	}
+	
+	private final void updateBoundingBox(final Coordinate coordinate, final boolean add) throws Exception {
+		if (coordinates.size() > 1) {
+			if (bounding_box == null) {
+				bounding_box = Box.getBoundingBoxIf(coordinates);
+			}
+			else {
+				if (add) {
+					bounding_box = Box.addToBoundingBox(bounding_box, coordinate);
+				}
+				else {
+					bounding_box = Box.removeFromBoundingBox(bounding_box, coordinates, coordinate);
+				}
+			}
+		}
+	}
+	
+	protected final void remove(final Coordinate coordinate, 
+							  final boolean computeCentroid) throws Exception  {
+		// Add the coordinate to the set.
+		coordinates.remove(coordinate);
+
+		for (Coordinate c : coordinate.getNeighbors()) {
+			refresh(c);
+		}
+
+		// Recompute the centroid.  This must be done, however it can be
+		// flagged off for bulk operations.  They must do it once all values
+		// have been added.
+		if (computeCentroid) {
+			computeCentroid();
+		}
+
+		updateBoundingBox(coordinate, false);
+	}
+	
+	/**
+	 * Refreshes the coordinate lists for the specified point.
+	 * @param coordinate
+	 * @throws Exception
+	 */
+	private final void refresh(final Coordinate coordinate) throws Exception {
+		// If this coordinate is in the selection.
+		if (coordinates.contains(coordinate)) {
+			boolean border = isBorder(coordinate, coordinates);
+			
+			for (Coordinate c : coordinate.getNeighbors()) {
+				if (!coordinates.contains(c)) {
+					neighbors.add(c);
+				}
+			}
+			
+			if (border) {
+				this.border.add(coordinate);
+			}
+			else {
+				this.border.remove(coordinate);
+			}
+		}
+		// This coordinate is not in the selection.
+		else {
+			boolean neighbor = isNeighbor(coordinate, coordinates);
+
+			if (neighbor == true) { 
+				neighbors.add(coordinate);
+				for (Coordinate c : coordinate.getNeighbors()) {
+					if (coordinates.contains(c)) {
+						border.add(c);
+					}
+				}
+			}
+			else {
+				neighbors.remove(coordinate);
+			}
+		}
+		
 	}
 	
 	public final void add(final Collection<Coordinate> coordinates) throws Exception  {
@@ -117,17 +225,26 @@ public abstract class SelectionCore {
 		return start;
 	}
 	
+	
+	/**
+	 * Returns the selection's bounding box.
+	 * @return
+	 */
+	public final Box getBoundingBox() {
+		return bounding_box;
+	}
+	
 	public final int adjacent(final Coordinate coordinate) throws Exception {
 		int adjacent = 0;
 		for (Coordinate c : coordinate.getNeighbors()) {
-			if (coordinates.contains(c)) { 
+			if (getCoordinates().contains(c)) { 
 				adjacent++;
 			}
 		}
 		return adjacent;
 	}
 	
-	public Pixel getAverage(final Canvas canvas) throws Exception {
+	public RGBPixel getAverage(final Canvas canvas) throws Exception {
 		return canvas.getAverage(getCoordinates());
 	}
 
@@ -149,7 +266,7 @@ public abstract class SelectionCore {
 	 */
 	public final Coordinate getRoundestNeighbor(final Canvas canvas, 
 												final Integer deltaThreshold) throws Exception {
-		Pixel average = null;
+		RGBPixel average = null;
 		if (canvas != null && deltaThreshold != null) {
 			average = getAverage(canvas);
 		}
@@ -193,60 +310,6 @@ public abstract class SelectionCore {
 		return coordinates;
 	}
 	
-	public String toString() {
-		if (coordinates.size() == 0) {
-			return new String("Uninitialized selection.");
-		}
-		try {
-			return "Coords: " + StringUtils.concatenate(coordinates, " ", true) + 
-				   "\nBorder: " + StringUtils.concatenate(border, " ", true) + 
-				   "\nNghbrs: " + StringUtils.concatenate(neighbors, " ", true); 
-		}
-		catch (Exception e) {
-			return new String("Unable to create string: " + e.getMessage());
-		}
-	}
-	
-	public String toMatrix() throws Exception {
-		int x_start = Coordinate.getMinX(coordinates);
-		int y_start = Coordinate.getMinY(coordinates);
-		int x_size = Math.max(Coordinate.getMaxX(coordinates) - x_start, 1) + 4;
-		int y_size = Math.max(Coordinate.getMaxY(coordinates) - y_start, 1) + 4;
-		CheckUtils.checkPositive(x_start, "x start");
-		CheckUtils.checkPositive(y_start, "y start");
-		CheckUtils.checkPositive(x_size, "x size");
-		CheckUtils.checkPositive(y_size, "y size");
-		
-		char values[][] = new char[x_size][y_size];
-		
-		for (int i = 0; i < x_size; i++) {
-			for (int j = 0; j < y_size; j++) {
-				values[i][j] = ' ';
-			}
-		}
-		for (Coordinate coordinate : coordinates) {
-			values[coordinate.getX() - x_start + 2][coordinate.getY() - y_start + 2] = 'o';
-		}
-		for (Coordinate coordinate : border) {
-			values[coordinate.getX() - x_start + 2][coordinate.getY() - y_start + 2] = 'x';
-		}
-		for (Coordinate coordinate : neighbors) {
-			values[coordinate.getX() - x_start + 2][coordinate.getY() - y_start + 2] = '*';
-		}
-		if (start != null) {
-			values[start.getX() - x_start + 2][start.getY() - y_start + 2] = '%';
-		}
-
-		StringBuffer buffer = new StringBuffer();
-		for (int i = 0; i < x_size; i++) {
-			for (int j = 0; j < y_size; j++) {
-				buffer.append(values[i][j] + " ");
-			}
-			buffer.append("\n");
-		}
-		return new String(buffer);
-	}
-	
 	/**
 	 * Returns whether or not the given coordinate is in the border of the set.
 	 * Specifically, does the coordinate have a neighbor that is not in the
@@ -261,6 +324,28 @@ public abstract class SelectionCore {
 		
 		for (Coordinate n : coordinate.getNeighbors()) {
 			if (!coordinates.contains(n)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns whether or not the given coordinate is in the neighbors of this
+	 * set.
+	 * @param coordinate
+	 * @param coordinates
+	 * @return
+	 * @throws Exception
+	 */
+	public static boolean isNeighbor(final Coordinate coordinate, 
+									 final Set<Coordinate> coordinates) throws Exception {
+		if (coordinates.contains(coordinate)) {
+			throw new Exception("Coordinate cannot be in the set.");
+		}
+		
+		for (Coordinate n : coordinate.getNeighbors()) {
+			if (coordinates.contains(n)) {
 				return true;
 			}
 		}

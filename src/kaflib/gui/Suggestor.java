@@ -332,7 +332,7 @@ public class Suggestor {
 
 	private boolean wordTyped(final String typedWord) {
 		
-		if (typedWord.isEmpty() || typedWord.length() == 1) {
+		if (typedWord.isEmpty() || typedWord.length() < 2) {
 			return false;
 		}
 
