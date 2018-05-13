@@ -8,6 +8,7 @@ import java.io.File;
 
 import javax.imageio.ImageIO;
 
+import kaflib.graphics.Canvas;
 import kaflib.utils.CheckUtils;
 
 /**
@@ -62,6 +63,11 @@ public class ImageComponent extends Component {
 		height = (int)(image.getHeight() * scaling);
 	}
 
+	public ImageComponent(final Canvas image) throws Exception {
+		this(image.toBufferedImage(), 1);
+	}
+
+	
 	public ImageComponent(final BufferedImage image) throws Exception {
 		this(image, 1);
 	}

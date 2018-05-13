@@ -7,7 +7,9 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
+import kaflib.graphics.Canvas;
 import kaflib.utils.CheckUtils;
+import kaflib.utils.GUIUtils;
 
 public class ImageCascade extends JPanel {
 
@@ -21,8 +23,24 @@ public class ImageCascade extends JPanel {
 		
 		for (BufferedImage image : images) {
 			ImageComponent component = new ImageComponent(image);
+			JPanel panel = GUIUtils.getTitledPanel("");
+			panel.add(component);
 			cascade.add(component);
-			this.add(component);
+			this.add(panel);
+		}
+	}
+	
+	public ImageCascade(final Canvas... images) throws Exception {
+		super(new GridLayout(1, images.length));
+		
+		cascade = new ArrayList<ImageComponent>();
+		
+		for (Canvas image : images) {
+			ImageComponent component = new ImageComponent(image);
+			JPanel panel = GUIUtils.getTitledPanel("");
+			panel.add(component);
+			cascade.add(component);
+			this.add(panel);
 		}
 	}
 	

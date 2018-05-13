@@ -33,7 +33,7 @@ import kaflib.utils.TypeUtils;
  */
 public class FileCrypto {
 	
-	public static final String DEFAULT_FILE_EXTENSION = "oo2";
+	public static final String DEFAULT_FILE_EXTENSION = AESUtils.DEFAULT_FILE_EXTENSION;
 	
 	private final JFrame main_frame;
 	private final JPanel main_panel;

@@ -20,6 +20,12 @@ public class Percent implements Serializable {
 		max = Integer.MAX_VALUE;
 	}
 
+	public Percent(final double value) {
+		this.value = (int) (value * 100);
+		min = Integer.MIN_VALUE;
+		max = Integer.MAX_VALUE;
+	}
+	
 	public Percent(final float value) {
 		this.value = (int) (value * 100);
 		min = Integer.MIN_VALUE;

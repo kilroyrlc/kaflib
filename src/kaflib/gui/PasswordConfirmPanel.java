@@ -174,7 +174,7 @@ public class PasswordConfirmPanel extends JPanel implements KeyListener, FocusLi
 	
 				@Override
 				protected void process() throws Exception {
-					if (match()) {
+					if (match() && getA().length() >= 8 && getB().length() >= 8) {
 						field_a.setForeground(Color.GREEN);
 						field_b.setForeground(Color.GREEN);
 					}

@@ -30,7 +30,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
 import java.text.NumberFormat;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -242,6 +244,34 @@ public class GUIUtils {
 		else {
 			return null;
 		}
+	}
+	
+	public static Set<File> chooseFiles(final Component parent,
+										final File startingDirectory) {
+		JFileChooser chooser;
+		Set<File> files = new HashSet<File>();
+		if (startingDirectory != null && 
+				startingDirectory.canRead()) {
+			if (startingDirectory.isDirectory()) {
+				chooser = new JFileChooser(startingDirectory);
+			}
+			else {
+				chooser = new JFileChooser(startingDirectory.getParentFile());
+			}
+		}
+		else {
+			chooser = new JFileChooser();
+		}
+		chooser.setMultiSelectionEnabled(true);
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+			for (File file : chooser.getSelectedFiles()) {
+				if (file != null && file.exists()) {
+					files.add(file);
+				}
+			}
+		}
+		return files;
 	}
 	
 	/**

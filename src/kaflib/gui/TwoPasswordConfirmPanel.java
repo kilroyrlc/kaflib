@@ -33,7 +33,7 @@ public class TwoPasswordConfirmPanel extends JPanel {
 	
 	public static KeyPair promptForPasswords(final Component parent) throws Exception {
 		final TwoPasswordConfirmPanel panel = new TwoPasswordConfirmPanel();
-		if (JOptionPane.showConfirmDialog(parent, panel) == JOptionPane.OK_OPTION) {
+		if (JOptionPane.showConfirmDialog(parent, panel, "Password", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
 			return new KeyPair(panel.getOuter().getText(),
 							   panel.getInner().getText());
 		}

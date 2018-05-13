@@ -84,6 +84,21 @@ public class CheckUtils {
 		}
 	}
 
+	public static void checkEven(final int value) throws Exception {
+		checkEven(value, null);
+	}
+	
+	public static void checkEven(final int value, final String description) throws Exception {
+		if (value % 2 != 0) {
+			if (description == null) {
+				throw new Exception(value + " not even.");
+			}
+			else {
+				throw new Exception(value + " not even: " + description + ".");
+			}
+		}
+	}
+	
 	/**
 	 * Throws if the supplied string is null or empty.
 	 * @param string
@@ -207,6 +222,13 @@ public class CheckUtils {
 		checkPositive(value, null);
 	}
 	
+	public static void checkPositive(int... values) throws Exception {
+		for (int value : values) {
+			checkPositive(value, null);
+		}
+	}
+	
+	
 	/**
 	 * Throws if the given value is < 1.
 	 * @param value
@@ -287,6 +309,12 @@ public class CheckUtils {
 			else {
 				throw new Exception("Negative value: " + description + " = " + value + ".");
 			}
+		}
+	}
+	
+	public static void checkNonNegative(final int... values) throws Exception {
+		for (int value : values) {
+			checkNonNegative(value);
 		}
 	}
 	

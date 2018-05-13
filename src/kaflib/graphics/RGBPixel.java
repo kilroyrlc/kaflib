@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import kaflib.types.Byte;
+import kaflib.types.Percent;
 import kaflib.utils.MathUtils;
 import kaflib.utils.RandomUtils;
 
@@ -94,6 +95,35 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 		b = new Byte(pixel.getB());
 	}
 
+	/**
+	 * Creates a new pixel that is a blend of a and b.  aDominant determines
+	 * the likelihood that a will be the dominant pixel.  blendDominant
+	 * determines how to blend, e.g. 90% dominant/10% non.
+	 * @param a
+	 * @param b
+	 * @param aDominant
+	 * @param blendDominant
+	 */
+	public RGBPixel(final RGBPixel a, 
+					final RGBPixel b, 
+					final Percent aDominant,
+					final Percent blendDominant) throws Exception {
+		super(Opacity.OPAQUE);
+		// A is dominant.
+		if (RandomUtils.randomBoolean(aDominant.get())) {
+			this.r = Byte.combine(a.getR(), b.getR(), blendDominant);
+			this.g = Byte.combine(a.getG(), b.getG(), blendDominant);
+			this.b = Byte.combine(a.getB(), b.getB(), blendDominant);
+		}
+		// B is dominant.
+		else {
+			this.r = Byte.combine(b.getR(), a.getR(), blendDominant);
+			this.g = Byte.combine(b.getG(), a.getG(), blendDominant);
+			this.b = Byte.combine(b.getB(), a.getB(), blendDominant);
+		}
+	}
+
+	
 	public Byte getLuminance() {
 		return GraphicsUtils.getLuminance(r, g, b);
 	}
@@ -183,6 +213,12 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 		r.combine(other.getR(), other.getOpacity().getPercent());
 		g.combine(other.getG(), other.getOpacity().getPercent());
 		b.combine(other.getB(), other.getOpacity().getPercent());
+	}
+	
+	public void blend(final RGBPixel other, final Percent otherPercent) throws Exception {
+		r.combine(other.getR(), otherPercent);
+		g.combine(other.getG(), otherPercent);
+		b.combine(other.getB(), otherPercent);
 	}
 	
 	public int getARGB() {

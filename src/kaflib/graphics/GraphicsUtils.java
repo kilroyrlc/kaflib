@@ -148,6 +148,25 @@ public class GraphicsUtils {
 		
 	}
 	
+	public static BufferedImage mirror(final BufferedImage image, 
+									   final boolean horizontal) throws Exception {
+		int width = image.getWidth();
+		int height = image.getHeight();
+		
+		BufferedImage output = new BufferedImage(image.getHeight(), image.getWidth(), image.getType());
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < image.getHeight(); j++) {
+				if (horizontal) {
+					output.setRGB(width - i - 1, j, image.getRGB(i, j));
+				}
+				else {
+					output.setRGB(i, height - j - 1, image.getRGB(i, j));
+				}
+			}
+		}
+		return output;
+	}
+	
 	/**
 	 * Returns whether or not the supplied images are equal, pixel for pixel.
 	 * @param a
@@ -537,6 +556,13 @@ public class GraphicsUtils {
 		CheckUtils.check(image, "image for file: "+ file.getName());
 		
 		ImageIO.write(image, "jpg", file);
+	}
+	
+	public static void writePNG(final BufferedImage image, final File file) throws Exception {
+		CheckUtils.check(file, "file");
+		CheckUtils.check(image, "image for file: "+ file.getName());
+		
+		ImageIO.write(image, "png", file);
 	}
 	
 	/**

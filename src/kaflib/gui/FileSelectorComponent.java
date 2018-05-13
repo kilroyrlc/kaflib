@@ -8,6 +8,7 @@ import java.io.FilenameFilter;
 import javax.swing.JComboBox;
 
 import kaflib.types.FilenameExtensionFilter;
+import kaflib.types.FilenamePrefixFilter;
 
 /**
  * Defines a dropdown file selector
@@ -55,6 +56,29 @@ public class FileSelectorComponent extends JComboBox<String> implements ItemList
 		refresh();
 	}
 
+	public FileSelectorComponent(final boolean empty,
+			final boolean create,
+			final File directory, 
+			final String prefix) throws Exception {
+		super();
+		this.directory = directory;
+		this.none = empty;
+		this.create = create;
+		this.listener = null;
+		this.last = null;
+		if (!directory.exists() || !directory.isDirectory()) {
+			throw new Exception("Must specify a directory.");
+		}
+		if (prefix != null) {
+			filter = new FilenamePrefixFilter(prefix);
+		}
+		else {
+			filter = null;
+		}
+		this.addItemListener(this);
+		refresh();
+	}
+	
 	/**
 	 * Returns the selected file or null if create.
 	 * @return

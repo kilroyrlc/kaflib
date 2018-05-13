@@ -25,7 +25,7 @@ public class Directory extends File {
 	 */
 	public Directory(File parent, String child) throws Exception {
 		super(parent, child);
-		if (!this.isDirectory()) {
+		if (exists() && !this.isDirectory()) {
 			throw new Exception("Not a directory.");
 		}
 	}

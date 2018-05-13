@@ -26,6 +26,8 @@ import kaflib.types.Pair;
 
 
 public class AESUtils {
+	public static final String DEFAULT_FILE_EXTENSION = "oo2";
+	
 	public static final int KEY_SIZE = 128;
 	public static final int IV_LENGTH = 16;
 	public static final int SALT_LENGTH = 8;
@@ -40,7 +42,7 @@ public class AESUtils {
 	 * @throws Exception
 	 */
 	public static void doubleEncrypt(final Set<File> files,
-									 final String extension,
+									 final String outputFileExtension,
 									 final String outerPassword, 
 									 final String innerPassword) throws Exception {
 		// Generate keys, statically salted by the opposite.
@@ -48,33 +50,39 @@ public class AESUtils {
 		SecretKey inner = generateKey(innerPassword, outerPassword.substring(0, SALT_LENGTH).getBytes("UTF-8"));
 		
 		for (File file : files) {
-			doubleEncrypt(file, extension, outer, inner);
+			doubleEncrypt(file, outputFileExtension, outer, inner);
 		}
 	}
 
-	public static void doubleEncrypt(final File file,
-			 final String extension,
-			 final KeyPair keys) throws Exception {
-		doubleEncrypt(file, extension, keys.getOuter(), keys.getInner());
+	public static File doubleEncrypt(final File file,
+									 final KeyPair keys) throws Exception {
+		return doubleEncrypt(file, DEFAULT_FILE_EXTENSION, keys.getOuter(), keys.getInner());
 	}
 	
-	public static void doubleEncrypt(final File file,
-									 final String extension,
+	public static File doubleEncrypt(final File file,
+									 final String outputFileExtension,
+									 final KeyPair keys) throws Exception {
+		return doubleEncrypt(file, outputFileExtension, keys.getOuter(), keys.getInner());
+	}
+	
+	public static File doubleEncrypt(final File file,
+									 final String outputFileExtension,
 									 final SecretKey outerKey, 
 									 final SecretKey innerKey) throws Exception {
-		if (file.getName().endsWith(extension)) {
+		if (file.getName().endsWith(outputFileExtension)) {
 			System.out.println("Skipping encrypted file: " + file + ".");
-			return;
+			return null;
 		}
 		
 		File temp = encrypt(file, true, null, outerKey, 1000000000);
-		encrypt(temp, false, extension, innerKey, 1000000000);
+		File output = encrypt(temp, false, outputFileExtension, innerKey, 1000000000);
 		temp.delete();
 		file.delete();
+		return output;
 	}
 				
 	public static void doubleDecrypt(final Set<File> files,
-			 						 final String extension,
+			 						 final String inputFileExtension,
 									 final String outerPassword, 
 									 final String innerPassword) throws Exception {
 		// Generate keys, statically salted by the opposite.
@@ -82,13 +90,23 @@ public class AESUtils {
 		SecretKey inner = generateKey(innerPassword, outerPassword.substring(0, SALT_LENGTH).getBytes("UTF-8"));
 
 		for (File file : files) {
-			if (!file.getName().endsWith(extension)) {
+			if (!file.getName().endsWith(inputFileExtension)) {
 				continue;
 			}
-			doubleDecrypt(file, extension, outer, inner);
+			doubleDecrypt(file, inputFileExtension, outer, inner);
 		}
 	}
 	
+	public static File doubleDecrypt(final File file,
+			 final KeyPair keys) throws Exception {
+		return doubleDecrypt(file, false, DEFAULT_FILE_EXTENSION, keys.getOuter(), keys.getInner());
+	}
+	
+	public static File doubleDecrypt(final File file,
+			 						 final boolean keepOriginal,
+									 final KeyPair keys) throws Exception {
+		return doubleDecrypt(file, keepOriginal, DEFAULT_FILE_EXTENSION, keys.getOuter(), keys.getInner());
+	}
 
 	public static File doubleDecrypt(final File file,
 			 						 final boolean keepOriginal,

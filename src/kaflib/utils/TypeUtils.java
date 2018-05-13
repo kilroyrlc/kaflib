@@ -426,4 +426,28 @@ public class TypeUtils {
 		return IOUtils.toByteArray(stream);
 	}
 	
+
+	/**
+	 * Wraps System.arraycopy() with validity checks.
+	 * @param source
+	 * @param sourceIndex
+	 * @param dest
+	 * @param destIndex
+	 * @param length
+	 * @throws Exception
+	 */
+	public static<T> void copy(T source[], final int sourceIndex,
+							  T dest[], final int destIndex,
+							  final int length) throws Exception {
+		CheckUtils.checkNonNegative(length, sourceIndex, destIndex);
+		if (length > dest.length - destIndex) {
+			throw new Exception("Writing " + length + " values to " + destIndex + 
+								" with dest length: " + dest.length + ".");
+		}
+		if (length > source.length - sourceIndex) {
+			throw new Exception("Writing " + length + " from source: " + 
+								source.length + " starting at: " + sourceIndex + ".");
+		}
+		System.arraycopy(source, sourceIndex, dest, destIndex, length);
+	}
 }

@@ -112,6 +112,26 @@ public class Box {
 		}
 	}
 	
+	public int getWidth() {
+		return x_max - x_min;
+	}
+	
+	public int getHeight() {
+		return y_max - y_min;
+	}
+	
+	public boolean isContained(final Box other) {
+		if (x_min >= other.getXMin() &&
+			x_max <= other.getXMax() &&
+			y_min >= other.getYMin() &&
+			y_max <= other.getYMax()) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
 	public boolean containsOrAdjacent(final Coordinate coordinate) throws Exception {
 		return getBorderBox().contains(coordinate);
 	}
@@ -178,6 +198,10 @@ public class Box {
 	 */
 	public int getYMax() {
 		return y_max;
+	}
+	
+	public String toString() {
+		return "Box: " + getTopLeft() + getBottomRight();
 	}
 	
 	/**
@@ -277,4 +301,5 @@ public class Box {
 			return getBoundingBoxIf(remaining);
 		}
 	}
+	
 }

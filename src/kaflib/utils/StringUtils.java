@@ -638,16 +638,20 @@ public class StringUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String truncateAt(final String input, final String substring) throws Exception {
-		int index = input.indexOf(substring);
+	public static String truncateAt(final String input, final String... substrings) throws Exception {
+		int index = input.length();
+		for (String substring : substrings) {
+			int value = input.indexOf(substring);
+			if (value >= 0 && value < index) {
+				index = value;
+			}
+		}
 		
-		if (index < 0) {
+		
+		if (index == input.length()) {
 			return input;
 		}
 		else {
-			if (input.lastIndexOf(substring) != index) {
-				throw new Exception("Cannot truncate " + input + ", it contains multiple instances of " + substring + ".");
-			}
 			return input.substring(0, index);
 		}
 		

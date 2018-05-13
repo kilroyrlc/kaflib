@@ -67,6 +67,10 @@ public class RandomUtils {
 		}
 	}
 	
+	public static boolean randomBoolean(final double percentTrue) throws Exception {
+		return randomBoolean((int) (percentTrue * 100));
+	}
+	
 	/**
 	 * Returns a random integer in the full signed range.
 	 * @return

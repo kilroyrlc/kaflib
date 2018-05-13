@@ -99,6 +99,13 @@ public class Byte implements Comparable<Byte> {
 		add(o);
 	}
 	
+	public static Byte combine(final Byte a, final Byte b, final Percent aPct) throws Exception {
+		CheckUtils.checkRange(aPct.get(), 0, 100);
+		return new Byte(((a.getValue() * aPct.get()) / 100) +
+					    ((b.getValue() * aPct.getComplement().get()) / 100),
+					    true);
+	}
+	
 	public void sub(final Byte other) throws Exception {
 		if (value < other.getValue()) {
 			throw new Exception("Value less than 0: " + 
