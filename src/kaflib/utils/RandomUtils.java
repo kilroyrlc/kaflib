@@ -121,8 +121,11 @@ public class RandomUtils {
 	 * @return
 	 */
 	public static int randomInt(final int min, final int max) throws Exception {
-		if (max <= min) {
-			throw new Exception("Invalid max <= min.");
+		if (max < min) {
+			throw new Exception("Invalid max " + max + " < min " + min + ".");
+		}
+		if (min == max) {
+			return min;
 		}
 		
 		return min + randomInt(max - min);
@@ -229,14 +232,20 @@ public class RandomUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static <T> T getRandom(final Set<T> values) throws Exception {
+	public static <T> T getRandom(final Collection<T> values) throws Exception {
 		CheckUtils.checkNonEmpty(values, "values");
 		int random = randomInt(values.size());
-		Iterator<T> iterator = values.iterator();
-		for (int i = 0; i < random; i++) {
-			iterator.next();
+		
+		if (values instanceof List) {
+			return ((List<T>) values).get(random);
 		}
-		return iterator.next();
+		else {
+			Iterator<T> iterator = values.iterator();
+			for (int i = 0; i < random; i++) {
+				iterator.next();
+			}
+			return iterator.next();
+		}
 	}	
 	
 	/**

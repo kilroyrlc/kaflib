@@ -1,6 +1,6 @@
 package kaflib.gui;
 
-import java.awt.GridLayout;
+import java.awt.FlowLayout;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ public class ImageCascade extends JPanel {
 	private final List<ImageComponent> cascade;
 
 	public ImageCascade(final BufferedImage... images) throws Exception {
-		super(new GridLayout(1, images.length));
+		super(new FlowLayout());
 		
 		cascade = new ArrayList<ImageComponent>();
 		
@@ -31,7 +31,7 @@ public class ImageCascade extends JPanel {
 	}
 	
 	public ImageCascade(final Canvas... images) throws Exception {
-		super(new GridLayout(1, images.length));
+		super(new FlowLayout());
 		
 		cascade = new ArrayList<ImageComponent>();
 		
@@ -42,6 +42,11 @@ public class ImageCascade extends JPanel {
 			cascade.add(component);
 			this.add(panel);
 		}
+	}
+	
+	public void update(final Canvas image, final int index) throws Exception {
+		CheckUtils.checkRange(index, 0, cascade.size() - 1, "panel index");
+		cascade.get(index).update(image.toBufferedImage());
 	}
 	
 	public void update(final BufferedImage image, final int index) throws Exception {

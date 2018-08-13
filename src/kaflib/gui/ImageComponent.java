@@ -117,7 +117,23 @@ public class ImageComponent extends Component {
 	public void setThumbnailScaling(final int scaling) throws Exception {
 		CheckUtils.checkPositive(scaling, "scaling");
 	}
-	
+
+	/**
+	 * Updates the image.
+	 * @param image
+	 * @throws Exception
+	 */
+	public void update(final Canvas image) throws Exception {
+		CheckUtils.check(image, "image");
+		this.image = image.toBufferedImage();
+		
+		width = (int)(image.getWidth() * scaling);
+		height = (int)(image.getHeight() * scaling);
+		
+		invalidate();
+		repaint();
+		revalidate();
+	}
 	
 	/**
 	 * Updates the image.

@@ -16,6 +16,7 @@ import kaflib.utils.RandomUtils;
 public class Directory extends File {
 
 	private static final long serialVersionUID = 1L;
+	private static final String LOCK = ".klock";
 
 	/**
 	 * Create the directory.
@@ -30,6 +31,13 @@ public class Directory extends File {
 		}
 	}
 
+	public Directory() throws Exception {
+		super("/");
+		if (!this.isDirectory()) {
+			throw new Exception("Not a directory.");
+		}
+	}
+	
 	public Directory(String path) throws Exception {
 		super(path);
 		if (!this.isDirectory()) {
@@ -154,6 +162,68 @@ public class Directory extends File {
 			}
 		}
 		return directories;
+	}
+	
+	private File getLockFile() {
+		return new File(this, LOCK);
+	}
+	
+	/**
+	 * Writes a lock file to the directory, returns true if successful.
+	 * @return
+	 * @throws Exception
+	 */
+	public synchronized Integer lock(final boolean exclusive) throws Exception {
+		File file = getLockFile();
+		Integer combo = RandomUtils.randomInt();
+		if (file.exists()) {
+			return null;
+		}
+		else {
+			if (exclusive) {
+				FileUtils.write(file, "" + combo);
+			}
+			else {
+				file.createNewFile();
+			}
+			return combo;
+		}
+	}
+	
+	/**
+	 * Checks if the directory is locked.
+	 * @return
+	 */
+	public boolean isLocked() {
+		return getLockFile().exists();
+	}
+	
+	/**
+	 * Reemoves the lock file from the directory if the hashes match.
+	 * @return
+	 * @throws Exception
+	 */
+	public synchronized boolean unlock(final Integer combo) throws Exception {
+		File file = getLockFile();
+		if (!file.exists()) {
+			return true;
+		}
+		
+		String combo_string = FileUtils.readString(file, null).trim();
+		if (combo_string.length() == 0) {
+			file.delete();
+			return true;
+		}
+			
+		Integer value = Integer.valueOf(combo_string);
+		
+		if (value == combo) {
+			file.delete();
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 	
 }

@@ -35,6 +35,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import kaflib.types.Bitstream;
+import kaflib.types.Pair;
 
 /**
  * A set of utilities for manipulating strings.
@@ -367,6 +368,21 @@ public class StringUtils {
 		
 	}
 
+	public static Pair<String, String> splitAtFirst(final String string, final String split) throws Exception {
+		Pair<String, String> pair = new Pair<String, String>(null, null);
+		int index = string.indexOf(split);
+		if (index < 0) {
+			pair.setKey(string);
+		}
+		else {
+			pair.setKey(string.substring(0, index));
+			if (index + 1 < string.length()) {
+				pair.setValue(string.substring(index + 1));
+			}
+		}
+		return pair;
+	}
+	
 	/**
 	 * Convert each item in the list of strings to lower case.
 	 * @param strings
@@ -536,16 +552,19 @@ public class StringUtils {
 	 * @throws Exception
 	 */
 	public static List<String> parse(final String string, final String separator, boolean trim) throws Exception {
-		StringTokenizer tokenizer = new StringTokenizer(string, separator);
+		String left = string;
 		List<String> tokens = new ArrayList<String>();
-		while (tokenizer.hasMoreTokens()) {
+		while (left.indexOf(separator) >= 0) {
+			int index = left.indexOf(separator);
 			if (trim) {
-				tokens.add(tokenizer.nextToken().trim());
+				tokens.add(left.substring(0, index).trim());
 			}
 			else {
-				tokens.add(tokenizer.nextToken());
+				tokens.add(left.substring(0, index));
 			}
+			left = left.substring(index + separator.length());
 		}
+		tokens.add(left.substring(0));
 		return tokens;
 	}
 	
@@ -631,8 +650,7 @@ public class StringUtils {
 	}
 
 	/**
-	 * Chops everything after (and including) substring.  If multiple instances
-	 * of substring exist, throws.
+	 * Chops everything after (and including) substring. 
 	 * @param input
 	 * @param substring
 	 * @return
@@ -646,7 +664,6 @@ public class StringUtils {
 				index = value;
 			}
 		}
-		
 		
 		if (index == input.length()) {
 			return input;

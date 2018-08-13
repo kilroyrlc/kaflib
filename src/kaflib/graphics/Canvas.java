@@ -9,11 +9,15 @@ import java.util.List;
 import java.util.Set;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-import kaflib.gui.ImageCascade;
+import kaflib.graphics.GraphicsUtils.Rotation;
+import kaflib.gui.ImageComponent;
 import kaflib.types.Box;
+import kaflib.types.Byte;
 import kaflib.types.Coordinate;
 import kaflib.types.Percent;
+import kaflib.types.Worker;
 import kaflib.utils.CheckUtils;
 import kaflib.utils.GUIUtils;
 import kaflib.utils.MathUtils;
@@ -67,6 +71,14 @@ public class Canvas {
 			throw new Exception("Mismatched dimensions: " + 
 								toString() + " vs " + 
 								other.toString() + ".");
+		}
+	}
+	
+	public void addNoise(final Byte max) throws Exception {
+		for (int i = 0; i < getWidth(); i++) {
+			for (int j = 0; j < getHeight(); j++) {
+				pixels[i][j].addNoise(max);
+			}
 		}
 	}
 	
@@ -190,6 +202,14 @@ public class Canvas {
 	public void toFile(final File file) throws Exception {
 		GraphicsUtils.writePNG(toBufferedImage(), file);
 	}
+
+	public void toPNG(final File file) throws Exception {
+		GraphicsUtils.writePNG(toBufferedImage(), file);
+	}
+
+	public void toJPG(final File file) throws Exception {
+		GraphicsUtils.writeJPG(toBufferedImage(), file);
+	}
 	
 	public RGBPixel get(final Coordinate location) throws Exception {
 		return get(location.getX(), location.getY());
@@ -222,6 +242,135 @@ public class Canvas {
 		return pixels[0].length;
 	}
 
+	public static Canvas getRandomRotateMirror(final Canvas canvas) throws Exception {
+		int random = RandomUtils.randomInt(0, 3);
+		Canvas changed;
+		if (random == 0) {
+			changed = new Canvas(canvas);
+		}
+		else if (random == 1) {
+			changed = rotate(canvas, GraphicsUtils.Rotation.CLOCKWISE);
+		}
+		else if (random == 2) {
+			changed = rotate(canvas, GraphicsUtils.Rotation.ONE_EIGHTY);
+		}
+		else {
+			changed = rotate(canvas, GraphicsUtils.Rotation.COUNTERCLOCKWISE);
+		}
+		random = RandomUtils.randomInt(0, 2);
+		if (random == 0) {
+		}
+		else if (random == 1) {
+			changed = mirror(changed, false);
+		}
+		else {
+			changed = mirror(changed, true);
+		}
+		return changed;
+	}
+	
+	public static Canvas rotate(final Canvas image, 
+								final GraphicsUtils.Rotation rotation) throws Exception {
+		if (rotation == Rotation.CLOCKWISE) {
+			Canvas output = new Canvas(image.getHeight(), image.getWidth());
+			for (int i = 0; i < image.getWidth(); i++) {
+				for (int j = 0; j < image.getHeight(); j++) {
+					output.set(output.getWidth() - j - 1, i, image.get(i, j));
+				}
+			}
+			return output;
+		}
+		else if (rotation == Rotation.COUNTERCLOCKWISE) {
+			Canvas output = new Canvas(image.getHeight(), image.getWidth());
+			for (int i = 0; i < image.getWidth(); i++) {
+				for (int j = 0; j < image.getHeight(); j++) {
+					output.set(j, output.getHeight() - i - 1, image.get(i, j));
+				}
+			}
+			return output;			
+		}
+		else if (rotation == Rotation.ONE_EIGHTY) {
+			Canvas output = new Canvas(image.getWidth(), image.getHeight());
+			for (int i = 0; i < image.getWidth(); i++) {
+				for (int j = 0; j < image.getHeight(); j++) {
+					output.set(output.getWidth() - i - 1, output.getHeight() - j - 1, image.get(i, j));
+				}
+			}
+			return output;
+		}
+		else {
+			throw new Exception("Unsupported rotation: " + rotation + ".");
+		}
+	}
+
+	public static Canvas mirror(final Canvas image, 
+								final boolean horizontal) throws Exception {
+		int width = image.getWidth();
+		int height = image.getHeight();
+
+		Canvas output = new Canvas(image.getHeight(), image.getWidth());
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < image.getHeight(); j++) {
+				if (horizontal) {
+					output.set(width - i - 1, j, image.get(i, j));
+				}
+				else {
+					output.set(i, height - j - 1, image.get(i, j));
+				}
+			}
+		}
+		return output;
+	}
+	
+	/**
+	 * Draws the specified values of the canvas from the top left x, y.
+	 * @param topLeft
+	 * @param values
+	 * @throws Exception
+	 */
+	public void set(final Coordinate topLeft, final Canvas values) throws Exception {
+		for (int i = 0; i < values.getWidth(); i++) {
+			TypeUtils.copy(values.getColumn(i), 
+					       0, 
+					       pixels[i + topLeft.getX()], 
+					       topLeft.getY(), 
+					       values.getHeight());
+		}
+	}
+
+	public void set(final Box box, final RGBPixel value) throws Exception {
+		if (!box.isContained(getBounds())) {
+			throw new Exception("Box: " + box + " outside of " + getBounds() + ".");
+		}
+		for (int i = box.getXMin(); i <= box.getXMax(); i++) {
+			for (int j = box.getYMin(); j <= box.getYMax(); j++) {
+				pixels[i][j] = new RGBPixel(value);
+			}
+		}
+	}
+	
+	public void set(final Coordinate topLeft, 
+				    final Canvas values, 
+				    final int feather) throws Exception {
+		Box patch_bounds = values.getBounds();
+
+		for (int i = 0; i < values.getWidth(); i++) {
+			for (int j = 0; j < values.getHeight(); j++) {
+				int distance_from_edge = patch_bounds.getRiseRunToEdge(new Coordinate(i, j));
+				if (distance_from_edge < feather) {
+					Percent percent = new Percent(((distance_from_edge + 1) * 100) / feather);
+					pixels[i + topLeft.getX()][topLeft.getY() + j] = 
+							new RGBPixel(pixels[i + topLeft.getX()][topLeft.getY() + j],
+									     values.get(i, j),
+									     percent);
+				}
+				else {
+					pixels[i + topLeft.getX()][topLeft.getY() + j] = values.get(i, j);
+				}
+			}
+		}
+	}
+	
 	public void set(final Coordinate coordinate, final RGBPixel value) throws Exception {
 		if (!isValid(coordinate)) {
 			return;
@@ -255,6 +404,85 @@ public class Canvas {
 	}
 
 	/**
+	 * Returns a random new subcanvas.
+	 * @param width
+	 * @param height
+	 * @return
+	 * @throws Exception
+	 */
+	public Canvas getRandom(final int width, final int height) throws Exception {
+		return get(getRandomBox(width, height));
+	}
+	
+	/**
+	 * Returns a random box from the canvas with the specified height and 
+	 * width.
+	 * @param width
+	 * @param height
+	 * @return
+	 * @throws Exception
+	 */
+	public Box getRandomBox(final int width, final int height) throws Exception {
+		CheckUtils.checkRange(width, 1, getWidth());
+		CheckUtils.checkRange(height, 1, getHeight());
+		int x = 0;
+		int y = 0;
+
+		if (getWidth() > width) {
+			x = RandomUtils.randomInt(0, getWidth() - width - 1);
+		}
+		if (getHeight() > height) {
+			y = RandomUtils.randomInt(0, getHeight() - height - 1);
+		}
+		return new Box(x, width, y, height);
+	}
+	
+	/**
+	 * Creates a set of boxes that covers the canvas based on random start
+	 * points.  The boxes will overlap around the border.
+	 * @param width
+	 * @param height
+	 * @return
+	 * @throws Exception
+	 */
+	public Set<Box> getRandomCoverage(final int width, final int height, final int overlap) throws Exception {
+		Set<Box> set = new HashSet<Box>();
+
+		// Determine the top edge of all rows.
+		List<Integer> rows = new ArrayList<Integer>();	
+		rows.add(0);
+		rows.add(getHeight() - height - 1);
+		int y = RandomUtils.randomInt(0, getHeight() - height - 1);
+		rows.add(y);
+		// Go up until you go off map.
+		for (int j = y; j > 0; j -= (height - overlap)) {
+			rows.add(j);
+		}
+		// Go up until you go off map.
+		for (int j = y + height; j < getHeight() - height - 1; j += (height - overlap)) {
+			rows.add(j);
+		}
+		
+		// Rows determined, for each row, go left and right.
+		for (Integer j : rows) {
+			// Add the sides.
+			set.add(new Box(0, width, j, height));
+			set.add(new Box(getWidth() - 1 - width, getWidth(), j, height));
+			
+			int x = RandomUtils.randomInt(0, getWidth() - width - 1);
+			// Go left.
+			for (int i = x; i > 0; i -= (width - overlap)) {
+				set.add(new Box(i, width, j, height));
+			}
+			// Go right.
+			for (int i = x + width; i < getWidth() - width - 1; i += (width - overlap)) {
+				set.add(new Box(i, i + width, j, j + height));
+			}			
+		}
+		return set;
+	}
+	
+	/**
 	 * Applies one canvas to this one, using the opacity of the parameter to
 	 * determine how to blend.  The opacity of this layer remains as-is, and
 	 * is not factored into the blend.
@@ -270,6 +498,11 @@ public class Canvas {
 	    }		
 	}
 	
+	/**
+	 * Writes the canvas as an argb image.
+	 * @return
+	 * @throws Exception
+	 */
 	public BufferedImage toBufferedImage() throws Exception {
 
 	    BufferedImage image = new BufferedImage(pixels.length, 
@@ -283,10 +516,54 @@ public class Canvas {
 	    return image;
 	}
 	
+	/**
+	 * Resizes the canvas so the smaller dimensions match, then center
+	 * crops the longer dimension.
+	 * @param source
+	 * @param width
+	 * @param height
+	 * @return
+	 * @throws Exception
+	 */
 	public static Canvas fill(final Canvas source,
 							  final int width,
 							  final int height) throws Exception {
+		if (source.getWidth() == width && source.getHeight() == height) {
+			return source;
+		}
+		
 		return new Canvas(GraphicsUtils.fill(source.toBufferedImage(), width, height));
+	}
+	
+	/**
+	 * Scales the canvas until the width or height (if specified) reaches max.
+	 * @param canvas
+	 * @param maxWidth
+	 * @param maxHeight
+	 * @return
+	 * @throws Exception
+	 */
+	public static Canvas scaleTo(final Canvas canvas,
+								  final Integer maxWidth,
+								  final Integer maxHeight) throws Exception {
+		return new Canvas(GraphicsUtils.getScaled(canvas.toBufferedImage(), maxWidth, maxHeight));
+	}
+	
+	public static Canvas join(final Canvas... canvases) throws Exception {
+		int width = 0;
+		int height = 0;
+		for (Canvas canvas : canvases) {
+			width += canvas.getWidth();
+			height = Math.max(height, canvas.getHeight());
+		}
+		Canvas new_canvas = new Canvas(width, height);
+		int x_start = 0;
+		
+		for (Canvas canvas : canvases) {
+			new_canvas.set(new Coordinate(x_start, 0), canvas);
+			x_start += canvas.getWidth();
+		}
+		return new_canvas;
 	}
 	
 	/**
@@ -335,7 +612,7 @@ public class Canvas {
 			}
 		}
 		else {
-			CheckUtils.checkEquals(topLeft.getHeight(), bottomRight.getHeight(), "Height");
+			CheckUtils.checkEquals(topLeft.getWidth(), bottomRight.getWidth(), "Width");
 			canvas = new Canvas(topLeft.getWidth(),
 							    topLeft.getHeight() + bottomRight.getHeight() - margin);
 			// Copy non-margin top side.
@@ -378,20 +655,64 @@ public class Canvas {
 			if (file == null) {
 				System.exit(1);
 			}
-			Canvas canvas = new Canvas(file);
-			Canvas horizontal = Canvas.join(canvas, canvas, 0, true);
-			Canvas vertical = Canvas.join(canvas, canvas, 0, false);
-			Canvas blendedh = Canvas.join(vertical, vertical, 10, true);
-			Canvas blendedv = Canvas.join(horizontal, horizontal, 10, false);
-			ImageCascade cascade = new ImageCascade(canvas, horizontal, vertical, blendedh, blendedv);
-			frame.setContentPane(cascade);
+			final Canvas canvas = new Canvas(file);
+			Set<Box> boxes = canvas.getRandomCoverage(30, 30, 2);
+			for (Box box : boxes) {
+				canvas.set(box, RGBPixel.getRandomOpaque());
+			}
+			
+			final ImageComponent component = new ImageComponent(canvas);
+			JPanel panel = new JPanel();
+			panel.add(component);
+			frame.setContentPane(panel);
 			frame.pack();
 			frame.setVisible(true);
+			
+			Worker worker = new Worker() {
+				@Override
+				protected void process() throws Exception {
+					for (int i = 0; i < 5; i++) {
+						Thread.sleep(5000);
+						int size = RandomUtils.randomInt(25, 40);
+						
+						Set<Box> boxes = canvas.getRandomCoverage(size, size, 2);
+						for (Box box : boxes) {
+							canvas.set(box, RGBPixel.getRandomOpaque());
+						}
+						component.update(canvas);
+					}
+				}
+				
+			};
+			worker.start();
+			
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
 	}
+}
+
+class Modification {
+	enum Mirror {
+		NONE,
+		X,
+		Y
+	}
+	private final Rotation rotation;
+	private final Mirror mirror;
 	
+	public Modification(final Rotation rotation, final Mirror mirror) {
+		this.rotation = rotation;
+		this.mirror = mirror;
+	}
+	
+	public Rotation getRotation() {
+		return rotation;
+	}
+	
+	public Mirror getMirror() {
+		return mirror;
+	}
 }

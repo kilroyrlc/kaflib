@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Set;
 
 import kaflib.types.Coordinate;
-import kaflib.types.Pair;
 import kaflib.utils.CheckUtils;
 import kaflib.utils.StringUtils;
 
@@ -453,27 +452,27 @@ public class Selection extends SelectionCore {
 	 * @param approach
 	 * @throws Exception
 	 */
-	public static void dissolveLu(final Canvas canvas,
-								final Selection selection,
-								final Collection<Selection> selections,
-								final Approach approach) throws Exception {
-		List<Pair<Selection, Integer>> adjacent = new ArrayList<Pair<Selection, Integer>>();
-		
-		
-		for (Selection s : selection.getAdjacentSelections(selections)) {
-			
-			
-			//adjacent.add(new Pair<Selection, Integer>(s, value));
-		}
-		
-		
-		
-		while (selection.size() > 0) {
-			for (Coordinate coordinate : selection.getBorder()) {
-				
-			}
-		}
-	}
+//	public static void dissolveLu(final Canvas canvas,
+//								final Selection selection,
+//								final Collection<Selection> selections,
+//								final Approach approach) throws Exception {
+//		List<Pair<Selection, Integer>> adjacent = new ArrayList<Pair<Selection, Integer>>();
+//		
+//		
+//		for (Selection s : selection.getAdjacentSelections(selections)) {
+//			
+//			
+//			//adjacent.add(new Pair<Selection, Integer>(s, value));
+//		}
+//		
+//		
+//		
+//		while (selection.size() > 0) {
+//			for (Coordinate coordinate : selection.getBorder()) {
+//				
+//			}
+//		}
+//	}
 	
 //	public static Selection findBestMatch(final Canvas canvas,
 //										  final Coordinate coordinate,

@@ -21,14 +21,17 @@ public class Box {
 	protected final int y_min;
 	protected final int x_max;
 	protected final int y_max;
+	protected final int width;
+	protected final int height;
 	
-
-	public Box(final int xMin, final int xMax,
-			   final int yMin, final int yMax) throws Exception {
+	public Box(final int xMin, final int width,
+			   final int yMin, final int height) throws Exception {
 		x_min = xMin;
-		x_max = xMax;
+		x_max = xMin + width - 1;
 		y_min = yMin;
-		y_max = yMax;
+		y_max = yMin + height - 1;
+		this.width = width;
+		this.height = height;
 		
 		top_left = new Coordinate(x_min, y_min);
 		top_right = new Coordinate(x_max, y_min);
@@ -36,7 +39,8 @@ public class Box {
 		bottom_right = new Coordinate(x_max, y_max);
 		
 		if (x_min == x_max || y_min == y_max) {
-			throw new Exception("Invalid box bounds.");
+			throw new Exception("Invalid box bounds: " + x_min + "-" + x_max + 
+								" by " + y_min + "-" + y_max + ".");
 		}
 	}
 	
@@ -53,6 +57,8 @@ public class Box {
 		x_max = Coordinate.getMaxX(coordinates);
 		y_min = Coordinate.getMinY(coordinates);
 		y_max = Coordinate.getMaxY(coordinates);
+		width = x_max - x_min + 1;
+		height = y_max - y_min + 1;
 		
 		top_left = new Coordinate(x_min, y_min);
 		top_right = new Coordinate(x_max, y_min);
@@ -95,6 +101,18 @@ public class Box {
 	}
 
 	/**
+	 * Returns the rise or run to get to the nearest edge.
+	 * @param coordinate
+	 * @return
+	 * @throws Exception
+	 */
+	public int getRiseRunToEdge(final Coordinate coordinate) throws Exception {
+		int x = Math.min(Math.abs(coordinate.getX() - x_min), Math.abs(coordinate.getX() - x_max));
+		int y = Math.min(Math.abs(coordinate.getY() - y_min), Math.abs(coordinate.getY() - y_max));
+		return Math.min(x, y);
+	}
+	
+	/**
 	 * Returns whether or not the box contains the specified coordinate, 
 	 * inclusive.
 	 * @param coordinate
@@ -113,11 +131,11 @@ public class Box {
 	}
 	
 	public int getWidth() {
-		return x_max - x_min;
+		return width;
 	}
 	
 	public int getHeight() {
-		return y_max - y_min;
+		return height;
 	}
 	
 	public boolean isContained(final Box other) {
@@ -141,7 +159,7 @@ public class Box {
 		CheckUtils.checkAddOverflow(x_max, 1);
 		CheckUtils.checkSubOverflow(y_min, 1);
 		CheckUtils.checkAddOverflow(y_max, 1);
-		return new Box(x_min - 1, x_max + 1, y_min - 1, y_max + 1);
+		return new Box(x_min - 1, x_max - x_min + 1, y_min - 1, y_max - y_min + 1);
 	}
 	
 	/**
@@ -204,6 +222,16 @@ public class Box {
 		return "Box: " + getTopLeft() + getBottomRight();
 	}
 	
+	public Set<Coordinate> getCoordinates() {
+		Set<Coordinate> set = new HashSet<Coordinate>();
+		for (int i = x_min; i <= x_max; i++) {
+			for (int j = y_min; j <= y_max; j++) {
+				set.add(new Coordinate(i, j));
+			}
+		}
+		return set;
+	}
+	
 	/**
 	 * Return if the coordinate is in one of the bounds.
 	 * @param coordinate
@@ -219,6 +247,48 @@ public class Box {
 		else {
 			return false;
 		}
+	}
+	
+	/**
+	 * Returns a new box that slides within the boundary if it exceeds it.
+	 * @param box
+	 * @param boundary
+	 * @return
+	 * @throws Exception
+	 */
+	public static final Box slideInbounds(final Box box, final Box boundary) throws Exception {
+		if (box.getWidth() > boundary.getWidth() || box.getHeight() > boundary.getHeight()) {
+			throw new Exception("Box " + box + " larger than boundary " + boundary + ".");
+		}
+		int x_min;
+		int x_max;
+		int y_min;
+		int y_max;
+
+		if (box.getXMin() < boundary.getXMin() && box.getXMax() < boundary.getXMax()) {
+			x_min = boundary.getXMin();
+			x_max = x_min + box.getWidth();
+		}
+		else if (box.getXMin() < boundary.getXMin() && box.getXMax() < boundary.getXMax()) {
+			x_min = boundary.getXMax() - box.getWidth();
+			x_max = boundary.getXMax();
+		}
+		else {
+			throw new Exception("Invalid x boundaries: " + box + ", " + boundary + ".");
+		}
+
+		if (box.getYMin() < boundary.getYMin() && box.getYMax() < boundary.getYMax()) {
+			y_min = boundary.getYMin();
+			y_max = y_min + box.getWidth();
+		}
+		else if (box.getYMin() < boundary.getYMin() && box.getYMax() < boundary.getYMax()) {
+			y_min = boundary.getYMax() - box.getWidth();
+			y_max = boundary.getYMax();
+		}
+		else {
+			throw new Exception("Invalid y boundaries: " + box + ", " + boundary + ".");
+		}
+		return new Box(x_min, x_max - x_min, y_min, y_max - y_min);
 	}
 	
 	/**
@@ -253,7 +323,7 @@ public class Box {
 			return null;
 		}
 		
-		return new Box(x_min, x_max, y_min, y_max);
+		return new Box(x_min, x_max - x_min, y_min, y_max - y_min);
 	}
 	
 	/**
@@ -268,7 +338,7 @@ public class Box {
 		int x_max = Math.max(box.getXMax(), coordinate.getX());
 		int y_min = Math.min(box.getYMin(), coordinate.getY());
 		int y_max = Math.max(box.getYMax(), coordinate.getY());
-		return new Box(x_min, x_max, y_min, y_max);
+		return new Box(x_min, x_max - x_min, y_min, y_max - y_min);
 	}
 	
 	/**

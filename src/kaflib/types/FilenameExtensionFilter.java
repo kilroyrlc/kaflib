@@ -29,7 +29,7 @@ public class FilenameExtensionFilter implements FilenameFilter {
 	@Override
 	public boolean accept(File dir, String name) {
 		for (String extension : extensions) {
-			if (name.endsWith("." + extension)) {
+			if (name.toLowerCase().endsWith("." + extension.toLowerCase())) {
 				return true;
 			}
 		}

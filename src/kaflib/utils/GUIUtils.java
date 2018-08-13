@@ -45,6 +45,7 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.filechooser.FileFilter;
 
 import kaflib.types.Pair;
 
@@ -164,6 +165,36 @@ public class GUIUtils {
 		
 		return field;
 	}
+
+	/**
+	 * Returns a numeric field.
+	 * @param columns
+	 * @return
+	 * @throws Exception
+	 */
+	public static JFormattedTextField getNumberField(int columns) throws Exception {
+		return getNumberField(columns, -1, -1);
+	}
+	
+	/**
+	 * Returns a numeric field.
+	 * @param columns
+	 * @param maxWidth
+	 * @param maxHeight
+	 * @return
+	 * @throws Exception
+	 */
+	public static JFormattedTextField getNumberField(int columns, int maxWidth, int maxHeight) throws Exception {
+		JFormattedTextField field = new JFormattedTextField(NumberFormat.getIntegerInstance());
+		field.setValue(0);
+		field.setColumns(columns);
+		
+		if (maxWidth > 0 && maxHeight > 0) {
+			field.setMaximumSize(new Dimension(maxWidth, maxHeight));
+		}
+		
+		return field;
+	}
 	
 	/**
 	 * Returns an empty border.
@@ -245,9 +276,19 @@ public class GUIUtils {
 			return null;
 		}
 	}
-	
+
+	public static Set<File> chooseFiles(final Component parent) {
+		return chooseFiles(parent, null, null);
+	}
+
 	public static Set<File> chooseFiles(final Component parent,
 										final File startingDirectory) {
+		return chooseFiles(parent, startingDirectory, null);
+	}
+	
+	public static Set<File> chooseFiles(final Component parent,
+										final File startingDirectory,
+										final FileFilter filter) {
 		JFileChooser chooser;
 		Set<File> files = new HashSet<File>();
 		if (startingDirectory != null && 
@@ -264,6 +305,9 @@ public class GUIUtils {
 		}
 		chooser.setMultiSelectionEnabled(true);
 		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		if (filter != null) {
+			chooser.setFileFilter(filter);
+		}
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
 			for (File file : chooser.getSelectedFiles()) {
 				if (file != null && file.exists()) {

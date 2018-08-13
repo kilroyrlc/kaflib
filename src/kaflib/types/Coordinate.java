@@ -81,8 +81,7 @@ public class Coordinate {
 	 * @return
 	 * @throws Exception
 	 */
-	public int getDistanceSquared(Coordinate other) throws Exception {
-		CheckUtils.check(other, "other coord");
+	public int getDistanceSquared(final Coordinate other) {
 		
 		return ((other.getX() - x) * (other.getX() - x)) +
  			   ((other.getY() - y) * (other.getY() - y));
@@ -450,6 +449,16 @@ public class Coordinate {
 			}
 		}
 		return y;
+	}
+
+	public static Coordinate getRandom(final Box box) throws Exception {
+		return getRandom(box.getXMin(), box.getXMax(), box.getYMin(), box.getYMax());
+	}
+	
+	public static Coordinate getRandom(final int xMin, final int xMax, 
+									   final int yMin, final int yMax) throws Exception {
+		return new Coordinate(RandomUtils.randomInt(xMin, xMax),
+							  RandomUtils.randomInt(yMin, yMax));
 	}
 	
 }

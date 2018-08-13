@@ -128,6 +128,17 @@ public class FileUtils {
 		workbook.close();
 		return matrices;
 	}
+
+	public static File changeExtension(final File file, 
+										 final String newExtension) throws Exception {
+		String name = getFilenameWithoutExtension(file);
+		if (newExtension.startsWith(".")) {
+			return new File(file.getParentFile(), name + newExtension);
+		}
+		else {
+			return new File(file.getParentFile(), name + "." + newExtension);
+		}
+	}
 	
 	public static String changeType(final String path, final String newExtension) throws Exception {
 		int index = path.lastIndexOf('.');
@@ -607,7 +618,10 @@ public class FileUtils {
 	 * @throws Exception
 	 */
 	public static String getExtension(final File file) throws Exception {
-		String name = file.getName();
+		return getExtension(file.getName());
+	}
+	
+	public static String getExtension(final String name) throws Exception {
 		if (name == null || name.lastIndexOf('.') < 0) {
 			return null;
 		}

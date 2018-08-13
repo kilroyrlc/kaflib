@@ -123,9 +123,39 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 		}
 	}
 
+	public RGBPixel(final RGBPixel a, 
+					final RGBPixel b, 
+					final Percent pctA) throws Exception {
+		super(Opacity.OPAQUE);
+		this.r = Byte.combine(a.getR(), b.getR(), pctA);
+		this.g = Byte.combine(a.getG(), b.getG(), pctA);
+		this.b = Byte.combine(a.getB(), b.getB(), pctA);
+	}
+	
 	
 	public Byte getLuminance() {
 		return GraphicsUtils.getLuminance(r, g, b);
+	}
+	
+	public void addNoise(final Byte max) throws Exception {
+		if (RandomUtils.randomBoolean()) {
+			r.addOrMax(Byte.random(max));
+		}
+		else {
+			r.subOrMin(Byte.random(max));
+		}
+		if (RandomUtils.randomBoolean()) {
+			g.addOrMax(Byte.random(max));
+		}
+		else {
+			g.subOrMin(Byte.random(max));
+		}
+		if (RandomUtils.randomBoolean()) {
+			b.addOrMax(Byte.random(max));
+		}
+		else {
+			b.subOrMin(Byte.random(max));
+		}
 	}
 	
 	public void lighten(final Byte value) {

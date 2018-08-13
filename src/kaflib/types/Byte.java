@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import kaflib.utils.CheckUtils;
+import kaflib.utils.RandomUtils;
 
 /**
  * Defines an 8-bit unsigned type.
@@ -154,6 +155,10 @@ public class Byte implements Comparable<Byte> {
 		else {
 			return 0;
 		}
+	}
+	
+	public static Byte random(final Byte max) throws Exception {
+		return new Byte(RandomUtils.randomInt(0, max.getValue()));
 	}
 	
 	public static int or(final int i, final Byte b) {

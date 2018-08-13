@@ -6,7 +6,6 @@ import java.io.File;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import kaflib.graphics.transform.AverageFilter;
 import kaflib.graphics.transform.CompositeTransforms;
 import kaflib.gui.ImageComponent;
 
