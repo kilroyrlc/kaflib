@@ -91,6 +91,18 @@ public class DateUtils {
 	 * @return
 	 * @throws Exception
 	 */
+	public static String getYYYYMM(final Date date, 
+									final String separator) throws Exception {
+		SimpleDateFormat format = new SimpleDateFormat("yyyy" + separator + "MM");
+		return format.format(date);
+	}
+	
+	/**
+	 * Returns the date as month/day/year with the supplied separator.
+	 * @param date
+	 * @return
+	 * @throws Exception
+	 */
 	public static String getMMDDYYYY(final Date date, 
 									 final String separator) throws Exception {
 		SimpleDateFormat format = new SimpleDateFormat("MM" + separator + "dd" + separator + "yyyy");

@@ -32,7 +32,7 @@ public class KeyStore {
 		if (FileUtils.getExtension(input).equals(AESUtils.DEFAULT_FILE_EXTENSION)) {
 			throw new Exception("Cannot encrypt " + input + ".");
 		}
-		return AESUtils.doubleEncrypt(input, keys);
+		return AESUtils.encrypt(input, AESUtils.DEFAULT_FILE_EXTENSION, keys);
 	}
 	
 	public File decrypt(final File input) throws Exception {
@@ -43,6 +43,6 @@ public class KeyStore {
 		if (!FileUtils.getExtension(input).equals(AESUtils.DEFAULT_FILE_EXTENSION)) {
 			throw new Exception("Cannot decrypt " + input + ".");
 		}
-		return AESUtils.doubleDecrypt(input, keys);
+		return AESUtils.decrypt(input, AESUtils.DEFAULT_FILE_EXTENSION, keys);
 	}
 }

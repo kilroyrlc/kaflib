@@ -73,7 +73,7 @@ public class Projection {
 		}
 		
 		if (last == null && projected == null) {
-			return null;
+			return new Float(0);
 		}
 		else if (last != null && projected != null) {
 			expected = (last + projected) / 2;

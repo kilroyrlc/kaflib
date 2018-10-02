@@ -39,6 +39,8 @@ import java.util.Set;
 
 import org.apache.poi.util.IOUtils;
 
+import kaflib.types.Pair;
+
 /**
  * Contains utilities for various Java data types.
  */
@@ -450,4 +452,46 @@ public class TypeUtils {
 		}
 		System.arraycopy(source, sourceIndex, dest, destIndex, length);
 	}
+	
+	public static Integer max(final Collection<Integer> values) {
+		Integer max = null;
+		for (Integer t : values) {
+			if (max == null || t > max) {
+				max = t;
+			}
+		}
+		return max;
+	}
+	
+	/**
+	 * Concatenates the byte arrays.
+	 * @param arrays
+	 * @return
+	 * @throws Exception
+	 */
+	public static byte[] concatenate(final byte[]... arrays) throws Exception {
+        int length = 0;
+        for (byte[] array : arrays) {
+            length += array.length;
+        }
+
+        byte[] result = new byte[length];
+
+        int position = 0;
+        for (final byte[] array : arrays) {
+            System.arraycopy(array, 0, result, position, array.length);
+            position += array.length;
+        }
+        return result;
+	}
+	
+	public static Pair<byte[], byte[]> split(final byte array[], final int firstSize) throws Exception {
+		CheckUtils.checkRange(firstSize, 0, array.length, "split location");
+		byte a[] = new byte[firstSize];
+		byte b[] = new byte[array.length - firstSize];
+		System.arraycopy(array, 0, a, 0, firstSize);
+		System.arraycopy(array, firstSize, b, 0, array.length - firstSize);
+		return new Pair<byte[], byte[]>(a, b);
+	}
+	
 }

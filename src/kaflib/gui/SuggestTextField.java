@@ -18,16 +18,16 @@ public class SuggestTextField extends JTextField {
 	
 	/**
 	 * Create the panel.
-	 * @param label
+	 * @param defaultValue
 	 * @param width
 	 * @param window
 	 * @param words
 	 */
-	public SuggestTextField(final String label, 
+	public SuggestTextField(final String defaultValue, 
 									final int width, 
 									final Window window,
 									final WordTrie words) throws Exception {
-		super(label, width);
+		super(defaultValue, width);
 		this.words = words;
 		
         suggestor = new Suggestor(this, 

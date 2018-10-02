@@ -128,7 +128,7 @@ public class Suggestor {
 		suggestion_panel = new JPanel();
 		suggestion_panel.setLayout(new GridLayout(0, 1));
 		suggestion_panel.setBackground(popUpBackground);
-
+		
 		addKeyBindingToRequestFocusInPopUpWindow();
 	}
 
@@ -258,6 +258,8 @@ public class Suggestor {
 			value += parent.getX();
 			parent = parent.getParent();
 		}
+		value += container.getX();
+
 		return value;
 	}
 	
@@ -268,10 +270,17 @@ public class Suggestor {
 			value += parent.getY();
 			parent = parent.getParent();
 		}
+		value += container.getY();
 		return value;
+	}
+
+	private void hide() {
+		suggestion_popup.setVisible(false);
 	}
 	
 	private void showPopUpWindow() {
+		requestVisible(this);
+		
 		suggestion_popup.getContentPane().add(suggestion_panel);
 		suggestion_popup.setMinimumSize(new Dimension(text_field.getWidth(), 30));
 		suggestion_popup.setSize(tW, tH);
@@ -280,13 +289,10 @@ public class Suggestor {
 		int windowX = 0;
 		int windowY = 0;
 		
-		//windowX = container.getX() + text_field.getX() + 5;
 		windowX = getAbsoluteX();
 		if (suggestion_panel.getHeight() > suggestion_popup.getMinimumSize().height) {
-			//windowY = container.getY() + text_field.getY() + text_field.getHeight() + suggestion_popup.getMinimumSize().height;
 			windowY = getAbsoluteY() + text_field.getHeight();
 		} else {
-			//windowY = container.getY() + text_field.getY() + text_field.getHeight() + suggestion_popup.getHeight();
 			windowY = getAbsoluteY() + text_field.getHeight();
 		}
 
@@ -294,7 +300,6 @@ public class Suggestor {
 		suggestion_popup.setMinimumSize(new Dimension(text_field.getWidth(), 30));
 		suggestion_popup.revalidate();
 		suggestion_popup.repaint();
-
 	}
 
 	/**
@@ -390,6 +395,16 @@ public class Suggestor {
             }
         });
 	}
+
+	private static Suggestor open_suggestor = null;
+	
+	private static void requestVisible(final Suggestor suggestor) {
+		if (open_suggestor != null) {
+			open_suggestor.hide();
+		}
+		open_suggestor = suggestor;
+	}
+	
 }
 
 class SuggestionLabel extends JLabel {

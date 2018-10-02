@@ -8,7 +8,6 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.crypto.SecretKey;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -25,6 +24,7 @@ import kaflib.types.Worker;
 import kaflib.utils.AESUtils;
 import kaflib.utils.CheckUtils;
 import kaflib.utils.FileUtils;
+import kaflib.utils.KeyPair;
 import kaflib.utils.TypeUtils;
 
 /**
@@ -53,8 +53,7 @@ public class FileCrypto {
 	private File file;
 	private String file_extension;
 	
-	private SecretKey outer_key;
-	private SecretKey inner_key;
+	private KeyPair keys;
 	private Mutex mutex;
 	
 	/**
@@ -143,12 +142,9 @@ public class FileCrypto {
 			return;
 		}
 		
-		if (outer_key == null && inner_key == null) {
+		if (keys == null) {
 			try {
-				outer_key = AESUtils.generateKey(outer.getText(), 
-												 inner.getText().substring(0, AESUtils.SALT_LENGTH).getBytes("UTF-8"));
-				inner_key = AESUtils.generateKey(inner.getText(), 
-						 						 outer.getText().substring(0, AESUtils.SALT_LENGTH).getBytes("UTF-8"));
+				keys = new KeyPair(outer.getText(), inner.getText());
 				
 				outer.clear();
 				outer.setEnabled(false);
@@ -235,7 +231,7 @@ public class FileCrypto {
 	 * @return
 	 */
 	private boolean checkPasswords() {
-		if (outer_key != null && inner_key != null) {
+		if (keys == null) {
 			return true;
 		}
 		
@@ -280,8 +276,7 @@ public class FileCrypto {
 		setKeys();
 		
 		try {
-			CheckUtils.check(outer_key, "outer key");
-			CheckUtils.check(inner_key, "inner key");
+			CheckUtils.check(keys, "keys");
 			boolean proceed = true;
 			
 			Pair<Boolean, Set<File>> files = getFiles();
@@ -319,16 +314,10 @@ public class FileCrypto {
 					}
 					try {
 						if (files.getFirst()) {
-							AESUtils.doubleEncrypt(f, 
-												   file_extension, 
-												   outer_key, 
-												   inner_key);
+							AESUtils.encrypt(f, file_extension, keys);
 						}
 						else {
-							AESUtils.doubleDecrypt(f,
-												   file_extension, 
-												   outer_key, 
-												   inner_key);
+							AESUtils.decrypt(f, file_extension, keys);
 						}
 					}
 					catch (Exception e) {

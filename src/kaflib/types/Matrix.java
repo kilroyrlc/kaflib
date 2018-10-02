@@ -64,7 +64,10 @@ public class Matrix<T> implements MatrixNavigator<T> {
 	public Matrix(final int rows, final int columns) {
 		matrix = new ArrayList<ArrayList<T>>(columns);
 		for (int i = 0; i < rows; i++) {
-			matrix.set(i, new ArrayList<T>(rows));
+			matrix.add(new ArrayList<T>(rows));
+			for (int j = 0; j < columns; j++) {
+				matrix.get(i).add(null);
+			}
 		}
 	}
 	
@@ -128,6 +131,18 @@ public class Matrix<T> implements MatrixNavigator<T> {
 		return list;
 	}
 	
+	public Coordinate getNextEmptyByColumn() throws Exception {
+		for (int i = 0; i < getColumnCount(); i++) {
+			for (int j = 0; j < getRowCount(); j++) {
+				if (get(j, i) == null) {
+					return new Coordinate(i, j);
+				}
+			}
+		}
+		return null;
+	}
+	
+	
 	/**
 	 * Sets the specified matrix cell to the given value.  Pads empty values
 	 * until the specified row and column is reached.
@@ -150,6 +165,17 @@ public class Matrix<T> implements MatrixNavigator<T> {
 		}
 		target_row.set(column, value);
 	}
+	
+	public void set(Coordinate coordinate, T value) throws Exception {
+		set(coordinate.getY(), coordinate.getX(), value);
+	}
+	
+	public void set(Collection<Coordinate> coordinates, T value) throws Exception {
+		for (Coordinate c : coordinates) {
+			set(c.getY(), c.getX(), value);
+		}
+	}
+	
 	
 	/**
 	 * Returns whether or not the given index is within range.

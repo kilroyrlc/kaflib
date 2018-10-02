@@ -78,11 +78,10 @@ public class ImageEditor {
 		panel.add(input_pane, BorderLayout.EAST);
 		
 		frame.add(panel);
-		frame.pack();
-		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
+		
 	}
 	
 	/**
@@ -104,7 +103,7 @@ public class ImageEditor {
 			panel.add(new JLabel("Label b"));
 			panel.add(new JLabel("Label c"));
 			
-			ImageEditor editor = new ImageEditor(new File("flag.jpg"));
+			ImageEditor editor = new ImageEditor(new File("data/flag.jpg"));
 			editor.show();
 		}
 		catch (Exception e) {

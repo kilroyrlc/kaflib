@@ -27,10 +27,11 @@ import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.StringTokenizer;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -544,6 +545,11 @@ public class StringUtils {
 		}
 	}
 	
+	public static List<String> split(final String string, final String regex) throws Exception {
+		String tokens[] = string.split(regex);
+		return Arrays.asList(tokens);
+	}
+	
 	/**
 	 * Splits the string based on the given separator.
 	 * @param string
@@ -958,6 +964,19 @@ public class StringUtils {
 		return new String(buffer);
 	}
 
+	public static<K, V> String toString(final Map<K, V> map) throws Exception {
+		StringBuffer buffer = new StringBuffer();
+		for (K k : map.keySet()) {
+			if (map.get(k) == null) {
+				buffer.append(k.toString() + ": null\n");
+			}
+			else {
+				buffer.append(k.toString() + ": " + map.get(k).toString() + "\n");
+			}
+		}
+		return new String(buffer);
+	}
+	
 	/**
 	 * Reads the stream to a utf8 string.
 	 * @param stream
@@ -967,5 +986,23 @@ public class StringUtils {
 	public static String read(final InputStream stream) throws Exception {
 		return new String(TypeUtils.read(stream), "UTF-8");
 	}
+
+	
+	private final static char[] hexArray = "0123456789abcdef".toCharArray();
+	/**
+	 * Writes the bytes to a hex string.
+	 * @param bytes
+	 * @return
+	 */
+	public static String toHex(final byte bytes[]) {
+	    char[] chars = new char[bytes.length * 2];
+	    for ( int j = 0; j < bytes.length; j++ ) {
+	        int v = bytes[j] & 0xFF;
+	        chars[j * 2] = hexArray[v >>> 4];
+	        chars[j * 2 + 1] = hexArray[v & 0x0F];
+	    }
+	    return new String(chars);
+	}
 	
 }
+

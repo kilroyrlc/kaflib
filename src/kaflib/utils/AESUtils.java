@@ -1,19 +1,10 @@
 package kaflib.utils;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.security.AlgorithmParameters;
 import java.security.spec.KeySpec;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -33,343 +24,146 @@ public class AESUtils {
 	public static final int SALT_LENGTH = 8;
 	public static final int MAX_FILENAME_LENGTH = 72;
 	
-	/**
-	 * Encrypts the specified file set using two separate passwords, that salt
-	 * each other.  Output files get a specified extension.
-	 * @param files
-	 * @param inner
-	 * @param outer
-	 * @throws Exception
-	 */
-	public static void doubleEncrypt(final Set<File> files,
-									 final String outputFileExtension,
-									 final String outerPassword, 
-									 final String innerPassword) throws Exception {
-		// Generate keys, statically salted by the opposite.
-		SecretKey outer = generateKey(outerPassword, innerPassword.substring(0, SALT_LENGTH).getBytes("UTF-8"));
-		SecretKey inner = generateKey(innerPassword, outerPassword.substring(0, SALT_LENGTH).getBytes("UTF-8"));
-		
-		for (File file : files) {
-			doubleEncrypt(file, outputFileExtension, outer, inner);
-		}
-	}
-
-	public static File doubleEncrypt(final File file,
-									 final KeyPair keys) throws Exception {
-		return doubleEncrypt(file, DEFAULT_FILE_EXTENSION, keys.getOuter(), keys.getInner());
-	}
-	
-	public static File doubleEncrypt(final File file,
-									 final String outputFileExtension,
-									 final KeyPair keys) throws Exception {
-		return doubleEncrypt(file, outputFileExtension, keys.getOuter(), keys.getInner());
-	}
-	
-	public static File doubleEncrypt(final File file,
-									 final String outputFileExtension,
-									 final SecretKey outerKey, 
-									 final SecretKey innerKey) throws Exception {
-		if (file.getName().endsWith(outputFileExtension)) {
-			System.out.println("Skipping encrypted file: " + file + ".");
-			return null;
-		}
-		
-		File temp = encrypt(file, true, null, outerKey, 1000000000);
-		File output = encrypt(temp, false, outputFileExtension, innerKey, 1000000000);
-		temp.delete();
-		file.delete();
-		return output;
-	}
-				
-	public static void doubleDecrypt(final Set<File> files,
-			 						 final String inputFileExtension,
-									 final String outerPassword, 
-									 final String innerPassword) throws Exception {
-		// Generate keys, statically salted by the opposite.
-		SecretKey outer = generateKey(outerPassword, innerPassword.substring(0, SALT_LENGTH).getBytes("UTF-8"));
-		SecretKey inner = generateKey(innerPassword, outerPassword.substring(0, SALT_LENGTH).getBytes("UTF-8"));
-
-		for (File file : files) {
-			if (!file.getName().endsWith(inputFileExtension)) {
-				continue;
-			}
-			doubleDecrypt(file, inputFileExtension, outer, inner);
-		}
-	}
-	
-	public static File doubleDecrypt(final File file,
-			 final KeyPair keys) throws Exception {
-		return doubleDecrypt(file, false, DEFAULT_FILE_EXTENSION, keys.getOuter(), keys.getInner());
-	}
-	
-	public static File doubleDecrypt(final File file,
-			 						 final boolean keepOriginal,
-									 final KeyPair keys) throws Exception {
-		return doubleDecrypt(file, keepOriginal, DEFAULT_FILE_EXTENSION, keys.getOuter(), keys.getInner());
-	}
-
-	public static File doubleDecrypt(final File file,
-			 						 final boolean keepOriginal,
-									 final String extension,
-									 final KeyPair keys) throws Exception {
-		return doubleDecrypt(file, keepOriginal, extension, keys.getOuter(), keys.getInner());
-	}
-
-
-	public static File doubleDecrypt(final File file,
-									 final String extension,
-									 final SecretKey outerKey, 
-									 final SecretKey innerKey) throws Exception {
-		return doubleDecrypt(file, false, extension, outerKey, innerKey);
-	}
-
-	public static File doubleDecrypt(final File file,
-									 final boolean keepOriginal,
-									 final String extension,
-									 final SecretKey outerKey, 
-									 final SecretKey innerKey) throws Exception {
-		if (!file.getName().endsWith(extension)) {
-			System.out.println("Skipping non-encrypted file: " + file + ".");
-			return null;
-		}
-		File temp = decrypt(file, false, extension, innerKey);
-		File output = decrypt(temp, true, null, outerKey);
-		
-		temp.delete();
-		if (!keepOriginal) {
-			file.delete();
-		}
-		return output;
-	}
 	
 	
 	/**
-	 * Encrypt the specified input file, using the given key.  The output file
-	 * will be named the b64 encoding of the input, the IV will be written to
-	 * the beginning of the output file.
+	 * Encrypts the file and its name to a new file with the specified extension.
 	 * @param in
-	 * @param key
-	 * @param maxLength
-	 * @throws Exception
-	 */
-	public static File encrypt(final File in, 
-							   final boolean encryptName,
-							   final String outputExtension,
-							   final SecretKey key,
-							   final int maxLength) throws Exception {
-		String outname = in.getName();
-		
-		if (encryptName) {
-			outname = encryptAESECBToBase64(in.getName().getBytes("UTF-8"), key);
-			if (outname.length() > MAX_FILENAME_LENGTH) {
-				throw new Exception("B64 name for " + in + " is: " + outname + ".");
-			}
-		}
-		
-		File out;
-		if (outputExtension == null || outputExtension.length() == 0) {
-			out = new File(in.getParentFile(), outname);
-		}
-		else {
-			out = new File(in.getParentFile(), outname + "." + outputExtension);
-		}
-		byte plaintext[] = FileUtils.read(in, maxLength);
-						
-		// Encrypt source file.
-		Pair<byte[], byte[]> ciphertext = encryptAESCBC(plaintext, key);
-		plaintext = null;
-		System.gc();
-		
-		FileOutputStream ostream = new FileOutputStream(out);
-		ostream.write(ciphertext.getFirst());
-		ostream.write(ciphertext.getSecond());
-		ostream.close();
-		return out;
-	}
-	
-	public static void encryptObject(final Serializable object, 
-	   		  final File file, 
-	   		  final SecretKey key) throws Exception {
-
-		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-		ObjectOutputStream ostream = new ObjectOutputStream(bytes);
-		try {
-			ostream.writeObject(object);
-			AESUtils.encrypt(bytes.toByteArray(), file, key);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		finally {
-			bytes.close();
-			ostream.close();
-		}
-
-	}
-	
-	public static void encryptObjects(final Collection<Serializable> objects, 
-							   		  final File file, 
-							   		  final SecretKey key) throws Exception {
-		
-		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-		ObjectOutputStream ostream = new ObjectOutputStream(bytes);
-		try {
-			for (Serializable object : objects) {
-				ostream.writeObject(object);
-			}
-			
-			AESUtils.encrypt(bytes.toByteArray(), file, key);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		finally {
-			bytes.close();
-			ostream.close();
-		}
-
-	}
-	
-	public static Object decryptObject(final File file, final SecretKey key) throws Exception {
-		ByteArrayInputStream bytes = new ByteArrayInputStream(AESUtils.decrypt(file, key));
-		ObjectInputStream ostream = new ObjectInputStream(bytes);
-		Object object = null;
-		try {
-			object = ostream.readObject();
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		finally {
-			bytes.close();
-			ostream.close();
-		}
-		return object;
-
-	}
-		
-	public static List<Object> decryptObjects(final File file, final SecretKey key) throws Exception {
-		ByteArrayInputStream bytes = new ByteArrayInputStream(AESUtils.decrypt(file, key));
-		ObjectInputStream ostream = new ObjectInputStream(bytes);
-		List<Object> objects = new ArrayList<Object>();
-		try {
-			Object object = ostream.readObject();
-			while (object != null) {
-				objects.add(object);
-				object = ostream.readObject();
-			}
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		finally {
-			bytes.close();
-			ostream.close();
-		}
-		return objects;
-
-	}
-	
-	/**
-	 * Encrypt the specified data, using the given key.  The IV will be written to
-	 * the beginning of the output file.
-	 * @param in
-	 * @param key
-	 * @param maxLength
-	 * @throws Exception
-	 */
-	public static File encrypt(final byte in[],
-							   final File out,
-							   final SecretKey key) throws Exception {
-		CheckUtils.check(out, "output file");
-		
-		// Encrypt source file.
-		Pair<byte[], byte[]> ciphertext = encryptAESCBC(in, key);
-		
-		FileOutputStream ostream = new FileOutputStream(out);
-		ostream.write(ciphertext.getFirst());
-		ostream.write(ciphertext.getSecond());
-		ostream.close();
-		return out;
-	}
-
-	/**
-	 * Decrypts the specified file, using the given key.
-	 * @param in
+	 * @param outputExtension
 	 * @param key
 	 * @return
 	 * @throws Exception
 	 */
-	public static File decrypt(final File in, 
-							   final boolean decryptName,
-							   final String extension, 
-							   final SecretKey key) throws Exception {
-		if (in.length() > Integer.MAX_VALUE) {
-			throw new Exception("Input file longer than int max.");
-		}	
-		int data_length = (int)in.length() - IV_LENGTH;
+	public static File encrypt(final File in,
+							   final String outputExtension,
+							   final KeyPair keys) throws Exception {
+		if (outputExtension.contains(".")) {
+			throw new Exception("Chars only in extension.");
+		}
 		
-		FileInputStream instream = new FileInputStream(in);
+		if (in.getName().endsWith(outputExtension)) {
+			throw new Exception("Cannot encrypt encrypted file: " + in + ".");
+		}
+		
+		String outname = encryptAESECBToBase64(in.getName().getBytes("UTF-8"), keys.getOuter());
+		if (outname.length() > MAX_FILENAME_LENGTH) {
+			throw new Exception("B64 name for " + in + " is: " + outname + ".");
+		}
+		outname += "." + outputExtension;
+		File out = new File(in.getParentFile(), outname);
+		encrypt(out, in, true, keys);
+		return out;
+	}
+	
 
+	public static void encrypt(final File out,
+							   final File in,
+							   final KeyPair keys) throws Exception {
+		encrypt(out, in, false, keys);
+	}
+	
+	public static void encrypt(final File out,
+							   final File in,
+							   final boolean deleteInput,
+							   final KeyPair keys) throws Exception {
+		CheckUtils.check(in, "input file");
+		byte buffer[] = FileUtils.read(in, null);
+		
+		encrypt(out, buffer, keys);
+		
+		if (deleteInput) {
+			in.delete();
+		}
+		
+	}
+
+	public static void encrypt(final File out,
+							   final byte[] buffer,
+							   final KeyPair keys) throws Exception {
+		// Encrypt source file.
+		Pair<byte[], byte[]> ciphertext = encryptAESCBC(buffer, keys.getOuter());
+		byte temp[] = TypeUtils.concatenate(ciphertext.getFirst(), ciphertext.getSecond());
+		ciphertext = null;
+		ciphertext = encryptAESCBC(temp, keys.getInner());
+
+		FileOutputStream ostream = new FileOutputStream(out);
+		ostream.write(ciphertext.getFirst());
+		ostream.write(ciphertext.getSecond());
+		ostream.close();
+	}
+	
+	public static String decryptName(final File in,
+									final String outputExtension,
+									final KeyPair keys) throws Exception {
+		if (!in.getName().endsWith(outputExtension)) {
+			throw new Exception("File not encrypted: " + in + ".");
+		}
+
+		String name = FileUtils.getFilenameWithoutExtension(in);
+		return new String(decryptBase64AESECB(name, keys.getOuter()));
+	}
+	
+	
+	public static File decrypt(final File in,
+							   final String outputExtension,
+							   final KeyPair keys) throws Exception {
+		if (!in.getName().endsWith(outputExtension)) {
+			throw new Exception("File not encrypted: " + in + ".");
+		}
+		
+		String name = FileUtils.getFilenameWithoutExtension(in);
+		File out;
+		out = new File(in.getParentFile(), new String(decryptBase64AESECB(name, keys.getOuter())));
+
+		decrypt(out, in, true, keys);
+		return out;
+	}
+	
+
+	public static void decrypt(final File out,
+							   final File in, 
+							   final KeyPair keys) throws Exception {
+		decrypt(out, in, false, keys);
+	}
+	
+	public static void decrypt(final File out,
+							   final File in, 
+							   final boolean deleteInput,
+							   final KeyPair keys) throws Exception {
+		CheckUtils.checkReadable(in, "input file");
+		
+		byte buffer[] = decrypt(in, keys);
+		
+		FileOutputStream ostream = new FileOutputStream(out);		
+		ostream.write(buffer);	
+		ostream.close();
+		
+		if (deleteInput) {
+			in.delete();
+		}
+	}
+	
+	public static byte[] decrypt(final File in, 
+								 final KeyPair keys) throws Exception {
+		CheckUtils.checkReadable(in, "input file");
+		
+		int data_length = (int)in.length() - IV_LENGTH;
+		FileInputStream instream = new FileInputStream(in);
 		byte iv[] = FileUtils.read(instream, IV_LENGTH);
 		byte ciphertext[] = FileUtils.read(instream, data_length);
 
 		instream.close();
 
-		byte plaintext[];
-		plaintext = decryptAESCBC(iv, ciphertext, key);
+		byte buffer[];
+		buffer = decryptAESCBC(iv, ciphertext, keys.getInner());
 		ciphertext = null;
-		System.gc();
-		
-		String name = StringUtils.truncateAt(in.getName(), "." + extension);
-		File out;
-		if (decryptName) {
-			out = new File(in.getParentFile(), new String(decryptBase64AESECB(name, key)));
-		}
-		else {
-			out = new File(in.getParentFile(), name);
-		}
-		FileOutputStream ostream = new FileOutputStream(out);		
-		ostream.write(plaintext);	
-		ostream.close();
-		
-		return out;
+
+		Pair<byte[], byte[]> pair = TypeUtils.split(buffer, IV_LENGTH); 
+		buffer = decryptAESCBC(pair.getFirst(), pair.getSecond(), keys.getOuter());
+	
+		return buffer;
 	}
 	
-	/**
-	 * Decrypts the specified file, using the given key.
-	 * @param in
-	 * @param key
-	 * @return
-	 * @throws Exception
-	 */
-	public static byte[] decrypt(final File in,
-							     final SecretKey key) throws Exception {
-		CheckUtils.checkReadable(in, "file: " + in);
-		
-		if (in.length() > Integer.MAX_VALUE) {
-			throw new Exception("Input file longer than int max.");
-		}	
-		int data_length = (int)in.length() - IV_LENGTH;
-		
-		try {
-			FileInputStream instream = new FileInputStream(in);
-	
-			byte iv[] = FileUtils.read(instream, IV_LENGTH);
-			byte ciphertext[] = FileUtils.read(instream, data_length);
-	
-			instream.close();
-	
-			byte plaintext[];
-			plaintext = decryptAESCBC(iv, ciphertext, key);
-			ciphertext = null;
-			return plaintext;
-		}
-		catch (Exception e) {
-			System.out.println("Unable to read: " + in + ".\n");
-			throw e;
-		}
-	}
 	
 	/**
 	 * Generates a key using the specified password and salt.
@@ -483,12 +277,24 @@ public class AESUtils {
 		cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
 		return cipher.doFinal(ciphertext);
 	}
-		
-}
-
-class Packet {
-	public byte initialization_vector[];
-	public byte message[];
+	
+	public static void main(String args[]) throws Exception {
+		try {
+			File plaintext = new File("plain.txt");
+			FileUtils.write(plaintext, "this message does this even crypto");
+			KeyPair keys = new KeyPair("tacotaco", "baconbacon");
+			File enc = new File("aestest.oo2");
+			AESUtils.encrypt(enc, plaintext, keys);
+			System.out.println("Wrote: " + enc);
+			
+			String text = new String(AESUtils.decrypt(enc, keys));
+			System.out.println("Message: " + text);
+			
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}		
 }
 
 

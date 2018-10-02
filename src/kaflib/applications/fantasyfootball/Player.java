@@ -23,6 +23,7 @@ public class Player {
 	private final Position position;
 	private final Set<String> teams;
 	private final Set<Position> positions;
+	private final int hash_code;
 	
 	public Player(final String string) throws Exception {
 		String input = new String(string.getBytes("UTF-8"));
@@ -31,7 +32,7 @@ public class Player {
 		teams = new HashSet<String>();
 		positions = new HashSet<Position>();
 		
-		String namereg = "([^\\,]+)\\,";
+		String namereg = "([^\\,]+)[\\,]?";
 		String teamreg = "([\\w]{2,3})";
 		String posreg = "([\\w]{1,3})";
 		
@@ -49,8 +50,8 @@ public class Player {
 		}
 		else {
 			pattern = Pattern.compile("^\\s*" + namereg + 
-					  "\\s*" + teamreg + 
-					  "\\s*" + posreg + 
+					  "\\s+" + teamreg + 
+					  "[\\s\\-]+" + posreg + 
 					  ".*$");	
 
 			matcher = pattern.matcher(input);
@@ -95,9 +96,8 @@ public class Player {
 			Position p = getPosition(matcher.group(3));
 			positions.add(p);
 			position = p;	
-			
 		}	
-		
+		hash_code = (name + position).hashCode();
 	}
 	
 	public String toString() {
@@ -105,7 +105,7 @@ public class Player {
 	}
 	
 	public int hashCode() {
-		return name.hashCode();
+		return hash_code;
 	}
 
 	public boolean equals(final Object other) {
@@ -118,7 +118,7 @@ public class Player {
 	}
 	
 	public boolean equals(final Player other) {
-		return name.equals(other.getName());
+		return name.equals(other.getName()) && position == other.getPosition();
 	}
 	
 	public static Position getPosition(final String string) throws Exception {
@@ -133,6 +133,9 @@ public class Player {
 		}
 		else if (string.matches("^\\s*[Tt][Ee]\\s*$")) {
 			return Position.TE;
+		}
+		else if (string.matches("^\\s*[Dd][Ee][Ff]\\s*$")) {
+			return Position.D_ST;
 		}
 		else if (string.matches("^\\s*[Dd][.][Ss][Tt]\\s*$")) {
 			return Position.D_ST;

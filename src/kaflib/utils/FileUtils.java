@@ -322,10 +322,13 @@ public class FileUtils {
 	 * @param separator
 	 * @throws Exception
 	 */
-	public static void write(final File file, final List<String> lines, final String separator) throws Exception {
+	public static void write(final File file, final Collection<String> lines, final String separator) throws Exception {
 		PrintWriter writer = getWriter(file);
 		
 		for (String line : lines) {
+			if (line.contains(separator)) {
+				throw new Exception("Line contains separator:\n" + line);
+			}
 			writer.print(line + separator);
 		}
 		writer.close();
@@ -668,6 +671,10 @@ public class FileUtils {
 			return false;
 		}
 		
+		return isImageExtension(extension);
+	}
+
+	public static boolean isImageExtension(final String extension) {
 		if (extension.equals("bmp") ||
 			extension.equals("gif") ||
 			extension.equals("jpg") ||
@@ -678,7 +685,6 @@ public class FileUtils {
 			return true;
 		}
 		return false;
-		
 	}
 	
 	/**

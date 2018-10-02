@@ -6,6 +6,10 @@ import java.util.Map;
 
 import kaflib.utils.StringUtils;
 
+/**
+ * Defines a histogram, a map of values to counts.
+ * @param <T>
+ */
 public class Histogram<T> {
 	private final Map<T, Integer> histogram;
 	private Integer ceiling;
@@ -19,6 +23,7 @@ public class Histogram<T> {
 		histogram = new HashMap<T, Integer>();
 		this.ceiling = ceiling;
 	}
+
 
 	
 	public void setCeiling(final int ceiling) {
@@ -55,7 +60,47 @@ public class Histogram<T> {
 		
 		histogram.put(item, histogram.get(item) + amount);
 	}
+	
+	/**
+	 * Returns the most frequent entry in the histogram, or null if it is 
+	 * empty.
+	 * @return
+	 */
+	public T getMostFrequent() {
+		T most = null;		
+		int max = 0;
+		for (T key : histogram.keySet()) {
+			if (histogram.get(key) > max) {
+				max = histogram.get(key);
+				most = key;
+			}
+		}
+		return most;
+	}
 
+	/**
+	 * Returns the histogram as a line:
+	 * (key, count);(key, count);(key, count);...
+	 * @return
+	 * @throws Exception
+	 */
+	public String toSerialLine() throws Exception {
+		StringBuffer buffer = new StringBuffer();
+		
+		for (T item : histogram.keySet()) {
+			if (item.toString().contains(");(")) {
+				throw new Exception("Name contains reserved string.");
+			}
+			
+			buffer.append("(");
+			buffer.append(item.toString());
+			buffer.append(",");
+			buffer.append(histogram.get(item));
+			buffer.append(");");
+		}
+		return new String(buffer);
+	}
+	
 	public String contentsToString() throws Exception {
 		return contentsToString(0);
 	}
@@ -87,6 +132,31 @@ public class Histogram<T> {
 		else {
 			return histogram.get(item);
 		}
+	}
+
+	/**
+	 * Reads a histogram from the serialized form.
+	 * @param serial
+	 * @throws Exception
+	 */
+	public static Histogram<String> createHistogram(final String serial) throws Exception {
+		Histogram<String> histogram = new Histogram<String>();
+		
+		String values[] = serial.split("\\)\\;\\(");
+		// Chomp the leading and trailing ();
+		values[0] = values[0].substring(1);
+		values[values.length - 1] = values[values.length - 1].
+								substring(0, values[values.length - 1].length() - 2);
+		
+		for (String value : values) {
+			int split = value.lastIndexOf(',');
+			if (split < 0) {
+				throw new Exception("No comma delimiter for " + value + ".");
+			}
+			histogram.increment(value.substring(0, split), 
+						  StringUtils.toInt(value.substring(split + 1).trim()));
+		}
+		return histogram;
 	}
 	
 }

@@ -269,7 +269,8 @@ public class CardCenter extends JFrame implements FocusListener,
 					community_rating.setEnabled(true);
 				}
 				setImage();
-				
+				search.setSelectionStart(0);
+				search.setSelectionEnd(search.getText().length());
 			}
 			// Text field contents not in db.
 			else {

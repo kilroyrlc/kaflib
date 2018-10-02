@@ -1,5 +1,6 @@
 package kaflib.types;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import kaflib.utils.CheckUtils;
+import kaflib.utils.FileUtils;
 import kaflib.utils.StringUtils;
 
 /**
@@ -52,6 +54,10 @@ public class WordTrie implements Serializable {
 		for (String word : initialValues) {
 			root.insert(word);
 		}
+	}
+
+	public WordTrie(final File file) throws Exception {	
+		this(FileUtils.readLines(file));
 	}
 	
 	/**

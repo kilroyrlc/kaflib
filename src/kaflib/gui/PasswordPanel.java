@@ -33,6 +33,10 @@ public class PasswordPanel extends TextFieldPanel {
 	}
 
 	public SecretKey getKey() throws Exception {
+		if (getText().length() < AESUtils.SALT_LENGTH) {
+			throw new Exception("Key length must be at least " + AESUtils.SALT_LENGTH + " characters.");
+		}
+		
 		return getKey(getText().substring(0, AESUtils.SALT_LENGTH).getBytes("UTF-8"));
 	}
 	

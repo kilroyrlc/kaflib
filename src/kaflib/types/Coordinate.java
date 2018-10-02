@@ -1,9 +1,11 @@
 package kaflib.types;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -450,6 +452,19 @@ public class Coordinate {
 		}
 		return y;
 	}
+	
+	public Collection<Coordinate> getBox(final int width, final int height) throws Exception {
+		CheckUtils.checkPositive(width);
+		CheckUtils.checkPositive(height);
+
+		List<Coordinate> box = new ArrayList<Coordinate>();
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				box.add(new Coordinate(getX() + i, getY() + j));
+			}
+		}
+		return box;
+	}
 
 	public static Coordinate getRandom(final Box box) throws Exception {
 		return getRandom(box.getXMin(), box.getXMax(), box.getYMin(), box.getYMax());
@@ -459,6 +474,20 @@ public class Coordinate {
 									   final int yMin, final int yMax) throws Exception {
 		return new Coordinate(RandomUtils.randomInt(xMin, xMax),
 							  RandomUtils.randomInt(yMin, yMax));
+	}
+
+	public static Set<Coordinate> getRandom(final int count, final int xMin, final int xMax, 
+			   						   final int yMin, final int yMax) throws Exception {
+		Set<Coordinate> coordinates = new HashSet<Coordinate>();
+		if (count > (xMax - xMin) * (yMax - yMin) / 2) {
+			throw new Exception("Suboptimal sampling quantity.");
+		}
+		
+		while (coordinates.size() < count) {
+			coordinates.add(getRandom(xMin, xMax, yMin, yMax));
+		}
+		
+		return coordinates;
 	}
 	
 }

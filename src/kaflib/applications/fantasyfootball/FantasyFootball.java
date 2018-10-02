@@ -18,6 +18,7 @@ import org.jsoup.select.Elements;
 
 import kaflib.applications.fantasyfootball.Player.Position;
 import kaflib.types.Matrix;
+import kaflib.utils.CheckUtils;
 import kaflib.utils.StringUtils;
 import kaflib.web.ParseUtils;
 
@@ -26,6 +27,7 @@ public class FantasyFootball {
 	public static void main(String args[]) {
 		try {
 			JFrame frame = new JFrame();
+			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		    JFileChooser chooser = new JFileChooser();
 		    chooser.setMultiSelectionEnabled(true);
 		    chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -56,25 +58,37 @@ public class FantasyFootball {
 			    Map<Player, Float> table = parseTable(file);
 			    
 			    for (Player player : table.keySet()) {
+			    	CheckUtils.check(player, "player");
+			    	
 			    	if (!stats.containsKey(player)) {
 			    		stats.put(player, new Projection());
 			    	}
-			    	float value = table.get(player);
-			    	if (is_projected) {
-			    		stats.get(player).setProjected(value);
+			    	Float value = table.get(player);
+			    	
+			    	try {
+			    		if (value != null) {
+					    	if (is_projected) {
+					    		stats.get(player).setProjected(value);
+					    	}
+					    	else {
+					    		stats.get(player).setLast(value);
+					    	}
+			    		}
 			    	}
-			    	else {
-			    		stats.get(player).setLast(value);
+			    	catch (Exception e) {
+			    		System.out.println("" + player + ": " + stats.get(player));
+			    		System.out.println("-> " + value + " / " + is_projected);
+			    		throw e;
 			    	}
 			    }
 		    }
-
 		    postprocess(stats, directory);
 		    System.out.println("Done with application.");
 		    System.exit(1);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
+			System.exit(0);
 		}
 	}
 	
@@ -166,11 +180,100 @@ public class FantasyFootball {
 		matrix.toXLSX(new File(directory, "sheet.xlsx"));
 	}
 	
-	
 	public static Map<Player, Float> parseTable(final File file) throws Exception {
+		Document document = Jsoup.parse(file, "UTF-8");
+	    Elements rows = ParseUtils.select(document, ".ysf-player-name");
+	    if (rows == null || rows.size() == 0) {
+	    	return parseTableESPN(file);
+	    }
+	    else {
+	    	return parseTableYahoo(file);
+	    }
+	}
+	
+	private static void checkOne(final String field, 
+								 final Elements elements,
+								 final Element value) throws Exception {
+		if (elements == null) {
+			throw new Exception("No matches for " + field + ".\n" + value);
+		}
+		else if (elements.size() != 1) {
+			throw new Exception("Results for " + field + ": " + elements.size() + ".\n" + value);
+		}
+		else {
+			
+		}
+	}
+	
+	public static Map<Player, Float> parseTableYahoo(final File file) throws Exception {
 	    Document document = Jsoup.parse(file, "UTF-8");
 	    Map<Player, Float> stats = new HashMap<Player, Float>();
-	    
+
+	    Elements rows = ParseUtils.select(document, "#players-table tbody tr");
+	    if (rows == null || rows.size() == 0) {
+	    	throw new Exception("Unable to find playertable.");
+	    }
+	    for (Element row : rows) {
+	    	Elements status = row.select(".ysf-player-name");
+	    	checkOne("status", status, row);
+
+	    	Elements name = status.get(0).select(".Nowrap.name.F-link");
+	    	if (name == null || name.size() != 1) {
+		    	name = status.get(0).select("a");
+		    	checkOne("name", name, status.get(0));
+	    	}
+	    	
+	    	Elements team = status.get(0).select(".Fz-xxs");
+	    	checkOne("team", team, status.get(0));
+
+	    	Player player;
+	    	if (team.text().trim().toLowerCase().endsWith("def")) {
+	    		player = new Player(team.text().substring(0, 4) + " " + team.text());
+	    	}
+	    	else {
+	    		player = new Player(name.text() + " " + team.text());
+	    	}
+	    	if (player.getName().equals("T. Taylor") || 
+	    		player.getName().equals("T. Williams") || 
+	    		player.getName().equals("D. Thomas") || 
+	    		player.getName().equals("J. Nelson") || 
+	    		player.getName().equals("T. Smith") || 
+	    		player.getName().equals("J. Brown")) {
+	    		continue;
+	    	}
+
+	    	Elements gp = row.select(".F-faded.Bdrend");
+	    	checkOne("gp", gp, row);
+
+	    	int games = 0;
+	    	if (!gp.text().trim().equals("-")) {
+	    		games = StringUtils.toInt(gp.text());
+	    	}
+	    	
+	    	Elements score = row.select(".Fw-b");
+	    	checkOne("score", score, row);
+
+	    	Float stat = Float.valueOf(score.text());
+	    	if (games > 6) {
+	    		stat = (stat / games) * 16;
+	    	}
+	    	else {
+	    		stat = null;
+	    	}
+	    	
+	    	if (stats.containsKey(player) && stats.get(player) != stat) {
+	    		throw new Exception(player + ": " + stat + " / " + stats.get(player));
+	    	}
+	    	
+	    	stats.put(player, stat);
+	    }
+	    return stats;
+	}
+	
+	public static Map<Player, Float> parseTableESPN(final File file) throws Exception {
+	    Document document = Jsoup.parse(file, "UTF-8");
+	    Map<Player, Float> stats = new HashMap<Player, Float>();
+
 	    Elements rows = ParseUtils.select(document, ".pncPlayerRow");
 	    if (rows == null || rows.size() == 0) {
 	    	throw new Exception("Unable to find playertable.");

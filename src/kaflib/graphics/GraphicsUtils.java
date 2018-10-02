@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -793,5 +794,27 @@ public class GraphicsUtils {
 		throw new Exception("Could not read after " + tries + " retries.");
 	}
 
+	
+	public static boolean isMonochrome(final BufferedImage image,
+									   final int samples,
+									   final int tolerance) throws Exception {
+		
+		Set<Coordinate> coordinates = Coordinate.getRandom(samples, 0, image.getWidth(), 0, image.getHeight());
+				
+		for (Coordinate coordinate : coordinates) {
+			int value = image.getRGB(coordinate.getX(), coordinate.getY());
+			
+			// Add tolerance, check for bias.
+			if (getRed(value) == getGreen(value) &&
+				getGreen(value) == getBlue(value)) {
+				// Matches.
+			}
+			else {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 }
 
