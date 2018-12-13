@@ -795,6 +795,10 @@ public class GraphicsUtils {
 	}
 
 	
+	public static boolean isMonochrome(final BufferedImage image) throws Exception {
+		return isMonochrome(image, image.getWidth() * image.getHeight() / 10, 0);
+	}
+	
 	public static boolean isMonochrome(final BufferedImage image,
 									   final int samples,
 									   final int tolerance) throws Exception {

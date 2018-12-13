@@ -1,5 +1,6 @@
 package kaflib.graphics;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -7,6 +8,7 @@ import java.util.List;
 
 import kaflib.types.Byte;
 import kaflib.types.Percent;
+import kaflib.utils.CheckUtils;
 import kaflib.utils.MathUtils;
 import kaflib.utils.RandomUtils;
 
@@ -32,7 +34,12 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 		g = new Byte();
 		b = new Byte();
 	}
-
+	
+	public RGBPixel(final Color color) throws Exception {
+		r = new Byte(color.getRed());
+		g = new Byte(color.getGreen());
+		b = new Byte(color.getBlue());
+	}
 	
 	public RGBPixel(final boolean opaque, final int rgb) {
 		super(opaque);
@@ -137,6 +144,12 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 		return GraphicsUtils.getLuminance(r, g, b);
 	}
 	
+	
+	/**
+	 * Adds a random value up to max to each channel of the pixel.
+	 * @param max
+	 * @throws Exception
+	 */
 	public void addNoise(final Byte max) throws Exception {
 		if (RandomUtils.randomBoolean()) {
 			r.addOrMax(Byte.random(max));
@@ -212,6 +225,11 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 		this.b = b;
 	}
 	
+	/**
+	 * Returns |r0-r1| + |g0-g1| + |b0-b1|.
+	 * @param other
+	 * @return
+	 */
 	public int getDelta(final RGBPixel other) {
 		return Byte.getAbsoluteDifference(r, other.getR()) +
 			   Byte.getAbsoluteDifference(g, other.getG()) +
@@ -264,6 +282,8 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 	}
 	
 	public static RGBPixel getAverage(final Collection<RGBPixel> pixels) throws Exception {
+		CheckUtils.checkNonEmpty(pixels, "pixel values");
+		
 		List<Integer> r = new ArrayList<Integer>();
 		List<Integer> g = new ArrayList<Integer>();
 		List<Integer> b = new ArrayList<Integer>();
@@ -290,22 +310,9 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 		return pixels.get(pixels.size() / 2);
 	}
 	
-	public static RGBPixel getMedianByRGB(final Collection<RGBPixel> pixels) throws Exception {
-		List<Byte> r = new ArrayList<Byte>();
-		List<Byte> g = new ArrayList<Byte>();
-		List<Byte> b = new ArrayList<Byte>();
-		for (RGBPixel pixel : pixels) {
-			if (pixel != null && pixel.isOpaque()) {
-				r.add(pixel.getR());
-				g.add(pixel.getG());
-				b.add(pixel.getB());
-			}
-		}
-		
-		Collections.sort(r);
-		Collections.sort(g);
-		Collections.sort(b);
-		return new RGBPixel(true, r.get(r.size() / 2), g.get(g.size() / 2), b.get(b.size() / 2));
+
+	public Color getColor() {
+		return new Color(r.getValue(), g.getValue(), b.getValue(), this.getOpacity().getInt());
 	}
 	
 	public String toString() {

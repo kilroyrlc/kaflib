@@ -1,7 +1,11 @@
 package kaflib.types;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import kaflib.utils.StringUtils;
@@ -54,8 +58,12 @@ public class Histogram<T> {
 			return;
 		}
 		
-		if (Integer.MAX_VALUE - histogram.get(item) < amount) {
-			throw new Exception("Overflow of: " + item.toString());
+		if (histogram.get(item) > 0) {
+			if (Integer.MAX_VALUE - histogram.get(item) < amount) {
+				throw new Exception("Overflow of: " + item.toString() + 
+						 			" trying to increment " + histogram.get(item) + 
+						 			" by " + amount + ".");
+			}
 		}
 		
 		histogram.put(item, histogram.get(item) + amount);
@@ -76,6 +84,31 @@ public class Histogram<T> {
 			}
 		}
 		return most;
+	}
+	
+	/**
+	 * Returns the values ranked most frequent to least.
+	 * @return
+	 */
+	public List<T> getRanked() {
+		List<T> list = new ArrayList<T>();
+		list.addAll(histogram.keySet());
+		Collections.sort(list, new Comparator<T>() {
+
+			@Override
+			public int compare(T o1, T o2) {
+				if (histogram.get(o1) > histogram.get(o2)) {
+					return -1;
+				}
+				else if (histogram.get(o1) < histogram.get(o2)) {
+					return 1;
+				}
+				else {
+					return 0;
+				}
+			}
+		});
+		return list;
 	}
 
 	/**

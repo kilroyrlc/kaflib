@@ -1,5 +1,6 @@
 package kaflib.graphics;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ import kaflib.utils.TypeUtils;
 
 /**
  * Defines a raster canvas of pixels (argb values).  Uninitialized values start
- * as transparent black.  This is 
+ * as transparent black.
  */
 public class Canvas {
 	public enum Orientation {
@@ -35,12 +36,26 @@ public class Canvas {
 		PORTRAIT
 	}
 	
+	private static final int SIMILAR_SCALE_WIDTH = 600;
+	private static final int SIMILAR_SAMPLES = 32;
+	private static final int SIMILAR_THRESHOLD = 64;
+	
 	private final RGBPixel pixels[][];
 
+	/**
+	 * Reads an image file to a canvas.
+	 * @param file
+	 * @throws Exception
+	 */
 	public Canvas(final File file) throws Exception {
 		this(GraphicsUtils.read(file));
 	}
 	
+	/**
+	 * Copy constructor.
+	 * @param image
+	 * @throws Exception
+	 */
 	public Canvas(final Canvas image) throws Exception {
 		pixels = new RGBPixel[image.getWidth()][image.getHeight()];
 	    for (int i = 0; i < pixels.length; i++) {
@@ -50,6 +65,11 @@ public class Canvas {
 	    }
 	}
 	
+	/**
+	 * Creates a canvas from a buffered image.
+	 * @param image
+	 * @throws Exception
+	 */
 	public Canvas(final BufferedImage image) throws Exception {
 		pixels = new RGBPixel[image.getWidth()][image.getHeight()];
 	    for (int i = 0; i < pixels.length; i++) {
@@ -59,12 +79,95 @@ public class Canvas {
 	    }
 	}
 	
+	/**
+	 * Creates a blank/black canvas of specified dimensions.
+	 * @param width
+	 * @param height
+	 * @throws Exception
+	 */
 	public Canvas(final int width, final int height) throws Exception {
 		CheckUtils.checkPositive(width, "width");
 		CheckUtils.checkPositive(height, "height");
 		pixels = new RGBPixel[width][height];
 	}
+
+	/**
+	 * Creates a canvas with all pixels equal to the given value.
+	 * @param width
+	 * @param height
+	 * @param color
+	 * @throws Exception
+	 */
+	public Canvas(final int width, final int height, final RGBPixel color) throws Exception {
+		CheckUtils.checkPositive(width, "width");
+		CheckUtils.checkPositive(height, "height");
+		pixels = new RGBPixel[width][height];
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				pixels[i][j] = new RGBPixel(color);
+			}
+		}
+	}
+
+	/**
+	 * Creates a canvas with pixels randomly one or another color.
+	 * @param width
+	 * @param height
+	 * @param colorA
+	 * @param colorB
+	 * @param aPct
+	 * @throws Exception
+	 */
+	public Canvas(final int width, 
+				  final int height, 
+				  final RGBPixel colorA,
+				  final RGBPixel colorB,
+				  final Percent aPct) throws Exception {
+		CheckUtils.checkPositive(width, "width");
+		CheckUtils.checkPositive(height, "height");
+		pixels = new RGBPixel[width][height];
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				if (RandomUtils.randomBoolean((aPct))) {
+					pixels[i][j] = new RGBPixel(colorA);
+				}
+				else {
+					pixels[i][j] = new RGBPixel(colorB);
+				}
+			}
+		}
+	}
 	
+	/**
+	 * Creates a canvas with pixels randomly/uniformly one of the supplied 
+	 * colors.
+	 * @param width
+	 * @param height
+	 * @param colors
+	 * @throws Exception
+	 */
+	public Canvas(final int width, 
+				  final int height, 
+				  final RGBPixel... colors) throws Exception {
+		CheckUtils.checkPositive(width, "width");
+		CheckUtils.checkPositive(height, "height");
+		CheckUtils.checkNonEmpty(colors, "colors");
+		
+		int count = colors.length;
+		pixels = new RGBPixel[width][height];
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				int rand = RandomUtils.randomInt(count);
+				pixels[i][j] = new RGBPixel(colors[rand]);
+			}
+		}
+	}
+	
+	/**
+	 * Check that the dimensions here match another.
+	 * @param other
+	 * @throws Exception
+	 */
 	public void checkDimensions(final Canvas other) throws Exception {
 		if (getWidth() != other.getWidth() ||
 			getHeight() != other.getHeight()) {
@@ -74,6 +177,58 @@ public class Canvas {
 		}
 	}
 	
+
+	public double getAspectRatio() {
+		return (double) getWidth() / (double) getHeight();
+	}
+	
+	public boolean aspectRatioMatches(final Canvas other, final Integer sigFigs) {
+		double a = getAspectRatio();
+		double b = other.getAspectRatio();
+		if (sigFigs == null || sigFigs < 1) {
+			return a == b;
+		}
+		int multiplier = sigFigs * 10;
+		int aint = (int) (a * multiplier);
+		int bint = (int) (b * multiplier);
+		return aint == bint;
+	}
+	
+	/**
+	 * Returns whether or not a random sampling of averaged points indicates
+	 * this image may be the same as another, ignoring scaling.
+	 * @param other
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean isSimilar(final Canvas other) throws Exception {
+		if (!aspectRatioMatches(other, 2)) {
+			return false;
+		}
+		
+		Canvas this_scaled = scaleTo(this, SIMILAR_SCALE_WIDTH, null);
+		Canvas other_scaled = scaleTo(other, SIMILAR_SCALE_WIDTH, null);
+		for (Coordinate value : this_scaled.getBounds().getRandom(SIMILAR_SAMPLES)) {
+			RGBPixel this_average = RGBPixel.getAverage(this_scaled.getBox(value, 3));
+
+			// Aspect ratio was close, but we found a pixel out of bounds.
+			if (!other_scaled.getBounds().contains(value)) {
+				continue;
+			}
+			RGBPixel other_average = RGBPixel.getAverage(other_scaled.getBox(value, 3));
+			
+			if (this_average.getDelta(other_average) > SIMILAR_THRESHOLD) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Adds white noise to each pixel.
+	 * @param max
+	 * @throws Exception
+	 */
 	public void addNoise(final Byte max) throws Exception {
 		for (int i = 0; i < getWidth(); i++) {
 			for (int j = 0; j < getHeight(); j++) {
@@ -82,13 +237,24 @@ public class Canvas {
 		}
 	}
 	
+	/**
+	 * Returns the canvas bounds.
+	 * @return
+	 * @throws Exception
+	 */
 	public Box getBounds() throws Exception {
 		return new Box(0, getWidth(), 0, getHeight());
 	}
 	
-	public RGBPixel[] getColumn(final int index) throws Exception {
-		CheckUtils.checkRange(index, 0, pixels.length - 1);
-		return pixels[index];
+	/**
+	 * Returns the values of a given vertical column.
+	 * @param column
+	 * @return
+	 * @throws Exception
+	 */
+	public RGBPixel[] getColumn(final int column) throws Exception {
+		CheckUtils.checkRange(column, 0, pixels.length - 1);
+		return pixels[column];
 	}
 	
 	public void setColumn(final RGBPixel column[], 
@@ -100,6 +266,21 @@ public class Canvas {
 		CheckUtils.checkRange(index, 0, pixels.length - 1);
 		System.arraycopy(column, 0, pixels[index], 0, column.length);
 	}
+	
+	public List<RGBPixel> getBox(final Coordinate center, final int radius) throws Exception {
+		List<RGBPixel> values = new ArrayList<RGBPixel>();
+		for (int i = Integer.max(0, center.getX() - radius);
+			 i < Integer.min(pixels.length, center.getX() + radius);
+			 i++) {
+			for (int j = Integer.max(0, center.getY() - radius);
+					 j < Integer.min(pixels[0].length, center.getY() + radius);
+					 j++) {
+				values.add(get(i, j));
+			}
+		}
+		return values;
+	}
+	
 	
 	public Canvas get(final Box box) throws Exception {
 		if (!box.isContained(getBounds())) {
@@ -337,7 +518,7 @@ public class Canvas {
 					       values.getHeight());
 		}
 	}
-
+	
 	public void set(final Box box, final RGBPixel value) throws Exception {
 		if (!box.isContained(getBounds())) {
 			throw new Exception("Box: " + box + " outside of " + getBounds() + ".");
@@ -366,6 +547,22 @@ public class Canvas {
 				}
 				else {
 					pixels[i + topLeft.getX()][topLeft.getY() + j] = values.get(i, j);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Sets each pixel in the canvas to the average of the values in the 
+	 * box specified by radius.
+	 * @param radius
+	 * @throws Exception
+	 */
+	public void smooth(final int radius) throws Exception {
+		for (int i = 0; i < radius; i++) {
+			for (int x = 0; x < getWidth(); x++) {
+				for (int y = 0; y < getHeight(); y++) {
+					set(x, y, RGBPixel.getAverage(getBox(new Coordinate(x, y), radius)));
 				}
 			}
 		}
@@ -644,6 +841,59 @@ public class Canvas {
 			}
 		}
 		
+		return canvas;
+	}
+	
+
+	public static Canvas createMottled(final Coordinate dimensions,
+									   final RGBPixel bg, 
+									   final RGBPixel fg) throws Exception {
+		return createMottled(dimensions, bg, fg, 2);
+	}
+	
+	public static Canvas createMottled(final Coordinate dimensions,
+									   final RGBPixel bg, 
+									   final RGBPixel fg, 
+									   final int smooth) throws Exception {
+		Canvas canvas = new Canvas(dimensions.getX(), 
+								   dimensions.getY(),
+								   bg,
+								   fg,
+								   new Percent(70));
+		
+		for (int i = 0; i < smooth; i++) {
+			canvas.smooth(2);
+		}
+		return canvas;
+	}
+
+	public static Canvas createMottled(final Coordinate dimensions,
+										final int smooth,
+										final RGBPixel... colors) throws Exception {
+		Canvas canvas = new Canvas(dimensions.getX(), 
+				dimensions.getY(),
+				colors);
+
+		for (int i = 0; i < smooth; i++) {
+			canvas.smooth(2);
+		}
+		return canvas;
+	}
+	
+	public static Canvas createMottled(final Coordinate dimensions,
+									final int smooth,
+									final Color... colors) throws Exception {
+		RGBPixel pixels[] = new RGBPixel[colors.length];
+		for (int i = 0; i < colors.length; i++) {
+			pixels[i] = new RGBPixel(colors[i]);
+		}
+		Canvas canvas = new Canvas(dimensions.getX(), 
+				dimensions.getY(),
+				pixels);
+
+		for (int i = 0; i < smooth; i++) {
+			canvas.smooth(2);
+		}
 		return canvas;
 	}
 	

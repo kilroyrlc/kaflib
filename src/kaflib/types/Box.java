@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import kaflib.utils.CheckUtils;
+import kaflib.utils.RandomUtils;
 import kaflib.utils.StringUtils;
 import kaflib.utils.TypeUtils;
 
@@ -230,6 +231,24 @@ public class Box {
 			}
 		}
 		return set;
+	}
+	
+	public Coordinate getRandom() throws Exception {
+		return new Coordinate(RandomUtils.randomInt(x_min, x_max),
+							  RandomUtils.randomInt(y_min, y_max));
+	}
+
+	public Set<Coordinate> getRandom(final int count) throws Exception {
+		Set<Coordinate> coordinates = new HashSet<Coordinate>();
+		if (count > (x_max - x_min) * (y_max - y_min) / 2) {
+			throw new Exception("Suboptimal sampling quantity.");
+		}
+
+		while (coordinates.size() < count) {
+			coordinates.add(getRandom());
+		}
+
+		return coordinates;
 	}
 	
 	/**

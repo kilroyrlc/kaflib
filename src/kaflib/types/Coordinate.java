@@ -94,6 +94,22 @@ public class Coordinate {
 		return Math.abs(other.getX() - x) + Math.abs(other.getY() - y);
 	}
 	
+	public Coordinate getNorth() throws Exception {
+		return new Coordinate(x, y - 1);
+	}
+
+	public Coordinate getSouth() throws Exception {
+		return new Coordinate(x, y + 1);
+	}
+
+	public Coordinate getWest() throws Exception {
+		return new Coordinate(x - 1, y);
+	}
+
+	public Coordinate getEast() throws Exception {
+		return new Coordinate(x + 1, y);
+	}
+	
 	public int getX() {
 		return x;
 	}
@@ -127,26 +143,44 @@ public class Coordinate {
 	 * @return
 	 * @throws Exception
 	 */
-	public Direction.Cardinal getNSEWDirection(final Coordinate other) throws Exception {
+	public Direction getNSEWDirection(final Coordinate other) throws Exception {
 		Coordinate delta = subtractFrom(other);
 		if (Math.abs(delta.getY()) >= Math.abs(delta.getX())) {
 			if (delta.getY() >= 0) {
-				return Direction.Cardinal.NORTH;
+				return Direction.SOUTH;
 			}
 			else {
-				return Direction.Cardinal.SOUTH;
+				return Direction.NORTH;
 			}
 		}
 		else {
 			if (delta.getX() >=0) {
-				return Direction.Cardinal.EAST;
+				return Direction.EAST;
 			}
 			else {
-				return Direction.Cardinal.WEST;
+				return Direction.WEST;
 			}
 		}
 	}
 
+	public Pair<Direction, Direction> getNSEWDirections(final Coordinate other) throws Exception {
+		Pair<Direction, Direction> directions = new Pair<Direction, Direction>();
+		Coordinate delta = subtractFrom(other);
+		if (delta.getY() >= 0) {
+			directions.setKey(Direction.SOUTH);
+		}
+		else {
+			directions.setKey(Direction.NORTH);
+		}
+		if (delta.getX() >=0) {
+			directions.setValue(Direction.EAST);
+		}
+		else {
+			directions.setValue(Direction.WEST);
+		}
+		return directions;
+	}
+	
 	public boolean isWithin(final int width, final int height) {
 		if (x < 0 || x >= width || y < 0 || y >= height) {
 			return false;
@@ -205,6 +239,10 @@ public class Coordinate {
 		return new Coordinate(x + dx, y + dy);
 	}
 
+	public Coordinate add(final Coordinate other) {
+		return new Coordinate(x + other.getX(), y + other.getY());
+	}
+	
 	/**
 	 * Returns a new coordinate as close as possible to a box from 0-max.
 	 * @param value
@@ -316,6 +354,11 @@ public class Coordinate {
 
 	public Set<Coordinate> getNeighbors() throws Exception {
 		return getNeighbors(1, 1);
+	}
+	
+	public Coordinate getNeighbor(final Direction direction) throws Exception {
+		return new Coordinate(x + Direction.getOffset(direction).getX(),
+							  y + Direction.getOffset(direction).getY());
 	}
 
 	/**

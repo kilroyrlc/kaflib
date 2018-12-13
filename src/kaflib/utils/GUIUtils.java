@@ -41,6 +41,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
@@ -54,6 +55,46 @@ import kaflib.types.Pair;
  */
 public class GUIUtils {
 
+	public enum ButtonType {
+		DIRECTORY,
+		FILE,
+		COMPUTER,
+		HARD_DRIVE,
+		SAVE,
+		NEW_FOLDER,
+		UP_FOLDER,
+		HOME_FOLDER,
+		DETAILS_VIEW,
+		LIST_VIEW
+	}
+	
+	public static JButton getButton(final ButtonType type) throws Exception {
+		switch (type) {
+		case DIRECTORY:
+			return new JButton(UIManager.getIcon("FileView.directoryIcon"));
+		case FILE:
+			return new JButton(UIManager.getIcon("FileView.fileIcon"));
+		case COMPUTER:
+			return new JButton(UIManager.getIcon("FileView.computerIcon"));
+		case HARD_DRIVE:
+			return new JButton(UIManager.getIcon("FileView.hardDriveIcon"));
+		case SAVE:
+			return new JButton(UIManager.getIcon("FileView.floppyDriveIcon"));
+		case NEW_FOLDER:
+			return new JButton(UIManager.getIcon("FileChooser.newFolderIcon"));
+		case UP_FOLDER:
+			return new JButton(UIManager.getIcon("FileChooser.upFolderIcon"));
+		case HOME_FOLDER:
+			return new JButton(UIManager.getIcon("FileChooser.homeFolderIcon"));
+		case DETAILS_VIEW:
+			return new JButton(UIManager.getIcon("FileChooser.detailsViewIcon"));
+		case LIST_VIEW:
+			return new JButton(UIManager.getIcon("FileChooser.listViewIcon"));
+		default:
+			throw new Exception("Unrecognized type: " + type + ".");
+		}
+	}
+	
 	public static Border getTitledBorder(final String title) {
 		Border border = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
 		return BorderFactory.createTitledBorder(border, title, TitledBorder.LEFT, TitledBorder.TOP);
@@ -246,6 +287,49 @@ public class GUIUtils {
 		}
 	}
 	
+	/**
+	 * Shows a single file chooser that accepts new files as input.
+	 * @param parent
+	 * @param startingDirectory
+	 * @return
+	 */
+	public static File chooseNewFile(final Component parent,
+			final File startingDirectory) {
+		JFileChooser chooser;
+		if (startingDirectory != null && 
+				startingDirectory.canRead()) {
+			if (startingDirectory.isDirectory()) {
+				chooser = new JFileChooser(startingDirectory);
+			}
+			else {
+				chooser = new JFileChooser(startingDirectory.getParentFile());
+			}
+		}
+		else {
+			chooser = new JFileChooser();
+		}
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+			File file = chooser.getSelectedFile();
+			if (file != null) {
+				return file;
+			}
+			else {
+				return null;
+			}
+		}
+		else {
+			return null;
+		}
+	}
+	
+	/**
+	 * Shows a single file chooser that requires an existing file as input.
+	 * @param parent
+	 * @param startingDirectory
+	 * @return
+	 */
 	public static File chooseFile(final Component parent,
 								  final File startingDirectory) {
 		JFileChooser chooser;

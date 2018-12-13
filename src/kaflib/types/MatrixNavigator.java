@@ -25,7 +25,7 @@ public interface MatrixNavigator<T> {
 	 * @throws Exception
 	 */
 	public T getNeighbor(final Coordinate me, 
-						 final Direction.Cardinal direction) throws Exception;
+						 final Direction direction) throws Exception;
 	
 	/**
 	 * Returns a list of nonnull neighbors.

@@ -72,6 +72,21 @@ public class WordTrie implements Serializable {
 		root.insert(word);
 	}
 	
+	public boolean contains(final String word) {
+		return root.contains(word);
+	}
+	
+	public boolean remove(final String word) throws Exception {
+		CheckUtils.checkNonEmpty(word, "word");
+		boolean removed = root.remove(word);
+		
+		if (removed) {
+			long sum = hash - word.hashCode();
+			hash = (int) (sum % Integer.MAX_VALUE);
+		}
+		return removed;
+	}
+	
 	/**
 	 * Returns a hash for this object.
 	 */
@@ -97,7 +112,7 @@ public class WordTrie implements Serializable {
 	 * @return
 	 * @throws Exception
 	 */
-	public Set<String> get() throws Exception {
+	public Set<String> get() {
 		return get(null, null);
 	}
 	
@@ -108,7 +123,7 @@ public class WordTrie implements Serializable {
 	 * @return
 	 * @throws Exception
 	 */
-	public Set<String> get(final Integer maxSize) throws Exception {
+	public Set<String> get(final Integer maxSize) {
 		return get(null, maxSize);
 	}
 	
@@ -119,7 +134,7 @@ public class WordTrie implements Serializable {
 	 * @return
 	 * @throws Exception
 	 */
-	public Set<String> get(final String prefix, final Integer maxSize) throws Exception {
+	public Set<String> get(final String prefix, final Integer maxSize) {
 		Set<String> words;
 		if (prefix == null) {
 			words = root.getAll(new String(), maxSize);
@@ -211,6 +226,31 @@ class Node implements Serializable {
 		
 	}
 	
+	public boolean contains(final String word) {
+		if (word.isEmpty() && is_word) {
+			return true;
+		}		
+		Character letter = word.charAt(0);
+		String subword = word.substring(1);
+		if (!children.containsKey(letter)) {
+			return false;
+		}
+		return children.get(letter).contains(subword);
+	}
+	
+	public boolean remove(final String word) throws Exception {
+		if (word.isEmpty()) {
+			is_word = false;
+			return true;
+		}		
+		Character letter = word.charAt(0);
+		String subword = word.substring(1);
+		if (!children.containsKey(letter)) {
+			return false;
+		}
+		return children.get(letter).remove(subword);
+	}
+	
 	/**
 	 * Returns whether or not this node terminated a word.
 	 * @return
@@ -226,7 +266,7 @@ class Node implements Serializable {
 	 * @throws Exception
 	 */
 	public Set<String> getAll(final String word, 
-							   final Integer maxSize) throws Exception {
+							   final Integer maxSize) {
 		Set<String> list = new HashSet<String>();
 		
 		// No more specifier, return the whole subtree.

@@ -545,6 +545,22 @@ public class StringUtils {
 		}
 	}
 	
+	/**
+	 * Splits the string at the first instance of split.  E.g.
+	 * (blahblah, hb) returns [bla, lah].
+	 * @param string
+	 * @param split
+	 * @return
+	 */
+	public static Pair<String, String> splitFirst(final String string, final String split) {
+		int index = string.indexOf(split);
+		if (index < 0) {
+			return new Pair<String, String>(string, "");
+		}
+		return new Pair<String, String>(string.substring(0, index), 
+									    string.substring(index + split.length()));
+	}
+	
 	public static List<String> split(final String string, final String regex) throws Exception {
 		String tokens[] = string.split(regex);
 		return Arrays.asList(tokens);

@@ -188,6 +188,16 @@ public class FileUtils {
 	}
 
 	/**
+	 * Returns the file contents as a string.
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static String readString(final File file) throws Exception {
+		return readString(file, null);
+	}
+	
+	/**
 	 * Returns the file contents as a string or null if the file exceeds max.
 	 * @param file
 	 * @return
@@ -744,6 +754,18 @@ public class FileUtils {
 		}
 		
 		FileUtils.copy(ofile, file);
+	}
+	
+	/**
+	 * 
+	 * @param file
+	 * @param length
+	 * @return
+	 * @throws Exception
+	 */
+	public static String getMD5Base64(final File file) throws Exception {
+		final byte md5[] = getMD5(file);
+		return new String(MathUtils.encodeBase64(md5, true));
 	}
 	
 	/**

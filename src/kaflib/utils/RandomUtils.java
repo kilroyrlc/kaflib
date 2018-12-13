@@ -1,6 +1,7 @@
 package kaflib.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /*
  * Copyright (c) 2015 Christopher Ritchie
@@ -34,6 +35,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+import kaflib.types.Direction;
+import kaflib.types.Percent;
+
 /**
  * Utilities for generating random values of different types.
  */
@@ -65,6 +69,18 @@ public class RandomUtils {
 		else {
 			return false;
 		}
+	}
+	
+	public static boolean randomBoolean(final Percent percentTrue) throws Exception {
+		if (percentTrue.get() < 0 || percentTrue.get() > 100) {
+			throw new Exception("Not a percent: " + percentTrue + ".");
+		}
+		if (randomInt(100) <= percentTrue.get()) {
+			return true;
+		}
+		else {
+			return false;
+		}		
 	}
 	
 	public static boolean randomBoolean(final double percentTrue) throws Exception {
@@ -128,7 +144,7 @@ public class RandomUtils {
 			return min;
 		}
 		
-		return min + randomInt(max - min);
+		return min + randomInt(max - min + 1);
 	}
 	
 	/**
@@ -232,8 +248,11 @@ public class RandomUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static <T> T getRandom(final Collection<T> values) throws Exception {
-		CheckUtils.checkNonEmpty(values, "values");
+	public static <T> T getRandom(final Collection<T> values) {
+		if (values.size() == 0) {
+			return null;
+		}
+		
 		int random = randomInt(values.size());
 		
 		if (values instanceof List) {
@@ -247,6 +266,16 @@ public class RandomUtils {
 			return iterator.next();
 		}
 	}	
+
+	public static <T> T getRandom(final Collection<T> values, T not) {
+		Collection<T> filtered = new ArrayList<T>();
+		for (T value : values) {
+			if (!value.equals(not)) {
+				filtered.add(value);
+			}
+		}
+		return getRandom(filtered);
+	}
 	
 	/**
 	 * Returns a specified number of values from the set, at random.
@@ -350,6 +379,47 @@ public class RandomUtils {
 		}
 
 		return values;
+	}
+	
+	/**
+	 * Returns a direction that is max 45 degrees the last direction, biased
+	 * toward continuing direction or going toward bias.  If a set of valid
+	 * directions is supplied, returns null if there are no valid choices.
+	 * @param bias
+	 * @param current
+	 * @return
+	 */
+	public static Direction getBiasedDirection(final Direction current,
+											   final Direction bias,
+											   Set<Direction> valid) throws Exception {
+		if (valid == null) {
+			valid = new HashSet<Direction>();
+			valid.addAll(Arrays.asList(Direction.values()));
+		}
+
+		Direction steer = Direction.steer(current, bias);
+		
+		// 50% of the time, continue the current direction.
+		if (RandomUtils.randomBoolean() && valid.contains(current)) {
+			return current;
+		}
+		// 25% of the time, steer toward bias.
+		else if (RandomUtils.randomBoolean() && valid.contains(steer)) {
+			return steer;
+		}
+		else {
+			for (int i = 0; i < 3; i++) {
+				steer = Direction.getRandomFortyFive(current);
+				if (valid.contains(steer)) {
+					return steer;
+				}
+			}			
+			
+			if (valid.contains(current)) {
+				return current;
+			}
+		}
+		return null;
 	}
 	
 }
