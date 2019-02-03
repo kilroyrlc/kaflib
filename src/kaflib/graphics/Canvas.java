@@ -86,9 +86,27 @@ public class Canvas {
 	 * @throws Exception
 	 */
 	public Canvas(final int width, final int height) throws Exception {
+		this(width, height, false);
+	}
+	
+	/**
+	 * Creates a blank/black canvas of specified dimensions.
+	 * @param width
+	 * @param height
+	 * @throws Exception
+	 */
+	public Canvas(final int width, final int height, final boolean randomize) throws Exception {
 		CheckUtils.checkPositive(width, "width");
 		CheckUtils.checkPositive(height, "height");
 		pixels = new RGBPixel[width][height];
+		if (randomize) {
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
+					pixels[i][j] = RGBPixel.getRandomOpaque();
+				}
+			}
+		}
+		
 	}
 
 	/**
@@ -518,8 +536,36 @@ public class Canvas {
 					       values.getHeight());
 		}
 	}
+
+	/**
+	 * Draws an empty one-pixel box with the specified values.
+	 * @param box
+	 * @param value
+	 * @throws Exception
+	 */
+	public void draw(final Box box, final RGBPixel value) throws Exception {
+		if (!box.isContained(getBounds())) {
+			throw new Exception("Box: " + box + " outside of " + getBounds() + ".");
+		}
+		
+		for (int i = box.getXMin(); i <= box.getXMax(); i++) {
+			pixels[i][box.getYMin()] = new RGBPixel(value);
+			pixels[i][box.getYMax()] = new RGBPixel(value);
+		}
+		for (int j = box.getYMin(); j <= box.getYMax(); j++) {
+			pixels[box.getXMin()][j] = new RGBPixel(value);
+			pixels[box.getXMax()][j] = new RGBPixel(value);			
+		}
+		
+	}
 	
-	public void set(final Box box, final RGBPixel value) throws Exception {
+	/**
+	 * Fills a box with the specified pixel values.
+	 * @param box
+	 * @param value
+	 * @throws Exception
+	 */
+	public void fill(final Box box, final RGBPixel value) throws Exception {
 		if (!box.isContained(getBounds())) {
 			throw new Exception("Box: " + box + " outside of " + getBounds() + ".");
 		}
@@ -610,6 +656,18 @@ public class Canvas {
 	public Canvas getRandom(final int width, final int height) throws Exception {
 		return get(getRandomBox(width, height));
 	}
+
+	/**
+	 * Returns a random box from the canvas with the specified height and 
+	 * width.
+	 * @param width
+	 * @param height
+	 * @return
+	 * @throws Exception
+	 */
+	public Box getRandomBox(final int sideLength) throws Exception {
+		return getRandomBox(sideLength, sideLength);
+	}
 	
 	/**
 	 * Returns a random box from the canvas with the specified height and 
@@ -679,6 +737,27 @@ public class Canvas {
 		return set;
 	}
 	
+
+	public Set<Box> getTiles(final int sideLength) throws Exception {
+		return getTiles(sideLength, sideLength);
+	} 
+	
+	/**
+	 * Returns a set of equal-size tiles starting with the top left.  Note this
+	 * will trim to the bottom/right when sizes don't line up.
+	 * @return
+	 * @throws Exception
+	 */
+	public Set<Box> getTiles(final int width, final int height) throws Exception {
+		Set<Box> tiles = new HashSet<Box>();
+		for (int i = 0; i < getWidth() - width; i += width) {
+			for (int j = 0; j < getHeight() - width; j += height) {
+				tiles.add(new Box(i, width, j, height));
+			}
+		}
+		return tiles;
+	}
+	
 	/**
 	 * Applies one canvas to this one, using the opacity of the parameter to
 	 * determine how to blend.  The opacity of this layer remains as-is, and
@@ -730,6 +809,11 @@ public class Canvas {
 		}
 		
 		return new Canvas(GraphicsUtils.fill(source.toBufferedImage(), width, height));
+	}
+
+	public Canvas getScaled(final Integer maxWidth,
+			  final Integer maxHeight) throws Exception {
+		return scaleTo(this, maxWidth, maxHeight);
 	}
 	
 	/**
@@ -908,7 +992,7 @@ public class Canvas {
 			final Canvas canvas = new Canvas(file);
 			Set<Box> boxes = canvas.getRandomCoverage(30, 30, 2);
 			for (Box box : boxes) {
-				canvas.set(box, RGBPixel.getRandomOpaque());
+				canvas.fill(box, RGBPixel.getRandomOpaque());
 			}
 			
 			final ImageComponent component = new ImageComponent(canvas);
@@ -927,7 +1011,7 @@ public class Canvas {
 						
 						Set<Box> boxes = canvas.getRandomCoverage(size, size, 2);
 						for (Box box : boxes) {
-							canvas.set(box, RGBPixel.getRandomOpaque());
+							canvas.fill(box, RGBPixel.getRandomOpaque());
 						}
 						component.update(canvas);
 					}

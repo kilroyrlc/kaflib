@@ -50,6 +50,10 @@ public class Byte implements Comparable<Byte> {
 		this.value = value;
 	}
 	
+	public double getDouble() {
+		return new Double(value);
+	}
+	
 	public int getValue() {
 		return value;
 	}

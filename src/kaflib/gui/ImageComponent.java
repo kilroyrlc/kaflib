@@ -6,7 +6,9 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
-import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import kaflib.graphics.Canvas;
 import kaflib.utils.CheckUtils;
@@ -18,10 +20,10 @@ public class ImageComponent extends Component {
 
 	private static final long serialVersionUID = 1L;
 
-	private BufferedImage image;
-	private float scaling;
-	private int width;
-	private int height;
+	private Canvas image;
+	private BufferedImage scaled_image; // The scaled image.
+	private Integer max_width;
+	private Integer max_height;
 	
 	/**
 	 * Creates the component.  Read-only spares the mouse listeners associated
@@ -30,94 +32,93 @@ public class ImageComponent extends Component {
 	 * @throws Exception
 	 */
 	public ImageComponent() throws Exception {
-		scaling = 1;
+		super();
+		max_width = null;
+		max_height = null;
 	}
 	
+	/**
+	 * Creates a component with the image contained in the specified file.
+	 * @param file
+	 * @throws Exception
+	 */
 	public ImageComponent(final File file) throws Exception {
 		this();
-		image = ImageIO.read(file);
-		width = image.getWidth();
-		height = image.getHeight();
+		update(file);
 	}
 	
+	/**
+	 * Creates an empty component of the specified dimensions.
+	 * @param width
+	 * @param height
+	 * @throws Exception
+	 */
 	public ImageComponent(final int width, final int height) throws Exception {
 		this();
-		this.width = width;
-		this.height = height;
 	}
 	
-	public ImageComponent(final int width, final int height, final float scaling) throws Exception {
-		this();
-		this.scaling = scaling;
-		this.width = width;
-		this.height = height;
-	}
-	
-	public ImageComponent(final File file, final float scaling) throws Exception {
-		this();
-		
-		image = ImageIO.read(file);
-		this.scaling = scaling;
-		
-		width = (int)(image.getWidth() * scaling);
-		height = (int)(image.getHeight() * scaling);
-	}
-
 	public ImageComponent(final Canvas image) throws Exception {
-		this(image.toBufferedImage(), 1);
+		this(image.toBufferedImage());
 	}
 
 	
 	public ImageComponent(final BufferedImage image) throws Exception {
-		this(image, 1);
+		update(image);
+
 	}
 
-	public ImageComponent(final BufferedImage image, final boolean readOnly) throws Exception {
-		this(image, 1, readOnly);
-	}
-	
-	public ImageComponent(final BufferedImage image, final float scaling) throws Exception {
-		this();
-		this.image = image;
-		this.scaling = scaling;
-		
-		width = (int)(image.getWidth() * scaling);
-		height = (int)(image.getHeight() * scaling);
-	}
-	
-	public ImageComponent(final BufferedImage image, 
-						  final float scaling,
-						  final boolean readOnly) throws Exception {
-		this();
-		this.image = image;
-		this.scaling = scaling;
-		
-		width = (int)(image.getWidth() * scaling);
-		height = (int)(image.getHeight() * scaling);
-	}
-	
-	public BufferedImage getImage() {
+	public Canvas getCanvas() {
 		return image;
 	}
+	
+	public BufferedImage getImage() throws Exception {
+		return image.toBufferedImage();
+	}
 		
-	/**
-	 * Sets the x:y aspect ratio of the thumbnail.
-	 * @param aspect
-	 * @throws Exception
-	 */
-	public void setThumbnailAspect(final float aspect) throws Exception {
-		CheckUtils.checkPositive(aspect, "aspect");
+	private void updateScaledImage() throws Exception {
+		if ((max_width != null || max_height != null) &&
+			(image.getWidth() > max_width || 
+			image.getHeight() > max_height)) {
+			scaled_image = image.getScaled(max_width, max_height).toBufferedImage();
+		}
+		else {
+			scaled_image = image.toBufferedImage();
+		}
+		SwingUtilities.invokeLater(new Runnable(){
+			@Override
+			public void run() {
+				invalidate();
+				repaint();
+				revalidate();
+			}
+		});
 	}
 	
 	/**
-	 * Sets the x:y aspect ratio of the thumbnail.
-	 * @param aspect
+	 * Returns the original->displayed scaling factor.
+	 * @return
 	 * @throws Exception
 	 */
-	public void setThumbnailScaling(final int scaling) throws Exception {
-		CheckUtils.checkPositive(scaling, "scaling");
+	protected Double getScalingFactor() throws Exception {
+		if (scaled_image == null || image == null || 
+			scaled_image.getWidth() == 0 || image.getWidth() == 0) {
+			return null;
+		}
+		return (double) scaled_image.getWidth() / (double) image.getWidth();
 	}
-
+	
+	public void setMaxWidth(final Integer width) throws Exception {
+		CheckUtils.checkPositive(width, "width");
+		max_width = width;
+		updateScaledImage();
+	}
+	
+	public void setMaxHeight(final Integer height) throws Exception {
+		CheckUtils.checkPositive(height, "height");
+		max_height = height;
+		updateScaledImage();
+	}
+	
 	/**
 	 * Updates the image.
 	 * @param image
@@ -125,14 +126,8 @@ public class ImageComponent extends Component {
 	 */
 	public void update(final Canvas image) throws Exception {
 		CheckUtils.check(image, "image");
-		this.image = image.toBufferedImage();
-		
-		width = (int)(image.getWidth() * scaling);
-		height = (int)(image.getHeight() * scaling);
-		
-		invalidate();
-		repaint();
-		revalidate();
+		this.image = image;
+		updateScaledImage();
 	}
 	
 	/**
@@ -142,14 +137,9 @@ public class ImageComponent extends Component {
 	 */
 	public void update(final BufferedImage image) throws Exception {
 		CheckUtils.check(image, "image");
-		this.image = image;
-		
-		width = (int)(image.getWidth() * scaling);
-		height = (int)(image.getHeight() * scaling);
-		
-		invalidate();
-		repaint();
-		revalidate();
+		this.image = new Canvas(image);
+		updateScaledImage();
+
 	}
 	
 	/**
@@ -162,14 +152,9 @@ public class ImageComponent extends Component {
 			return;
 		}
 		
-		image = ImageIO.read(file);
+		image = new Canvas(file);
+		updateScaledImage();
 
-		width = (int)(image.getWidth() * scaling);
-		height = (int)(image.getHeight() * scaling);
-		
-		invalidate();
-		repaint();
-		revalidate();
 	}
 	
 	/**
@@ -179,20 +164,47 @@ public class ImageComponent extends Component {
     	if (image == null) {
     		return;
     	}
-    	if (scaling == 1) {
-            g.drawImage(image, 0, 0, null);
-    	}
-    	else {
-        	g.drawImage(image, 0, 0, 
-        				(int) (image.getWidth() * scaling), 
-        				(int) (image.getHeight() * scaling), null);
-    		
-    	}
+        g.drawImage(scaled_image, 0, 0, null);
     }
 
+    /**
+     * Returns the preferred component size, typically matching the content.
+     */
     public Dimension getPreferredSize() {
+    	Integer width = max_width;
+    	Integer height = max_height;
+
+    	if (image != null) {
+        	if (width == null) {
+        		width = image.getWidth();
+        	}
+        	if (height == null) {
+        		height = image.getHeight();
+        	}
+    	}
+    	if (width == null) {
+    		width = 0;
+    	}
+    	if (height == null) {
+    		height = 0;
+    	}
     	return new Dimension(width, height);
     }
 	
-	
+	public static void main(String args[]) {
+		try {
+			JPanel image_panel = new ImagePanel();
+			JFrame image_frame = new JFrame();
+			image_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			ImageComponent component = new ImageComponent(new File("data/flag.jpg"));
+			image_panel.add(component);
+			image_frame.setContentPane(image_panel);
+			image_frame.pack();
+			image_frame.setVisible(true);
+			//component.update(new File("data/flag.jpg"));
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }

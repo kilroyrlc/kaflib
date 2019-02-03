@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import kaflib.utils.CheckUtils;
 import kaflib.utils.RandomUtils;
@@ -56,6 +58,23 @@ public class Coordinate {
 		this.x = coordinate.getX();
 		this.y = coordinate.getY();
 		this.positive_domain = coordinate.getPositiveDomain();
+		hash_code = toString().hashCode();
+	}
+	
+	/**
+	 * Parses the coordinate out of a serialized string "(x, y)".
+	 * @param serial
+	 * @throws Exception
+	 */
+	public Coordinate(final String serial) throws Exception {
+		Pattern pattern = Pattern.compile("^\\s*\\((\\d+)\\s*\\,\\s*(\\d+)\\)\\s*$");
+		Matcher matcher = pattern.matcher(serial);
+		if (!matcher.matches()) {
+			throw new Exception("Could not parse (x, y) out of: " + serial + ".");
+		}
+		this.x = Integer.valueOf(matcher.group(1));
+		this.y = Integer.valueOf(matcher.group(2));
+		this.positive_domain = !(x < 0 | y < 0);
 		hash_code = toString().hashCode();
 	}
 	
@@ -430,9 +449,13 @@ public class Coordinate {
 	public boolean equals(Coordinate c) {
 		return x == getX() && y == getY();
 	}
+
+	public String toSerial() {
+		return "(" + x + ", " + y + ")";
+	}
 	
 	public String toString() {
-		return "(" + x + ", " + y + ")";
+		return toSerial();
 	}
 	
 	

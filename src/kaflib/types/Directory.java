@@ -135,6 +135,17 @@ public class Directory extends File {
 		return files;
 	}
 	
+	public boolean contains(final FileHash hash) throws Exception {
+		for (File file : listFiles()) {
+			if (hash.equals(new FileHash(file))) {
+System.out.println(hash + " = " + file + " -> " + new FileHash(file));
+				
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * Returns whether or not this directory has subdirectories.
 	 * @param directory

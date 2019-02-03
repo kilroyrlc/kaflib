@@ -94,6 +94,10 @@ public class ImagePanel extends javax.swing.JPanel {
 
 	}
 
+	public void addButton(final JButton button) {
+		button_panel.add(button);
+	}
+	
 	private final void setInputEnabled(final boolean enabled) {
 		for (JButton button : buttons) {
 			button.setEnabled(enabled);

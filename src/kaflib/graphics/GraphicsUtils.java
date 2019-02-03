@@ -20,6 +20,7 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
 import kaflib.types.Coordinate;
+import kaflib.types.Box;
 import kaflib.types.Byte;
 import kaflib.utils.CheckUtils;
 
@@ -248,6 +249,7 @@ public class GraphicsUtils {
 		return getARGB(Byte.FF, r, g, b);
 	}
 
+	
 	/**
 	 * Returns the r/g/b channels as a single value.
 	 * @param r
@@ -273,7 +275,8 @@ public class GraphicsUtils {
 						LUMINANCE_G * (double) g.getValue() + 
 						LUMINANCE_B * (double) b.getValue());
 	}
-		
+
+	
 	public static Byte getLuminance(final int rgb) throws Exception {
 		Byte r = getRed(rgb);
 		Byte g = getGreen(rgb);
@@ -510,6 +513,10 @@ public class GraphicsUtils {
 		
 		return getCropped(image, dx / 2, dy / 2, width, height);
 		
+	}
+	
+	public static BufferedImage getCropped(final BufferedImage image, final Box box) throws Exception {
+		return getCropped(image, box.getXMin(), box.getYMin(), box.getWidth(), box.getHeight());
 	}
 	
 	/**
@@ -758,9 +765,16 @@ public class GraphicsUtils {
 	public static BufferedImage getJPG(final URL url, final File file) throws Exception {
 		CheckUtils.check(url, "url");
 		CheckUtils.check(file, "file");
-		
-		BufferedImage image = tryRead(url, 3);
-	
+
+		BufferedImage image;
+
+		try {
+			image = tryRead(url, 3);
+		}
+		catch (Exception e) {
+			System.out.println("URL: " + url);
+			throw e;
+		}
 		if (image == null) {
 			throw new Exception("Failed to read url: " + url + ".");
 		}

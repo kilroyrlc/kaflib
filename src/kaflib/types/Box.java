@@ -25,6 +25,14 @@ public class Box {
 	protected final int width;
 	protected final int height;
 	
+	/**
+	 * Creates a box of specified x/width, y/height.
+	 * @param xMin
+	 * @param width
+	 * @param yMin
+	 * @param height
+	 * @throws Exception
+	 */
 	public Box(final int xMin, final int width,
 			   final int yMin, final int height) throws Exception {
 		x_min = xMin;
@@ -52,6 +60,10 @@ public class Box {
 	 * @throws Exception
 	 */
 	public Box(final Coordinate c0, final Coordinate c1) throws Exception {
+		if (!isBox(c0, c1)) {
+			throw new Exception("Invalid box coordinates: " + c0 + ", " + c1 + ".");
+		}
+		
 		List<Coordinate> coordinates = TypeUtils.getList(c0, c1);
 		
 		x_min = Coordinate.getMinX(coordinates);
@@ -65,13 +77,56 @@ public class Box {
 		top_right = new Coordinate(x_max, y_min);
 		bottom_left = new Coordinate(x_min, y_max);
 		bottom_right = new Coordinate(x_max, y_max);
-		
-		if (x_min == x_max || y_min == y_max) {
-			throw new Exception("Invalid box coordinates: " + 
-						        StringUtils.concatenate(coordinates, " ", true) + ".");
-		}
 	}
 
+	/**
+	 * Creates a box with the given center point and dimensions.
+	 * @param center
+	 * @param width
+	 * @param height
+	 * @throws Exception
+	 */
+	public Box(final Coordinate center, final int width, final int height) throws Exception {
+		x_min = center.getX() - (width / 2);
+		x_max = x_min + width;
+		y_min = center.getY() - (height / 2);
+		y_max = y_min + height;
+		this.width = width;
+		this.height = height;
+		
+		top_left = new Coordinate(x_min, y_min);
+		top_right = new Coordinate(x_max, y_min);
+		bottom_left = new Coordinate(x_min, y_max);
+		bottom_right = new Coordinate(x_max, y_max);
+		
+	}
+	
+	public Box(final String serialized) throws Exception {
+		String tokens[] = serialized.split("\\:");
+		if (tokens.length != 2) {
+			throw new Exception("Could not parse coordinate:coordinate from " + serialized + ".");
+		}
+		Coordinate c0 = new Coordinate(tokens[0]);
+		Coordinate c1 = new Coordinate(tokens[1]);
+		if (!isBox(c0, c1)) {
+			throw new Exception("Invalid box coordinates: " + c0 + ", " + c1 + ".");
+		}
+		
+		List<Coordinate> coordinates = TypeUtils.getList(c0, c1);
+		
+		x_min = Coordinate.getMinX(coordinates);
+		x_max = Coordinate.getMaxX(coordinates);
+		y_min = Coordinate.getMinY(coordinates);
+		y_max = Coordinate.getMaxY(coordinates);
+		width = x_max - x_min + 1;
+		height = y_max - y_min + 1;
+		
+		top_left = new Coordinate(x_min, y_min);
+		top_right = new Coordinate(x_max, y_min);
+		bottom_left = new Coordinate(x_min, y_max);
+		bottom_right = new Coordinate(x_max, y_max);
+	}
+	
 	
 	/**
 	 * Returns whether or not the boxes overlap, inclusive.
@@ -139,6 +194,10 @@ public class Box {
 		return height;
 	}
 	
+	public Coordinate getCenter() {
+		return new Coordinate(x_min + width / 2, y_min + height / 2);
+	}
+	
 	public boolean isContained(final Box other) {
 		if (x_min >= other.getXMin() &&
 			x_max <= other.getXMax() &&
@@ -149,6 +208,14 @@ public class Box {
 		else {
 			return false;
 		}
+	}
+	
+	/**
+	 * Returns width / height.
+	 * @return
+	 */
+	public double getAspectRatio() {
+		return width / height;
 	}
 	
 	public boolean containsOrAdjacent(final Coordinate coordinate) throws Exception {
@@ -217,6 +284,10 @@ public class Box {
 	 */
 	public int getYMax() {
 		return y_max;
+	}
+	
+	public String toSerial() {
+		return getTopLeft().toSerial() + ":" + getBottomRight().toSerial();
 	}
 	
 	public String toString() {
@@ -388,6 +459,22 @@ public class Box {
 				return null;
 			}
 			return getBoundingBoxIf(remaining);
+		}
+	}
+	
+	/**
+	 * Returns whether or not the coordinates form a box, that is, whether or
+	 * not either coordinate is colinear.
+	 * @param c0
+	 * @param c1
+	 * @return
+	 */
+	public static boolean isBox(final Coordinate c0, final Coordinate c1) {
+		if (c0.getX() != c1.getX() && c0.getY() != c1.getY()) {
+			return true;
+		}
+		else {
+			return false;
 		}
 	}
 	

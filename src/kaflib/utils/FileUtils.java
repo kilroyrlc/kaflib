@@ -345,6 +345,27 @@ public class FileUtils {
 	}
 	
 	/**
+	 * Writes the toString() result of all items.
+	 * @param file
+	 * @param lines
+	 * @param separator
+	 * @throws Exception
+	 */
+	public static<T> void writeStrings(final File file, final Collection<T> lines, final String separator) throws Exception {
+		PrintWriter writer = getWriter(file);
+		
+		for (T line : lines) {
+			String value = line.toString();
+			
+			if (value.contains(separator)) {
+				throw new Exception("Line contains separator:\n" + line);
+			}
+			writer.print(value + separator);
+		}
+		writer.close();
+	}
+	
+	/**
 	 * Appends the given string the the specified file.
 	 * @param file
 	 * @param text
@@ -401,6 +422,10 @@ public class FileUtils {
 		return string;
 	}
 	
+
+	public static String torGet(final URL url) throws Exception {
+		return torGet(url, null);
+	}
 	
 	/**
 	 * Reads the html from the specified url using tor.
@@ -408,14 +433,14 @@ public class FileUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String torGet(final URL url) throws Exception {
+	public static String torGet(final URL url, final Long retrySleepMS) throws Exception {
 		
 		final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
 									  new InetSocketAddress("127.0.0.1", 9150));
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
 		//HttpURLConnection.setFollowRedirects(false);
-		//connection.setConnectTimeout(60000);
-		//connection.setReadTimeout(60000);
+		connection.setConnectTimeout(60000);
+		connection.setReadTimeout(60000);
 		for (int i = 0; i < 5; i++) {
 			try {
 				connection.connect();
@@ -424,6 +449,7 @@ public class FileUtils {
 			catch (Exception e) {
 				System.out.println(e.getMessage());
 			}
+			Thread.sleep(retrySleepMS);
 		}		
 		
 		String string = StringUtils.read(connection.getInputStream());
@@ -752,7 +778,6 @@ public class FileUtils {
 								file.length()/1000 + "k)" + " -> " + name + 
 								"(" + ofile.length()/1000 + "k).");
 		}
-		
 		FileUtils.copy(ofile, file);
 	}
 	

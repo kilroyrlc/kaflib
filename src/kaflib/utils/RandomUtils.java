@@ -316,7 +316,7 @@ public class RandomUtils {
 										final int count) throws Exception {
 		Set<Integer> indices = RandomUtils.randomSet(Math.min(count, values.size()),
 													 0, 
-													 values.size());
+													 values.size() - 1);
 		List<T> list = new ArrayList<T>();
 		for (Integer i : indices) {
 			list.add(values.get(i));
