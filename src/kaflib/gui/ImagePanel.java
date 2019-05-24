@@ -14,7 +14,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import kaflib.applications.imagetag.DescriptionSet;
 import kaflib.graphics.GraphicsUtils;
 import kaflib.types.Directory;
 import kaflib.utils.AESUtils;
@@ -143,8 +142,8 @@ public class ImagePanel extends javax.swing.JPanel {
 		}
 		
 		if (keys != null) {
-			String name = AESUtils.decryptName(file, DescriptionSet.IMAGE_EXTENSION, keys);
-			if (!FileUtils.isImageFile(new File(file.getParentFile(), name))) {
+			String name = AESUtils.decryptName(file, AESUtils.DEFAULT_FILE_EXTENSION, keys);
+			if (!FileUtils.isGraphicsFile(new File(file.getParentFile(), name))) {
 				image = null;
 				file_label.setText("");
 				setInputEnabled(false);
@@ -153,7 +152,7 @@ public class ImagePanel extends javax.swing.JPanel {
 			image = GraphicsUtils.read(AESUtils.decrypt(file, keys));
 		}
 		else {
-			if (!FileUtils.isImageFile(file)) {
+			if (!FileUtils.isGraphicsFile(file)) {
 				image = null;
 				file_label.setText("");
 				setInputEnabled(false);

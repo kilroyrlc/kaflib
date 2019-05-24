@@ -72,7 +72,7 @@ public class Directory extends File {
 	public Set<File> listImages() throws Exception {
 		Set<File> files = new HashSet<File>();
 		for (File file : listFiles()) {
-			if (!file.isDirectory() && FileUtils.isImageFile(file)) {
+			if (!file.isDirectory() && FileUtils.isGraphicsFile(file)) {
 				files.add(file);
 			}
 		}

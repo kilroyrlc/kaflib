@@ -547,8 +547,9 @@ public class CardDatabase implements Iterable<CardInstance> {
 			Card card = getCard(name);
 			if (card == null) {
 				missing.add(name);
+				continue;
 			}
-			Integer value = StringUtils.toInt(card.getCMC());
+			Integer value = getCMC(card);
 			if (value != null) {
 				if (!histogram.containsKey(value)) {
 					histogram.put(value, 0);
@@ -558,9 +559,17 @@ public class CardDatabase implements Iterable<CardInstance> {
 		}
 		
 		if (missing.size() > 0) {
-			throw new Exception("Missing cards:\n   " + StringUtils.concatenate(missing, "\n   "));
+			throw new Exception("Missing cards:\n   '" + StringUtils.concatenate(missing, "'\n   '"));
 		}
 		return histogram;
+	}
+	
+	public Integer getCMC(final Card card) throws Exception {
+		CheckUtils.check(card, "card");
+		if (card.getCMC() == null) {
+			return null;
+		}
+		return StringUtils.toInt(card.getCMC());
 	}
 	
 	public static CardInstance parseCard(final List<String> values) throws Exception {

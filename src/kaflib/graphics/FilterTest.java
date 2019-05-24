@@ -6,8 +6,9 @@ import java.io.File;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import kaflib.graphics.transform.CompositeTransforms;
+import kaflib.graphics.transform.EdgeFilter;
 import kaflib.gui.ImageComponent;
+import kaflib.types.Box;
 
 public class FilterTest {
 	
@@ -38,14 +39,26 @@ public class FilterTest {
 		//RegionFillFilter filter = new RegionFillFilter(image, 35, 1, new Percent(100));
 
 //		AverageFilter filter = new AverageFilter(canvas, 13, AverageFilter.DELTA_MED);
-//		EdgeFilter filter = new EdgeFilter(canvas, 
-//										   new Pixel(Pixel.OPAQUE_BLACK), 
-//										   7, 
-//										   new Percent(400));
-//	
-//		System.out.println("Applying filter.");
+		EdgeFilter filter = new EdgeFilter(canvas, 
+										   RGBPixel.OPAQUE_BLACK, 
+										   2, 
+										   110,
+										   true);
+	
+		System.out.println("Applying filter.");
 //		filter.start();
+		ThumbnailFinder thumbnailer = new ThumbnailFinder(canvas, 7, 5);
+		thumbnailer.start();
+		thumbnailer.blockUntilDone(null);
+		inputImage.update(thumbnailer.drawInterest());
+		
+Box box = thumbnailer.getMaxSelection(2, 3, 2, 3);
+System.out.println("Got: " + box);
+canvas.draw(box, RGBPixel.OPAQUE_GREEN);
+outputImage.update(canvas);
+
 //		Transform.Status status = filter.waitUntilFinished(null);
+//		
 //		if (status != Transform.Status.SUCCESS) {
 //			System.out.println("Filter failure.");
 //			System.out.println(filter.getMessages());
@@ -54,10 +67,10 @@ public class FilterTest {
 //			System.out.println("Filter success.");
 //			outputImage.update(filter.getResult().toBufferedImage());
 //		}
-		canvas = CompositeTransforms.temp(canvas);
-		if (canvas != null) {
-			outputImage.update(canvas.toBufferedImage());
-		}
+////		canvas = CompositeTransforms.temp(canvas);
+//		if (canvas != null) {
+//			outputImage.update(filter.getOutput());
+//		}
 		
 		System.out.println("Done applying filter.");
 
@@ -65,9 +78,9 @@ public class FilterTest {
 	
 	public static void main(String args[]) {
 		try {
-			//FilterTest editor = new FilterTest(new File("flag.jpg"));
-			FilterTest editor = new FilterTest(new File(new File("data"), "flag_medium.jpg"));
-			//FilterTest editor = new FilterTest(new File("flag_small.jpg"));
+			System.setProperty("sun.java2d.opengl",  "true");
+			//FilterTest editor = new FilterTest(new File(new File("data"), "flag_medium.jpg"));
+			FilterTest editor = new FilterTest(new File("C:\\Users\\0\\Desktop\\pano.jpg"));
 			editor.process();
 		}
 		catch (Exception e) {

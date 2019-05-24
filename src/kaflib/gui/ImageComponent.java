@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import kaflib.graphics.Canvas;
+import kaflib.graphics.GraphicsUtils;
 import kaflib.utils.CheckUtils;
 
 /**
@@ -22,6 +23,7 @@ public class ImageComponent extends Component {
 
 	private Canvas image;
 	private BufferedImage scaled_image; // The scaled image.
+	private int scaling_factor; // Always down: 1/2 = 2, 1/4 = 4...
 	private Integer max_width;
 	private Integer max_height;
 	
@@ -53,8 +55,10 @@ public class ImageComponent extends Component {
 	 * @param height
 	 * @throws Exception
 	 */
-	public ImageComponent(final int width, final int height) throws Exception {
+	public ImageComponent(final int maxWidth, final int maxHeight) throws Exception {
 		this();
+		max_width = maxWidth;
+		max_height = maxHeight;
 	}
 	
 	public ImageComponent(final Canvas image) throws Exception {
@@ -75,14 +79,17 @@ public class ImageComponent extends Component {
 		return image.toBufferedImage();
 	}
 		
+	public boolean scale() {
+		return max_width != null || max_height != null;
+	}
+	
 	private void updateScaledImage() throws Exception {
-		if ((max_width != null || max_height != null) &&
-			(image.getWidth() > max_width || 
-			image.getHeight() > max_height)) {
-			scaled_image = image.getScaled(max_width, max_height).toBufferedImage();
-		}
-		else {
-			scaled_image = image.toBufferedImage();
+		scaled_image = image.toBufferedImage();
+		scaling_factor = 1;
+		while ((max_width != null && scaled_image.getWidth() > max_width) ||
+		       (max_height != null && scaled_image.getHeight() > max_height)) {
+			scaled_image = GraphicsUtils.getScaledDown(scaled_image, 2);
+			scaling_factor *= 2;
 		}
 		SwingUtilities.invokeLater(new Runnable(){
 			@Override
@@ -94,17 +101,17 @@ public class ImageComponent extends Component {
 		});
 	}
 	
+	protected BufferedImage getScaledImage() {
+		return scaled_image;
+	}
+	
 	/**
-	 * Returns the original->displayed scaling factor.
+	 * Returns scaling factor as a 1/x integer.  So scaled by 1/4 = 4.
 	 * @return
 	 * @throws Exception
 	 */
-	protected Double getScalingFactor() throws Exception {
-		if (scaled_image == null || image == null || 
-			scaled_image.getWidth() == 0 || image.getWidth() == 0) {
-			return null;
-		}
-		return (double) scaled_image.getWidth() / (double) image.getWidth();
+	protected int getScalingFactor() {
+		return scaling_factor;
 	}
 	
 	public void setMaxWidth(final Integer width) throws Exception {

@@ -45,8 +45,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import kaflib.types.Directory;
 import kaflib.types.Matrix;
+import kaflib.types.Pair;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -231,6 +234,33 @@ public class FileUtils {
 		}
 	}
 
+	/**
+	 * Reads the lines of the file to a set.
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public static Set<String> readLinesToSet(final File file) throws Exception {
+		BufferedReader reader = getReader(file);
+		Set<String> values = new HashSet<String>();
+		
+		try {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				values.add(line);
+			}
+			
+			reader.close();
+			return values;
+		}
+		catch (Exception e) {
+			if (reader != null) {
+				reader.close();
+			}
+			throw e;
+		}
+	}
+	
 	/**
 	 * Returns the file contents as a string or null if the file exceeds max.
 	 * @param file
@@ -423,8 +453,8 @@ public class FileUtils {
 	}
 	
 
-	public static String torGet(final URL url) throws Exception {
-		return torGet(url, null);
+	public static String torGet(final URL url, final Pair<String, String>... properties) throws Exception {
+		return torGet(url, null, properties);
 	}
 	
 	/**
@@ -433,27 +463,59 @@ public class FileUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String torGet(final URL url, final Long retrySleepMS) throws Exception {
-		
+	public static String torGet(final URL url, final Long retrySleepMS, final Pair<String, String>... properties) throws Exception {
+		String string = null;
 		final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
 									  new InetSocketAddress("127.0.0.1", 9150));
-		HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
-		//HttpURLConnection.setFollowRedirects(false);
-		connection.setConnectTimeout(60000);
-		connection.setReadTimeout(60000);
-		for (int i = 0; i < 5; i++) {
-			try {
-				connection.connect();
-				break;
+		if (url.toString().startsWith("https")) {
+			HttpsURLConnection connection = (HttpsURLConnection) url.openConnection(proxy);
+			connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
+			for (Pair<String, String> property : properties) {
+				connection.addRequestProperty(property.getFirst(), property.getSecond());
 			}
-			catch (Exception e) {
-				System.out.println(e.getMessage());
-			}
-			Thread.sleep(retrySleepMS);
-		}		
+			
+			//HttpURLConnection.setFollowRedirects(false);
+			connection.setConnectTimeout(60000);
+			connection.setReadTimeout(60000);
+			for (int i = 0; i < 5; i++) {
+				try {
+					connection.connect();
+					break;
+				}
+				catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+				Thread.sleep(retrySleepMS);
+			}		
+			
+			string = StringUtils.read(connection.getInputStream());
+			connection.disconnect();
+		}
+		else {
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
+			connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
+			for (Pair<String, String> property : properties) {
+				connection.addRequestProperty(property.getFirst(), property.getSecond());
+			}			
+			//HttpURLConnection.setFollowRedirects(false);
+			connection.setConnectTimeout(60000);
+			connection.setReadTimeout(60000);
+			for (int i = 0; i < 5; i++) {
+				try {
+					connection.connect();
+					break;
+				}
+				catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+				Thread.sleep(retrySleepMS);
+			}		
+			
+			string = StringUtils.read(connection.getInputStream());
+			connection.disconnect();
+		}
 		
-		String string = StringUtils.read(connection.getInputStream());
-		connection.disconnect();
+		
 		return string;
 	}
 	
@@ -463,39 +525,78 @@ public class FileUtils {
 	 * @param url
 	 * @throws Exception
 	 */
-	public static void torDownload(final File file, final URL url) throws Exception {
+	public static void torDownload(final File file, final URL url, final Pair<String, String>... properties) throws Exception {
 		if (!file.exists()) {
 			file.createNewFile();
 		}
-		
-		final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
-									  new InetSocketAddress("127.0.0.1", 9150));
-		HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
-		//HttpURLConnection.setFollowRedirects(false);
-		//connection.setConnectTimeout(60000);
-		//connection.setReadTimeout(60000);
-		for (int i = 0; i < 5; i++) {
-			try {
-				connection.connect();
-				break;
+		if (url.toString().startsWith("https")) {
+			final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
+										  new InetSocketAddress("127.0.0.1", 9150));
+			HttpsURLConnection connection = (HttpsURLConnection) url.openConnection(proxy);
+			connection.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
+			for (Pair<String, String> property : properties) {
+				connection.addRequestProperty(property.getFirst(), property.getSecond());
 			}
-			catch (Exception e) {
-				System.out.println(e.getMessage());
+			//HttpURLConnection.setFollowRedirects(false);
+			//connection.setConnectTimeout(60000);
+			//connection.setReadTimeout(60000);
+			for (int i = 0; i < 5; i++) {
+				try {
+					connection.connect();
+					break;
+				}
+				catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+			}		
+			
+			InputStream input = connection.getInputStream();
+			OutputStream output = new FileOutputStream(file);
+	
+			byte[] bytes = new byte[2048];
+			int length;
+	
+			while ((length = input.read(bytes)) != -1) {
+				output.write(bytes, 0, length);
 			}
-		}		
-		
-		InputStream input = connection.getInputStream();
-		OutputStream output = new FileOutputStream(file);
-
-		byte[] bytes = new byte[2048];
-		int length;
-
-		while ((length = input.read(bytes)) != -1) {
-			output.write(bytes, 0, length);
+			input.close();
+			output.close();
+			connection.disconnect();
 		}
-		input.close();
-		output.close();
-		connection.disconnect();
+		else {
+			final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
+					  new InetSocketAddress("127.0.0.1", 9150));
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
+			connection.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
+			for (Pair<String, String> property : properties) {
+				connection.addRequestProperty(property.getFirst(), property.getSecond());
+			}
+			//HttpURLConnection.setFollowRedirects(false);
+			//connection.setConnectTimeout(60000);
+			//connection.setReadTimeout(60000);
+			for (int i = 0; i < 5; i++) {
+				try {
+					connection.connect();
+					break;
+				}
+				catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+			}		
+
+			InputStream input = connection.getInputStream();
+			OutputStream output = new FileOutputStream(file);
+
+			byte[] bytes = new byte[2048];
+			int length;
+
+			while ((length = input.read(bytes)) != -1) {
+				output.write(bytes, 0, length);
+			}
+			input.close();
+			output.close();
+			connection.disconnect();
+		}
 	}
 	
 	/**
@@ -506,7 +607,7 @@ public class FileUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static File createUniqueFile(final String prefix, final String suffix) throws Exception {
+	public static File createUniqueFile(final String prefix, final String suffix, final Pair<String, String>... properties) throws Exception {
 		return createUniqueFile(new File("."), prefix, suffix);
 	}
 	
@@ -605,7 +706,7 @@ public class FileUtils {
 	 * @param destination
 	 * @throws Exception
 	 */
-	public static void unzip(final File zipFile, final File destination) throws Exception {
+	public static void unzip(final File zipFile, final Directory destination) throws Exception {
 		CheckUtils.checkReadable(zipFile, "zip file");
 		if (!destination.exists()) {
 			destination.mkdir();
@@ -659,12 +760,31 @@ public class FileUtils {
 	public static String getExtension(final File file) throws Exception {
 		return getExtension(file.getName());
 	}
-	
+
 	public static String getExtension(final String name) throws Exception {
 		if (name == null || name.lastIndexOf('.') < 0) {
-			return null;
+			return "";
 		}
 		return name.substring(name.lastIndexOf('.') + 1);
+	}
+	
+	/**
+	 * Checks that the file matches any of the extensions supplied (no .).
+	 * @param file
+	 * @param extensions
+	 * @return
+	 * @throws Exception
+	 */
+	public static boolean matchesExtensions(final File file, 
+											final Collection<String> extensions) throws Exception {
+		String extension = getExtension(file);
+		
+		for (String e : extensions) {
+			if (extension.equals(e)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public static String append(final String directory, final String path) {
@@ -692,12 +812,14 @@ public class FileUtils {
 	 *  - png
 	 *  - tif
 	 *  - mp4
-	 *  - jpeg
+	 *  - svg
+	 *  - swf
+	 *  - webm
 	 * @param file
 	 * @return
 	 * @throws Exception
 	 */
-	public static boolean isImageFile(final File file) throws Exception {
+	public static boolean isGraphicsFile(final File file) throws Exception {
 		if (getExtension(file) == null) {
 			return false;
 		}
@@ -707,17 +829,46 @@ public class FileUtils {
 			return false;
 		}
 		
-		return isImageExtension(extension);
+		return isGraphicsExtension(extension);
 	}
 
-	public static boolean isImageExtension(final String extension) {
-		if (extension.equals("bmp") ||
-			extension.equals("gif") ||
-			extension.equals("jpg") ||
-			extension.equals("png") ||
-			extension.equals("tif") ||
-			extension.equals("jpeg") ||
-			extension.equals("mp4")) {
+	public static boolean isGraphicsExtension(final String extension) {
+		String extension_lower = extension.toLowerCase();
+		if (extension_lower.equals("bmp") ||
+			extension_lower.equals("gif") ||
+			extension_lower.equals("jpg") ||
+			extension_lower.equals("png") ||
+			extension_lower.equals("tif") ||
+			extension_lower.equals("tiff") ||
+			extension_lower.equals("swf") ||
+			extension_lower.equals("jpeg") ||
+			extension_lower.equals("webm") ||
+			extension_lower.equals("svg") ||
+			extension_lower.equals("mp4")) {
+			return true;
+		}
+		return false;
+	}
+	
+	public static boolean isArchiveFile(final File file) throws Exception {
+		if (getExtension(file) == null) {
+			return false;
+		}
+		
+		String extension = getExtension(file).toLowerCase();
+		if (extension == null) {
+			return false;
+		}
+		
+		return isArchiveExtension(extension);
+	}
+
+	public static boolean isArchiveExtension(final String extension) {
+		String extension_lower = extension.toLowerCase();
+		if (extension_lower.equals("zip") ||
+			extension_lower.equals("gzip") ||
+			extension_lower.equals("tar") ||
+			extension_lower.equals("gz")) {
 			return true;
 		}
 		return false;
@@ -757,7 +908,7 @@ public class FileUtils {
 	 * @param file
 	 * @throws Exception
 	 */
-	public static void renameToBase64Hash(final File file, 
+	public static File renameToBase64Hash(final File file, 
 										  final File outputDirectory,
 										  final Integer length) throws Exception {
 		if (file.isDirectory()) {
@@ -773,12 +924,20 @@ public class FileUtils {
 		String name = getMD5Base64Name(file, length);
 		
 		File ofile = new File(outputDirectory, name);
+		if (ofile.equals(file)) {
+			return ofile;
+		}
+		
 		if (ofile.exists()) {
 			throw new Exception("Collision: " + file + "(" + 
 								file.length()/1000 + "k)" + " -> " + name + 
 								"(" + ofile.length()/1000 + "k).");
 		}
 		FileUtils.copy(ofile, file);
+		if (outputDirectory.equals(file.getParentFile())) {
+			file.delete();
+		}
+		return ofile;
 	}
 	
 	/**

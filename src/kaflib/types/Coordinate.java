@@ -489,6 +489,30 @@ public class Coordinate {
 		return x;
 	}
 	
+	public static Coordinate getMinXCoordinate(final Collection<Coordinate> coordinates) {
+		Coordinate min = null;
+		int x = Integer.MAX_VALUE;
+		for (Coordinate coordinate : coordinates) {
+			if (coordinate.getX() < x) {
+				x = coordinate.getX();
+				min = coordinate;
+			}
+		}
+		return min;
+	}
+	
+	public static Coordinate getMaxXCoordinate(final Collection<Coordinate> coordinates) {
+		int x = Integer.MIN_VALUE;
+		Coordinate max = null;
+		for (Coordinate coordinate : coordinates) {
+			if (coordinate.getX() > x) {
+				x = coordinate.getX();
+				max = coordinate;
+			}
+		}
+		return max;
+	}
+	
 	public static int getMaxX(final Collection<Coordinate> coordinates) {
 		int x = Integer.MIN_VALUE;
 		for (Coordinate coordinate : coordinates) {
@@ -509,6 +533,18 @@ public class Coordinate {
 		return y;
 	}
 	
+	public static Coordinate getMinYCoordinate(final Collection<Coordinate> coordinates) {
+		Coordinate min = null;
+		int y = Integer.MAX_VALUE;
+		for (Coordinate coordinate : coordinates) {
+			if (coordinate.getY() < y) {
+				y = coordinate.getY();
+				min = coordinate;
+			}
+		}
+		return min;
+	}
+	
 	public static int getMaxY(final Collection<Coordinate> coordinates) {
 		int y = Integer.MIN_VALUE;
 		for (Coordinate coordinate : coordinates) {
@@ -517,6 +553,18 @@ public class Coordinate {
 			}
 		}
 		return y;
+	}
+	
+	public static Coordinate getMaxYCoordinate(final Collection<Coordinate> coordinates) {
+		Coordinate max = null;
+		int y = Integer.MIN_VALUE;
+		for (Coordinate coordinate : coordinates) {
+			if (coordinate.getY() > y) {
+				y = coordinate.getY();
+				max = coordinate;
+			}
+		}
+		return max;
 	}
 	
 	public Collection<Coordinate> getBox(final int width, final int height) throws Exception {

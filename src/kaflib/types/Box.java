@@ -36,9 +36,9 @@ public class Box {
 	public Box(final int xMin, final int width,
 			   final int yMin, final int height) throws Exception {
 		x_min = xMin;
-		x_max = xMin + width - 1;
+		x_max = xMin + width;
 		y_min = yMin;
-		y_max = yMin + height - 1;
+		y_max = yMin + height;
 		this.width = width;
 		this.height = height;
 		
@@ -351,34 +351,28 @@ public class Box {
 			throw new Exception("Box " + box + " larger than boundary " + boundary + ".");
 		}
 		int x_min;
-		int x_max;
 		int y_min;
-		int y_max;
 
-		if (box.getXMin() < boundary.getXMin() && box.getXMax() < boundary.getXMax()) {
+		if (box.getXMin() < boundary.getXMin()) {
 			x_min = boundary.getXMin();
-			x_max = x_min + box.getWidth();
 		}
-		else if (box.getXMin() < boundary.getXMin() && box.getXMax() < boundary.getXMax()) {
+		else if (box.getXMax() > boundary.getXMax()) {
 			x_min = boundary.getXMax() - box.getWidth();
-			x_max = boundary.getXMax();
 		}
 		else {
-			throw new Exception("Invalid x boundaries: " + box + ", " + boundary + ".");
+			x_min = box.getXMin();
 		}
 
-		if (box.getYMin() < boundary.getYMin() && box.getYMax() < boundary.getYMax()) {
+		if (box.getYMin() < boundary.getYMin()) {
 			y_min = boundary.getYMin();
-			y_max = y_min + box.getWidth();
 		}
-		else if (box.getYMin() < boundary.getYMin() && box.getYMax() < boundary.getYMax()) {
+		else if (box.getYMax() > boundary.getYMax()) {
 			y_min = boundary.getYMax() - box.getWidth();
-			y_max = boundary.getYMax();
 		}
 		else {
-			throw new Exception("Invalid y boundaries: " + box + ", " + boundary + ".");
+			y_min = box.getYMin();
 		}
-		return new Box(x_min, x_max - x_min, y_min, y_max - y_min);
+		return new Box(x_min, box.getWidth(), y_min, box.getHeight());
 	}
 	
 	/**
@@ -409,11 +403,16 @@ public class Box {
 		int x_max = Coordinate.getMaxX(coordinates);
 		int y_min = Coordinate.getMinY(coordinates);
 		int y_max = Coordinate.getMaxY(coordinates);
-		if (x_min == x_max || y_min == y_max) {
+		if (x_min >= x_max || y_min >= y_max) {
 			return null;
 		}
-		
-		return new Box(x_min, x_max - x_min, y_min, y_max - y_min);
+		try {
+			return new Box(x_min, x_max - x_min, y_min, y_max - y_min);
+		}
+		catch (Exception e) {
+			System.err.println("Bounding box for coordinates: " + StringUtils.concatenate(coordinates, " ", true) + ".");
+			throw e;
+		}
 	}
 	
 	/**
@@ -429,6 +428,33 @@ public class Box {
 		int y_min = Math.min(box.getYMin(), coordinate.getY());
 		int y_max = Math.max(box.getYMax(), coordinate.getY());
 		return new Box(x_min, x_max - x_min, y_min, y_max - y_min);
+	}
+
+	public static final Box getScaledUp(final Box box, final Integer scalingFactor) throws Exception {
+		CheckUtils.check(box, "box");
+		if (scalingFactor == null || scalingFactor == 1) {
+			return box;
+		}
+		
+		int x_min = box.getXMin() * scalingFactor;
+		int width = box.getWidth() * scalingFactor;
+		int y_min = box.getYMin() * scalingFactor;
+		int height = box.getHeight() * scalingFactor;
+		return new Box(x_min, width, y_min, height);		
+	}
+	
+	public static final Box getScaledDown(final Box box, final Integer scalingFactor) throws Exception {
+		CheckUtils.check(box, "box");
+		if (scalingFactor == null || scalingFactor == 1) {
+			return box;
+		}
+		
+		int x_min = box.getXMin() / scalingFactor;
+		int width = box.getWidth() / scalingFactor;
+		int y_min = box.getYMin() / scalingFactor;
+		int height = box.getHeight() / scalingFactor;
+		return new Box(x_min, width, y_min, height);		
+
 	}
 	
 	/**

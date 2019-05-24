@@ -8,6 +8,10 @@ import kaflib.graphics.IndependentTransform;
 import kaflib.types.Coordinate;
 import kaflib.utils.CheckUtils;
 
+/**
+ * Defines a star (square + diamond)-shaped transform to trace edges and
+ * optionally leave the rest intact or remove it.
+ */
 public class EdgeFilter extends IndependentTransform {
 	public static final int DELTA_VERY_LOW = 20;
 	public static final int DELTA_LOW = 45;

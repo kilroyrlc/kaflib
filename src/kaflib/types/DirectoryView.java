@@ -23,6 +23,13 @@ public class DirectoryView {
 	private Worker cacher;
 	private static final double RECACHE_THRESHOLD = 0.5;
 	
+	/**
+	 * Creates the view with the specified root directory and extension filter.
+	 * @param root
+	 * @param cacheSize
+	 * @param extensions
+	 * @throws Exception
+	 */
 	public DirectoryView(final Directory root, 
 						 final int cacheSize,
 						 final String... extensions) throws Exception {
@@ -38,13 +45,17 @@ public class DirectoryView {
 		runCacher();
 	}
 
+	/**
+	 * Check if it's time to recache.
+	 * @return
+	 */
 	private boolean belowRecacheThreshold() {
 		if (cache_size == 0) {
 			return false;
 		}
-		
 		return cache.size() <= (int)((double) cache_size * RECACHE_THRESHOLD);
 	}
+	
 	
 	private synchronized final void runCacher() throws Exception {
 		// Only run one cacher at a time.
@@ -67,6 +78,11 @@ public class DirectoryView {
 		cacher.start();
 	}
 	
+	/**
+	 * Selects a random subdirectory to pull a random file from.
+	 * @return
+	 * @throws Exception
+	 */
 	private File getRandomFile() throws Exception {
 		File file = null;
 

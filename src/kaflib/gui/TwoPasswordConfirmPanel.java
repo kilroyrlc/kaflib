@@ -3,6 +3,7 @@ package kaflib.gui;
 import java.awt.Component;
 import java.awt.GridLayout;
 
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
@@ -30,6 +31,13 @@ public class TwoPasswordConfirmPanel extends JPanel {
 	private PasswordConfirmPanel getInner() {
 		return inner;
 	}
+
+	public static KeyPair promptForPasswords() throws Exception {
+		JFrame frame = new JFrame();
+		KeyPair keys = promptForPasswords(frame);
+		frame.dispose();
+		return keys;
+	}
 	
 	public static KeyPair promptForPasswords(final Component parent) throws Exception {
 		final TwoPasswordConfirmPanel panel = new TwoPasswordConfirmPanel();
@@ -39,6 +47,15 @@ public class TwoPasswordConfirmPanel extends JPanel {
 		}
 		else {
 			return null;
+		}
+	}
+	
+	public static void main(String args[]) {
+		try {
+			promptForPasswords();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }

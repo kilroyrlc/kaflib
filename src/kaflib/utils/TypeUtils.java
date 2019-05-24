@@ -453,6 +453,11 @@ public class TypeUtils {
 		System.arraycopy(source, sourceIndex, dest, destIndex, length);
 	}
 	
+	/**
+	 * Returns the max value in a collection of integers.
+	 * @param values
+	 * @return
+	 */
 	public static Integer max(final Collection<Integer> values) {
 		Integer max = null;
 		for (Integer t : values) {
@@ -461,6 +466,16 @@ public class TypeUtils {
 			}
 		}
 		return max;
+	}
+	
+	public static Integer min(final Collection<Integer> values) {
+		Integer min = null;
+		for (Integer t : values) {
+			if (min == null || t < min) {
+				min = t;
+			}
+		}
+		return min;
 	}
 	
 	/**

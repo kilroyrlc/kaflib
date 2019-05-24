@@ -230,6 +230,19 @@ public class RandomUtils {
 		calendar.add(Calendar.DATE, days);
 		return calendar.getTime();
 	}
+
+	/**
+	 * Returns a date up to the specified days into the past.
+	 * @param msInFuture
+	 * @return
+	 * @throws Exception
+	 */
+	public static Date randomPastDate(final int minDaysInPast, final int maxDaysInPast) throws Exception {
+		Calendar calendar = Calendar.getInstance();
+		int days = randomInt(minDaysInPast, maxDaysInPast);
+		calendar.add(Calendar.DATE, -1 * days);
+		return calendar.getTime();
+	}
 	
 	/**
 	 * Returns a random value from the array.
@@ -371,7 +384,8 @@ public class RandomUtils {
 										final int max) throws Exception {
 		Set<Integer> values = new HashSet<Integer>();
 		if (count < 1 || count > max - min) {
-			throw new Exception("Invalid parameters.");
+			throw new Exception("Invalid parameters, count: " + count + ", min: " + 
+								min + ", max: " + max + ".");
 		}
 
 		while (values.size() < count) {
@@ -420,6 +434,15 @@ public class RandomUtils {
 			}
 		}
 		return null;
+	}
+	
+	public static void main(final String args[]) {
+		try {
+			System.out.println(randomPastDate(1, 50));
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 }

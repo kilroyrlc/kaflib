@@ -311,6 +311,17 @@ public class Matrix<T> implements MatrixNavigator<T> {
 	}
 
 	/**
+	 * Returns the largest number of columns in any row.
+	 * @return
+	 */
+	public int getColumnCount(final int row) {
+		if (row >= getRowCount()) {
+			return 0;
+		}
+		return matrix.get(row).size();
+	}
+	
+	/**
 	 * Returns the index of the specified label, null if it does not exist.
 	 * @param label
 	 * @return

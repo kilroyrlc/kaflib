@@ -125,6 +125,13 @@ public class RandomStack<T> {
 	}
 	
 	/**
+	 * Removes all items from list.
+	 */
+	public void clear() {
+		list.clear();
+	}
+	
+	/**
 	 * Returns all list elements.
 	 * @return
 	 */

@@ -47,16 +47,39 @@ public class Percent implements Serializable {
 			throw new Exception("Invalid min/value/max: " + min + " / " + value + " / " + max + ".");
 		}
 	}
-	
+
+	/**
+	 * Creates a percent value within the bounds where the actual value is supplied.
+	 * @param value
+	 * @param min
+	 * @param max
+	 * @throws Exception
+	 */
 	public Percent(final int value, final int min, final int max) throws Exception {
 		if (min >= max || value < min || value > max) {
-			throw new Exception("Invalid min/value/max: " + min + " / " + value + " / " + max + ".");
+			throw new Exception("Invalid value/min/max: " + value + " / " + min + " / " + max + ".");
 		}
 		
 		this.min = min;
 		this.max = max;
 		this.value = value;
 	}
+
+	/**
+	 * Returns a percent from 0-100 based on the value's relative value to min/max.
+	 * @param value
+	 * @param min
+	 * @param max
+	 * @return
+	 * @throws Exception
+	 */
+	public static Percent getRelative(final int value, final int min, final int max) throws Exception {
+		if (min >= max || value < min || value > max) {
+			throw new Exception("Invalid value/min/max: " + value + " / " + min + " / " + max + ".");
+		}
+		return new Percent(((double) (value - min)) / (double) (max - min));
+	}
+	
 	
 	public float getFloat() throws Exception {
 		return ((float) value) / 100;

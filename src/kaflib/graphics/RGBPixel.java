@@ -249,6 +249,35 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 		}
 		return MathUtils.average(deltas);
 	}
+
+	/**
+	 * Returns the maximum r/g/b delta between this and the supplied values.
+	 * @param others
+	 * @return
+	 * @throws Exception
+	 */
+	public int getMaxDelta(final Collection<RGBPixel> others) throws Exception {
+		int max = 0;
+		for (RGBPixel other : others) {
+			max = Math.max(max, getDelta(other));
+		}
+		return max;
+	}
+	
+	/**
+	 * Returns the maximum dr + dg + db between any two pixels in the 
+	 * collection.
+	 * @param pixels
+	 * @return
+	 * @throws Exceeption
+	 */
+	public static int getMaxDeltaFrom(final Collection<RGBPixel> pixels) throws Exception {
+		int max = 0;
+		for (RGBPixel pixel : pixels) {
+			max = Math.max(max, pixel.getMaxDelta(pixels));
+		}
+		return max;
+	}
 	
 	/**
 	 * Combines other with this pixel.  Uses the other transparency value

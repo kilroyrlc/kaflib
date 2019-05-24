@@ -586,7 +586,13 @@ public class StringUtils {
 			}
 			left = left.substring(index + separator.length());
 		}
-		tokens.add(left.substring(0));
+		if (trim) {
+			tokens.add(left.substring(0).trim());
+		}
+		else {
+			tokens.add(left.substring(0));
+
+		}
 		return tokens;
 	}
 	
@@ -778,6 +784,21 @@ public class StringUtils {
 	 * @throws Exception
 	 */
 	public static String replaceNonWordsWith(final String string, char replace) throws Exception {
+		CheckUtils.check(string, "string");
+		
+		StringBuffer buffer = new StringBuffer();
+		for (int i = 0; i < string.length(); i++) {
+			if (string.substring(i, i+1).matches("[\\W]")) {
+				buffer.append(replace);
+			}
+			else {
+				buffer.append(string.charAt(i));
+			}
+		}
+		return new String(buffer);
+	}
+	
+	public static String replaceNonWordsWith(final String string, String replace) throws Exception {
 		CheckUtils.check(string, "string");
 		
 		StringBuffer buffer = new StringBuffer();

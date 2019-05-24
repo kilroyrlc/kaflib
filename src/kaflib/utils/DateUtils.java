@@ -22,6 +22,7 @@ package kaflib.utils;
  */
 
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -213,6 +214,18 @@ public class DateUtils {
     	calendar.setTime(from);
     	calendar.add(Calendar.DATE, deltaDays);
     	return calendar.getTime();
+	}
+	
+	public static int getDay(final Date date) throws Exception {
+		return date.toInstant().atZone(ZoneId.systemDefault()).getDayOfMonth();
+	}
+	
+	public static int getMonth(final Date date) throws Exception {
+		return date.toInstant().atZone(ZoneId.systemDefault()).getMonthValue();
+	}
+	
+	public static int getYear(final Date date) throws Exception {
+		return date.toInstant().atZone(ZoneId.systemDefault()).getYear();
 	}
 	
 }

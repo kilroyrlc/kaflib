@@ -13,6 +13,8 @@ public class Byte implements Comparable<Byte> {
 	private int value;
 	
 	public static final Byte FF = new Byte(0xff);
+	public static final Byte MIN_VALUE = new Byte(0x00);
+	public static final Byte MAX_VALUE = FF;
 	
 	public Byte() {
 		value = 0;

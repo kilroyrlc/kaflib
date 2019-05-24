@@ -46,6 +46,7 @@ public enum Direction {
 		}
 	}
 	
+
 	public static Direction getOpposite(Direction direction) throws Exception {
 		switch (direction) {
 		case NORTH:

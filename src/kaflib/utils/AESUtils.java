@@ -25,6 +25,35 @@ public class AESUtils {
 	public static final int MAX_FILENAME_LENGTH = 72;
 	
 	
+	/**
+	 * Reads the file to a string.
+	 * @param in
+	 * @param keys
+	 * @return
+	 * @throws Exception
+	 */
+	public static String read(final File in,
+							  final KeyPair keys) throws Exception {
+		CheckUtils.checkReadable(in, "input file");
+		CheckUtils.check(keys, "keys");
+		byte bytes[] = AESUtils.decrypt(in, keys);
+		return new String(bytes);
+	}
+	
+	/**
+	 * Writes the file to a string.
+	 * @param out
+	 * @param keys
+	 * @param text
+	 * @throws Exception
+	 */
+	public static void write(final File out,
+							 final KeyPair keys,
+							 final String text) throws Exception {
+		CheckUtils.checkWritable(out, "output file");
+		CheckUtils.check(keys, "keys");
+		AESUtils.encrypt(out, text.getBytes("UTF-8"), keys);
+	}
 	
 	/**
 	 * Encrypts the file and its name to a new file with the specified extension.
@@ -91,11 +120,16 @@ public class AESUtils {
 		ostream.write(ciphertext.getSecond());
 		ostream.close();
 	}
-	
+
+	public static String decryptName(final File in,
+									 final KeyPair keys) throws Exception {
+		return decryptName(in, null, keys);
+	}
+		
 	public static String decryptName(final File in,
 									final String outputExtension,
 									final KeyPair keys) throws Exception {
-		if (!in.getName().endsWith(outputExtension)) {
+		if (outputExtension != null && !in.getName().endsWith(outputExtension)) {
 			throw new Exception("File not encrypted: " + in + ".");
 		}
 
@@ -112,9 +146,15 @@ public class AESUtils {
 		}
 		
 		String name = FileUtils.getFilenameWithoutExtension(in);
+		CheckUtils.checkNonEmpty(name, "name");
 		File out;
-		out = new File(in.getParentFile(), new String(decryptBase64AESECB(name, keys.getOuter())));
-
+		try {
+			out = new File(in.getParentFile(), new String(decryptBase64AESECB(name, keys.getOuter())));
+		}
+		catch (Exception e) {
+			System.err.println("Unable to generate decrypted filename for: " + name + ".");
+			throw e;
+		}
 		decrypt(out, in, true, keys);
 		return out;
 	}

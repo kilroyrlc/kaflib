@@ -108,7 +108,7 @@ public class ProgressLabel extends JPanel {
 		Client c = new Client(handle, max);
 
 		if (contains(handle) != null) {
-			throw new Exception("Need unique client handle.");
+			throw new Exception("Need unique client handle " + handle.toString() + ":\n" + getClients());
 		}
 		
 		if (clients.getKey() == null) {
@@ -122,6 +122,19 @@ public class ProgressLabel extends JPanel {
 		else {
 			return false;
 		}
+	}
+	
+	public String getClients() {
+		String string = "1. ";
+		if (clients.getFirst() != null) {
+			string += clients.getFirst().toString();
+		}
+		string += "\n2. ";
+		if (clients.getSecond() != null) {
+			string += clients.getSecond().toString();
+		}
+		string += "\n";
+		return string;
 	}
 
 	/**

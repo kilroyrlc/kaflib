@@ -17,19 +17,28 @@ public class FileList<T> implements Serializable, Iterable<File> {
 	private final Directory directory;
 	private final Map<File, T> files;
 	private final Map<Directory, FileList<T>> directories;
-	
+
 	/**
 	 * Creates a file list.
 	 * @param directory
 	 * @throws Exception
 	 */
 	public FileList(final Directory directory) throws Exception {
+		this(directory, false);
+	}
+	
+	/**
+	 * Creates a file list.
+	 * @param directory
+	 * @throws Exception
+	 */
+	public FileList(final Directory directory, boolean filesOnly) throws Exception {
 		this.directory = directory;
 		files = new HashMap<File, T>();
 		directories = new HashMap<Directory, FileList<T>>();
 		
 		for (File file : this.directory.listFiles()) {
-			if (file.isDirectory()) {
+			if (file.isDirectory() && !filesOnly) {
 				directories.put(new Directory(file), new FileList<T>(new Directory(file)));
 			}
 			else {

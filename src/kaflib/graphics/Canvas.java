@@ -5,8 +5,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JFrame;
@@ -17,6 +19,10 @@ import kaflib.gui.ImageComponent;
 import kaflib.types.Box;
 import kaflib.types.Byte;
 import kaflib.types.Coordinate;
+import kaflib.types.Histogram;
+import kaflib.types.IntegerHistogram;
+import kaflib.types.Matrix;
+import kaflib.types.Pair;
 import kaflib.types.Percent;
 import kaflib.types.Worker;
 import kaflib.utils.CheckUtils;
@@ -71,6 +77,8 @@ public class Canvas {
 	 * @throws Exception
 	 */
 	public Canvas(final BufferedImage image) throws Exception {
+		CheckUtils.check(image, "input image");
+		
 		pixels = new RGBPixel[image.getWidth()][image.getHeight()];
 	    for (int i = 0; i < pixels.length; i++) {
 	    	for (int j = 0; j < pixels[0].length; j++) {
@@ -212,6 +220,28 @@ public class Canvas {
 		return aint == bint;
 	}
 	
+	public static Canvas getLuminance(final Canvas canvas) throws Exception {
+		Canvas grey = new Canvas(canvas);
+		for (int i = 0; i < grey.getWidth(); i++) {
+			for (int j = 0; j < grey.getHeight(); j++) {
+				grey.set(i, j, new RGBPixel(true,
+											grey.get(i, j).getLuminance(),
+											grey.get(i, j).getLuminance(),
+											grey.get(i, j).getLuminance()));
+			}
+		}
+		return grey;
+	}
+	
+	public IntegerHistogram getLuminanceHistogram(final Collection<Coordinate> coordinates) throws Exception {
+		IntegerHistogram histogram = new IntegerHistogram(0, Byte.MAX_VALUE.getValue(), 8);
+		
+		for (Coordinate coordinate : coordinates) {
+			histogram.increment(get(coordinate).getLuminance().getValue());
+		}
+		return histogram;
+	}
+	
 	/**
 	 * Returns whether or not a random sampling of averaged points indicates
 	 * this image may be the same as another, ignoring scaling.
@@ -299,7 +329,12 @@ public class Canvas {
 		return values;
 	}
 	
-	
+	/**
+	 * Returns a copy of the canvas specified by the bounding box.	
+	 * @param box
+	 * @return
+	 * @throws Exception
+	 */
 	public Canvas get(final Box box) throws Exception {
 		if (!box.isContained(getBounds())) {
 			throw new Exception("Selection " + box + " exceeds canvas " + 
@@ -314,6 +349,12 @@ public class Canvas {
 		return canvas;
 	}
 	
+	/**
+	 * Returns the RGB values at the specified coordinates.
+	 * @param coordinates
+	 * @return
+	 * @throws Exception
+	 */
 	public List<RGBPixel> get(final Collection<Coordinate> coordinates) throws Exception {
 		List<RGBPixel> pixels = new ArrayList<RGBPixel>();
 		for (Coordinate coordinate : coordinates) {

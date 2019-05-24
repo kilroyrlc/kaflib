@@ -18,6 +18,7 @@ import javax.swing.SwingUtilities;
 
 import kaflib.graphics.Canvas;
 import kaflib.graphics.GraphicsUtils;
+import kaflib.graphics.ThumbCropBoxes;
 import kaflib.types.Box;
 import kaflib.types.Coordinate;
 import kaflib.types.Worker;
@@ -26,7 +27,8 @@ import kaflib.utils.FileUtils;
 import kaflib.utils.GUIUtils;
 
 /**
- * Defines a swing component with a bufferedimage and editing capabilities.
+ * Defines a swing component that displayes an image with the ability to define
+ * a thumbnail and crop.
  */
 public class ThumbCropComponent extends ImageComponent implements MouseListener, MouseMotionListener, MouseWheelListener {
 
@@ -34,15 +36,14 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 
 	private int thumbnail_height;
 	private double thumbnail_aspect;
-
+	
 	private int crop_button = MouseEvent.BUTTON1;
 	private int thumb_button = MouseEvent.BUTTON3;
 	
 	private boolean crop_image;
 	private Coordinate down_click;
 	private Coordinate thumbnail_center;
-	private Box thumbnail;
-	private Box crop;
+	private ThumbCropBoxes dimensions;
 	
 	private Coordinate mouse_location;
 	
@@ -61,7 +62,8 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 
 
 		parseBoxes(null);
-		
+
+		dimensions = new ThumbCropBoxes();
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
@@ -69,6 +71,7 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 
 	public ThumbCropComponent(final File file) throws Exception {
 		this(file, null);
+		dimensions = new ThumbCropBoxes();
 	}
 	
 	public ThumbCropComponent(final File file, final String serial) throws Exception {
@@ -83,13 +86,14 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 		addMouseWheelListener(this);
 	}
 	
-	public ThumbCropComponent(final int width, final int height) throws Exception {
-		super(width, height);
+	public ThumbCropComponent(final int maxWidth, final int maxHeight) throws Exception {
+		super(maxWidth, maxHeight);
 		crop_image = false;
 		down_click = null;
 
 		parseBoxes(null);
-		
+
+		dimensions = new ThumbCropBoxes();
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);	
@@ -99,8 +103,7 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 		super(image);
 		crop_image = false;
 		down_click = null;
-		thumbnail = null;
-		crop = null;
+		dimensions = new ThumbCropBoxes();
 		thumbnail_aspect = 1;
 		thumbnail_height = 61;
 		addMouseListener(this);
@@ -133,16 +136,16 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 	 */
 	public void update(final File file) throws Exception {
 		update(new Canvas(file), null);
-
 	}
 
 	public void update(final Canvas image, final String serial) throws Exception {
 		super.update(image);
 		parseBoxes(serial);
+		updateThumbnail();
 	}
 	
 	public void update(final BufferedImage image, final String serial) throws Exception {
-		update(new Canvas(image));
+		update(new Canvas(image), serial);
 	}
 
 	/**
@@ -151,28 +154,28 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 	 * @throws Exception
 	 */
 	private final void parseBoxes(final String serial) throws Exception {
+		// Parse the serial dimension information if it is supplied.
 		if (serial != null && serial.length() > 0) {
-			String lines[] = serial.split("\\n");
-			for (String line : lines) {
-				if (line.startsWith("c:")) {
-					crop = new Box(line.substring(2));
-				}
-				else if (line.startsWith("t:")) {
-					thumbnail = new Box(line.substring(2));
-					thumbnail_aspect = thumbnail.getAspectRatio();
-					thumbnail_height = thumbnail.getHeight();
-					thumbnail_center = thumbnail.getCenter();
-				}
+			dimensions = new ThumbCropBoxes(serial);
+			if (getScalingFactor() != 1) {
+				dimensions = ThumbCropBoxes.getScaledDown(dimensions, getScalingFactor());
 			}
+			thumbnail_aspect = dimensions.getThumbnail().getAspectRatio();
+			thumbnail_height = dimensions.getThumbnail().getHeight();
+			thumbnail_center = dimensions.getThumbnail().getCenter();
 		}
+		// No dimension information, clear.
 		else {
-			thumbnail = null;
-			crop = null;
+			dimensions = new ThumbCropBoxes();
+			thumbnail_center = null;
+			thumbnail_preview = null;
 			thumbnail_aspect = 1.0;
 			thumbnail_height = 60;
 		}
-		if (this.thumbnail != null) {
-			this.thumbnail_preview = getCanvas().get(thumbnail).toBufferedImage();
+		// If there is dimension information, update the thumbnail.
+		if (dimensions.getThumbnail() != null && 
+			dimensions.getThumbnail().isContained(GraphicsUtils.getBounds(getScaledImage()))) {
+			thumbnail_preview = GraphicsUtils.getCropped(getScaledImage(), (dimensions.getThumbnail()));
 		}
 	}
 	
@@ -194,6 +197,10 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 	public void setThumbnailScaling(final int scaling) throws Exception {
 		CheckUtils.checkPositive(scaling, "scaling");
 		thumbnail_height = scaling;
+	}
+	
+	private Box getCrop() {
+		return dimensions.getCrop();
 	}
 	
 	/**
@@ -218,9 +225,9 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 	    	}
     	}
     	// Draw a crop box if we're doing an outline rather than an actual crop.
-    	if (crop != null && !crop_image) {
+    	if (getCrop() != null && !crop_image) {
     		g.setColor(Color.ORANGE);
-    		g.drawRect(crop.getXMin(), crop.getYMin(), crop.getWidth(), crop.getHeight());
+    		g.drawRect(getCrop().getXMin(), getCrop().getYMin(), getCrop().getWidth(), getCrop().getHeight());
     	}
 
     	// Draw the centerpoint of the thumbnail.
@@ -238,26 +245,17 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
     }
 
     public final String toSerial() {
-    	String string = "";
-    	if (crop != null) {
-    		string += "c:" + crop.toSerial() + "\n";
+    	if (getScalingFactor() == 1) {
+       		return dimensions.toSerial();
     	}
-    	if (thumbnail != null) {
-    		string += "t:" + thumbnail.toSerial() + "\n";
+    	else {
+    		try {
+	    		return ThumbCropBoxes.getScaledUp(dimensions, getScalingFactor()).toSerial();
+    		}
+    		catch (Exception e) {
+    			return "Error serializing scaled: " + dimensions.toSerial() + ".";
+    		}
     	}
-    	return string;
-    }
-    
-    public Box getThumbanil() {
-    	return thumbnail;
-    }
-    
-    public Box getCrop() {
-    	return crop;
-    }
-    
-    public BufferedImage getThumbnailImage() {
-    	return thumbnail_preview;
     }
     
     /**
@@ -295,8 +293,11 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
     		
     		int width = (int) (thumbnail_aspect * thumbnail_height);
     		int height = thumbnail_height;
-    		thumbnail = new Box(thumbnail_center, width, height);
-    		thumbnail_preview = getCanvas().get(thumbnail).toBufferedImage();
+    		Box thumbnail = new Box(thumbnail_center, width, height);
+    		thumbnail = Box.slideInbounds(thumbnail, GraphicsUtils.getBounds(getScaledImage()));
+    		dimensions.setThumbnail(thumbnail);
+    		thumbnail_center = thumbnail.getCenter();
+    		thumbnail_preview = GraphicsUtils.getCropped(getScaledImage(), thumbnail);
 			repaintLater();
     	}
     	catch (Exception e) {
@@ -326,10 +327,11 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 			
 			if (e.getButton() == crop_button) {
 				if (Box.isBox(down_click, up_click)) {
-					crop = new Box(down_click, up_click);
+					Box crop = new Box(down_click, up_click);
 					if (crop_image) {			
 						cropImage(crop);
 					}
+					dimensions.setCrop(crop);
 					down_click = null;
 					repaintLater();
 				}
@@ -420,7 +422,10 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					try {
-						FileUtils.write(data_file, component.toSerial());
+						String serial = component.toSerial();
+						if (serial != null) {
+							FileUtils.write(data_file, component.toSerial());
+						}
 					}
 					catch (Exception ex) {
 						ex.printStackTrace();

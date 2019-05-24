@@ -62,6 +62,10 @@ public class FileHash {
 	public int hashCode() {
 		return hash_code;
 	}
+
+	public String toSerial() {
+		return combined;
+	}
 	
 	public String toString() {
 		return combined;

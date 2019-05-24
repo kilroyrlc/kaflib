@@ -1,7 +1,10 @@
 package kaflib.graphics;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
@@ -515,6 +518,10 @@ public class GraphicsUtils {
 		
 	}
 	
+	public static Box getBounds(final BufferedImage image) throws Exception {
+		return new Box(0, image.getWidth(), 0, image.getHeight());
+	}
+	
 	public static BufferedImage getCropped(final BufferedImage image, final Box box) throws Exception {
 		return getCropped(image, box.getXMin(), box.getYMin(), box.getWidth(), box.getHeight());
 	}
@@ -563,7 +570,13 @@ public class GraphicsUtils {
 		CheckUtils.check(file, "file");
 		CheckUtils.check(image, "image for file: "+ file.getName());
 		
-		ImageIO.write(image, "jpg", file);
+		try {
+			ImageIO.write(image, "jpg", file);
+		}
+		catch (Exception e) {
+			System.out.println("Unable to write " + file + ".");
+			throw e;
+		}
 	}
 	
 	public static void writePNG(final BufferedImage image, final File file) throws Exception {
@@ -783,6 +796,95 @@ public class GraphicsUtils {
 			writeJPG(image, file);
 		}
 		return image;
+	}
+	
+	public enum Position {
+		TOP_LEFT,
+		BOTTOM_LEFT
+	}
+	
+	public static BufferedImage drawString(final BufferedImage source,
+			  final String text,
+			  final Color foreground_color,
+			  final Color shadow_color,
+			  final Integer size,
+			  final int margin,
+			  final Position position) throws Exception {
+	    if (position == Position.TOP_LEFT) {
+	    	return drawStringOnCopy(source, text, foreground_color, shadow_color, size, new Coordinate(margin, margin + size));
+	    }
+	    else {
+	    	return drawStringOnCopy(source, text, foreground_color, shadow_color, size, new Coordinate(margin, source.getHeight() - margin - size));
+	    }
+	}
+	
+	public static BufferedImage drawStringOnCopy(final BufferedImage source,
+								  final String text,
+								  final Color foreground_color,
+								  final Color shadow_color,
+								  final Integer size,
+								  final Coordinate location) throws Exception {
+		
+	    BufferedImage output = new BufferedImage(source.getWidth(), source.getHeight(), source.getType());
+	    Graphics2D graphics = output.createGraphics();
+
+	    graphics.drawImage(source, 0, 0, output.getWidth(), output.getHeight(), null);
+
+	    graphics.setFont(new Font("Trebuchet MS", Font.BOLD, size));
+
+	    int x = location.getX();
+	    int y = location.getY();
+	    
+	    graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+	    graphics.setPaint(shadow_color);
+        graphics.drawString(text, x - 1, y - 1);
+        graphics.drawString(text, x - 1, y + 1);
+        graphics.drawString(text, x + 1, y + 1);
+
+        graphics.setPaint(foreground_color);
+        graphics.drawString(text, x, y);
+
+        graphics.dispose();
+        return output;
+	}
+	
+	public static void drawString(BufferedImage image,
+			  final String text,
+			  final Color foreground_color,
+			  final Color shadow_color,
+			  final Integer size,
+			  final Coordinate location) throws Exception {
+	
+		Graphics2D graphics = image.createGraphics();
+		
+		graphics.setFont(new Font("Trebuchet MS", Font.BOLD, size));
+		
+		int x = location.getX();
+		int y = location.getY();
+		
+		graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+		graphics.setPaint(shadow_color);
+		graphics.drawString(text, x - 1, y - 1);
+		graphics.drawString(text, x - 1, y + 1);
+		graphics.drawString(text, x + 1, y + 1);
+		
+		graphics.setPaint(foreground_color);
+		graphics.drawString(text, x, y);
+		
+		graphics.dispose();
+	}
+	
+	public static void drawCircle(BufferedImage image,
+								   final Coordinate location,
+								   final int radius,
+								   final Color color) throws Exception {
+
+		Graphics2D graphics = image.createGraphics();
+
+		graphics.setPaint(color);
+		graphics.drawOval(location.getX() - radius, location.getY() - radius, radius * 2, radius * 2);
+
+		graphics.dispose();
 	}
 	
 	/**

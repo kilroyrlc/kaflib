@@ -27,8 +27,6 @@ public class Histogram<T> {
 		histogram = new HashMap<T, Integer>();
 		this.ceiling = ceiling;
 	}
-
-
 	
 	public void setCeiling(final int ceiling) {
 		this.ceiling = ceiling;

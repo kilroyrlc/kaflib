@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import kaflib.types.Coordinate;
+import kaflib.types.IntegerHistogram;
 import kaflib.utils.CheckUtils;
 import kaflib.utils.StringUtils;
 
@@ -303,10 +304,11 @@ public class Selection extends SelectionCore {
 	public static final Selection getCircle(final Coordinate center, 
 											final int radius) throws Exception {
 		Selection selection = new Selection();
+		int radius_sq = radius * radius;
 		for (int i = center.getX() - radius; i < center.getX() + radius; i++) {
 			for (int j = center.getY() - radius; j < center.getY() + radius; j++) {
 				Coordinate point = new Coordinate(i, j);
-				if (point.getDistanceSquared(center) <= radius) {
+				if (point.getDistanceSquared(center) <= radius_sq) {
 					selection.add(point);
 				}
 			}
@@ -442,6 +444,60 @@ public class Selection extends SelectionCore {
 			}
 		}
 		return list;
+	}
+	
+	public IntegerHistogram getLuminanceHistogram(final Canvas canvas) throws Exception {
+		return canvas.getLuminanceHistogram(getCoordinates());
+	}
+	
+	/**
+	 * Draws a line from the top/leftmost coordinate to the other side of the
+	 * selection, returns the max rgb delta for a given window size of pixels.
+	 * Possibly useful to find areas of focus + contrast.
+	 * @param canvas
+	 * @param window
+	 * @param horizontal
+	 * @return
+	 * @throws Exception
+	 */
+	public int getMaxDelta(final Canvas canvas, 
+							final int windowSize, 
+							final boolean horizontal) throws Exception {
+		Set<Coordinate> coordinates = getCoordinates();
+		List<Coordinate> window = new ArrayList<Coordinate>();
+		Coordinate start;
+		Coordinate next;
+		int value = 0;
+		if (horizontal) {
+			start = Coordinate.getMinXCoordinate(coordinates);
+			next = start.getEast();
+		}
+		else {
+			start = Coordinate.getMinYCoordinate(coordinates);
+			next = start.getSouth();
+		}
+		window.add(start);
+		window.add(next);
+
+		if (!coordinates.contains(next)) {
+			return 0;
+		}
+		value = Math.max(value, RGBPixel.getMaxDeltaFrom(canvas.get(window)));
+
+		while (coordinates.contains(next)) {
+			if (horizontal) {
+				next = next.getEast();
+			}
+			else {
+				next = next.getSouth();
+			}
+			window.add(next);
+			while (window.size() > windowSize) {
+				window.remove(0);
+			}
+			value = Math.max(value, RGBPixel.getMaxDeltaFrom(canvas.get(window)));
+		}	
+		return value;
 	}
 	
 	/**
