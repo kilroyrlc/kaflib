@@ -11,6 +11,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -19,6 +21,8 @@ import javax.swing.SwingUtilities;
 import kaflib.graphics.Canvas;
 import kaflib.graphics.GraphicsUtils;
 import kaflib.graphics.ThumbCropBoxes;
+import kaflib.gui.components.DownscaledImageComponent;
+import kaflib.gui.components.ImageListener;
 import kaflib.types.Box;
 import kaflib.types.Coordinate;
 import kaflib.types.Worker;
@@ -30,7 +34,7 @@ import kaflib.utils.GUIUtils;
  * Defines a swing component that displayes an image with the ability to define
  * a thumbnail and crop.
  */
-public class ThumbCropComponent extends ImageComponent implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class ThumbCropComponent extends DownscaledImageComponent implements ImageListener {
 
 	private static final long serialVersionUID = 87987978L;
 
@@ -46,6 +50,8 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 	private ThumbCropBoxes dimensions;
 	
 	private Coordinate mouse_location;
+	
+	private final Set<CropListener> listeners;
 	
 	private BufferedImage thumbnail_preview = null;
 
@@ -67,6 +73,7 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
+		listeners = new HashSet<CropListener>();
 	}
 
 	public ThumbCropComponent(final File file) throws Exception {
@@ -84,6 +91,7 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
+		listeners = new HashSet<CropListener>();
 	}
 	
 	public ThumbCropComponent(final int maxWidth, final int maxHeight) throws Exception {
@@ -97,6 +105,7 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);	
+		listeners = new HashSet<CropListener>();
 	}
 
 	public ThumbCropComponent(final BufferedImage image) throws Exception {
@@ -109,8 +118,17 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
+		listeners = new HashSet<CropListener>();
 	}
 
+	public void addListener(final CropListener listener) {
+		listeners.add(listener);
+	}
+	
+	public void removeListener(final CropListener listener) {
+		listeners.remove(listener);
+	}
+	
 	/**
 	 * Updates the image.
 	 * @param image
@@ -139,7 +157,7 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 	}
 
 	public void update(final Canvas image, final String serial) throws Exception {
-		super.update(image);
+		super.set(image);
 		parseBoxes(serial);
 		updateThumbnail();
 	}
@@ -174,8 +192,8 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 		}
 		// If there is dimension information, update the thumbnail.
 		if (dimensions.getThumbnail() != null && 
-			dimensions.getThumbnail().isContained(GraphicsUtils.getBounds(getScaledImage()))) {
-			thumbnail_preview = GraphicsUtils.getCropped(getScaledImage(), (dimensions.getThumbnail()));
+			dimensions.getThumbnail().isContained(GraphicsUtils.getBounds(getShownImage()))) {
+			thumbnail_preview = GraphicsUtils.getCropped(getShownImage(), (dimensions.getThumbnail()));
 		}
 	}
 	
@@ -199,8 +217,12 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 		thumbnail_height = scaling;
 	}
 	
-	private Box getCrop() {
+	public Box getCrop() {
 		return dimensions.getCrop();
+	}
+	
+	public Box getThumbnail() {
+		return dimensions.getThumbnail();
 	}
 	
 	/**
@@ -266,8 +288,8 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 			Worker worker = new Worker(){
 				@Override
 				protected void process() throws Exception {
-					update(GraphicsUtils.getCropped(getImage(), box));
-					repaintLater();
+//					update(GraphicsUtils.getCropped(getSourceBufferedImage(), box));
+					redraw();
 				}};
 			worker.start();
     	}
@@ -294,53 +316,71 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
     		int width = (int) (thumbnail_aspect * thumbnail_height);
     		int height = thumbnail_height;
     		Box thumbnail = new Box(thumbnail_center, width, height);
-    		thumbnail = Box.slideInbounds(thumbnail, GraphicsUtils.getBounds(getScaledImage()));
+    		thumbnail = Box.slideInbounds(thumbnail, GraphicsUtils.getBounds(getShownImage()));
     		dimensions.setThumbnail(thumbnail);
     		thumbnail_center = thumbnail.getCenter();
-    		thumbnail_preview = GraphicsUtils.getCropped(getScaledImage(), thumbnail);
-			repaintLater();
+    		thumbnail_preview = GraphicsUtils.getCropped(getShownImage(), thumbnail);
+			redraw();
     	}
     	catch (Exception e) {
     		e.printStackTrace();
     	}
     }
     
+	private void notifyListeners() {
+		try {
+			Worker worker = new Worker() {
+				@Override
+				protected void process() throws Exception {
+					for (CropListener listener : listeners) {
+						listener.cropChanged();
+					}
+				}
+			};
+			worker.start();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
     
 	@Override
-	public void mouseClicked(MouseEvent e) {
-	}
-
-	@Override
-	public void mousePressed(MouseEvent e) {
+	public void mouseDown(MouseButton button, int x, int y) {
 		if (down_click == null) {
-			down_click = new Coordinate(e.getX(), e.getY());
+			down_click = new Coordinate(x, y);
 		}
 	}
 
 	@Override
-	public void mouseReleased(MouseEvent e) {
+	public void mouseUp(MouseButton button, int x, int y) {
 		try {
 			if (down_click == null) {
 				return;
 			}
-			final Coordinate up_click = new Coordinate(e.getX(), e.getY());
+			final Coordinate up_click = new Coordinate(x, y);
 			
-			if (e.getButton() == crop_button) {
+			if (button == MouseButton.LEFT) {
 				if (Box.isBox(down_click, up_click)) {
 					Box crop = new Box(down_click, up_click);
+					
+					crop = crop.crop(new Box(getShownImage().getWidth(),
+							getShownImage().getHeight()));
+					
 					if (crop_image) {			
 						cropImage(crop);
 					}
 					dimensions.setCrop(crop);
 					down_click = null;
-					repaintLater();
+					redraw();
+					notifyListeners();
 				}
 			}
-			else if (e.getButton() == thumb_button) {
+			else if (button == MouseButton.RIGHT) {
 				Worker worker = new Worker(){
 					@Override
 					protected void process() throws Exception {
 						updateThumbnail(up_click);
+						notifyListeners();
 					}};
 				worker.start();
 			}
@@ -348,46 +388,29 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 				
 			}
 			down_click = null;
-			repaintLater();
+			redraw();
 		}
 		catch (Exception ex) {
 			GUIUtils.showErrorDialog(this, "Error handling mouse release:\n" + ex.getMessage());
 			ex.printStackTrace();
-		}
+		}		
 	}
 
 	@Override
-	public void mouseEntered(MouseEvent e) {
+	public void mouseDrag(MouseButton button, int x, int y) {
+		mouse_location = new Coordinate(x, y);
+		redraw();
 	}
 
 	@Override
-	public void mouseExited(MouseEvent e) {
+	public void mouseMove(int x, int y) {
+		mouse_location = new Coordinate(x, y);
 	}
 
 	@Override
-	public void mouseDragged(MouseEvent e) {
-		mouse_location = new Coordinate(e.getX(), e.getY());
-		repaintLater();
-	}
-
-	private void repaintLater() {
-		SwingUtilities.invokeLater(new Runnable(){
-			@Override
-			public void run() {
-				repaint();
-			}
-		});
-	}
-	
-	@Override
-	public void mouseMoved(MouseEvent e) {
-		mouse_location = new Coordinate(e.getX(), e.getY());
-	}
-
-	@Override
-	public void mouseWheelMoved(MouseWheelEvent e) {
+	public void mouseWheelMove(int rotation) {
 		if (thumbnail_center != null) {
-			thumbnail_height += -10 * e.getWheelRotation();
+			thumbnail_height += -10 * rotation;
 	    	try {
 				Worker worker = new Worker(){
 					@Override
@@ -401,6 +424,7 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 	    	}
 		}
 	}
+
 	
 	public static void main(String args[]) {
 		try {
@@ -443,4 +467,6 @@ public class ThumbCropComponent extends ImageComponent implements MouseListener,
 			e.printStackTrace();
 		}
 	}
+
+
 }

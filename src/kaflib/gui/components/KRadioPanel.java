@@ -1,29 +1,20 @@
-package kaflib.gui;
-
-import java.awt.GridLayout;
-
+package kaflib.gui.components;
 import javax.swing.ButtonGroup;
-import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
-import kaflib.utils.GUIUtils;
-
-public class RadioPanel extends JPanel {
+public class KRadioPanel extends KPanel {
 	
 	private static final long serialVersionUID = 1L;
 	private final JRadioButton buttons[];
 	private final ButtonGroup group;
 	
-	public RadioPanel(final String title, 
+	public KRadioPanel(final String title, 
 					  final String... options) throws Exception {
-		super(new GridLayout(0, 1));
+		super(title);
 		if (options.length < 1) {
 			throw new Exception("Must supply button names.");
 		}
 		
-		if (title != null) {
-			setBorder(GUIUtils.getTitledBorder(title));
-		}
 		group = new ButtonGroup();
 		buttons = new JRadioButton[options.length];
 		for (int i = 0; i < buttons.length; i++) {
@@ -34,6 +25,10 @@ public class RadioPanel extends JPanel {
 		}
 		buttons[0].setSelected(true);
 	}
+
+	public void clearSelected() {
+		group.clearSelection();
+	}
 	
 	public void setEnabled(final boolean enabled) {
 		for (JRadioButton button : buttons) {
@@ -42,6 +37,9 @@ public class RadioPanel extends JPanel {
 	}
 	
 	public String getSelected() {
+		if (group.getSelection() == null) {
+			return null;
+		}
 		return group.getSelection().getActionCommand();
 	}
 }

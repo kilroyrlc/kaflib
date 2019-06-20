@@ -375,6 +375,21 @@ public class FileUtils {
 	}
 	
 	/**
+	 * Writes the bytes to the specified file.
+	 * @param file
+	 * @param bytes
+	 * @throws Exception
+	 */
+	public static void write(final File file, final byte bytes[]) throws Exception {
+		if (!file.exists()) {
+			file.createNewFile();
+		}
+		OutputStream output = new FileOutputStream(file);
+		output.write(bytes);
+		output.close();
+	}
+	
+	/**
 	 * Writes the toString() result of all items.
 	 * @param file
 	 * @param lines
@@ -409,9 +424,14 @@ public class FileUtils {
 	
 	public static File appendToFilename(final File file, final String text) throws Exception {
 		File directory = file.getParentFile();
-		String extension = FileUtils.getExtension(file);
-		String name = FileUtils.getFilenameWithoutExtension(file);
-		return new File(directory, name + text + "." + extension);
+		String name = file.getName();
+		int last_period = name.lastIndexOf('.');
+		if (last_period < 0) {
+			return new File(directory, name + text);
+		}
+		else {
+			return new File(directory, name.substring(0, last_period) + text + "." + name.substring(last_period + 1));
+		}
 	}
 
 	/**
@@ -453,6 +473,7 @@ public class FileUtils {
 	}
 	
 
+	@SafeVarargs
 	public static String torGet(final URL url, final Pair<String, String>... properties) throws Exception {
 		return torGet(url, null, properties);
 	}
@@ -463,6 +484,7 @@ public class FileUtils {
 	 * @return
 	 * @throws Exception
 	 */
+	@SafeVarargs
 	public static String torGet(final URL url, final Long retrySleepMS, final Pair<String, String>... properties) throws Exception {
 		String string = null;
 		final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
@@ -525,6 +547,7 @@ public class FileUtils {
 	 * @param url
 	 * @throws Exception
 	 */
+	@SafeVarargs
 	public static void torDownload(final File file, final URL url, final Pair<String, String>... properties) throws Exception {
 		if (!file.exists()) {
 			file.createNewFile();
@@ -607,6 +630,7 @@ public class FileUtils {
 	 * @return
 	 * @throws Exception
 	 */
+	@SafeVarargs
 	public static File createUniqueFile(final String prefix, final String suffix, final Pair<String, String>... properties) throws Exception {
 		return createUniqueFile(new File("."), prefix, suffix);
 	}
@@ -928,7 +952,7 @@ public class FileUtils {
 			return ofile;
 		}
 		
-		if (ofile.exists()) {
+		if (ofile.exists() && ofile.length() != file.length()) {
 			throw new Exception("Collision: " + file + "(" + 
 								file.length()/1000 + "k)" + " -> " + name + 
 								"(" + ofile.length()/1000 + "k).");

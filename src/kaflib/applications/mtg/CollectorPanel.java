@@ -31,8 +31,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import kaflib.graphics.GraphicsUtils;
-import kaflib.gui.ImageComponent;
 import kaflib.gui.ProgressLabel;
+import kaflib.gui.components.DownscaledImageComponent;
 import kaflib.types.WordTrie;
 import kaflib.types.Worker;
 import kaflib.utils.FileUtils;
@@ -75,7 +75,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 	
 	private Boolean tor_available;
 	private final BufferedImage no_image;
-	private final ImageComponent image;
+	private final DownscaledImageComponent image;
 	private final CardDatabase db;
 	
 	public CollectorPanel(final CardDatabase db, final WordTrie tree) throws Exception {	
@@ -146,7 +146,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		panel.add(progress, BorderLayout.CENTER);
 		panel.add(start, BorderLayout.EAST);
 		
-		image = new ImageComponent();
+		image = new DownscaledImageComponent();
 		image.update(no_image);
 		
 		JPanel left_panel = new JPanel();

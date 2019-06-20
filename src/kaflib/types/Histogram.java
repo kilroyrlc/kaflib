@@ -108,6 +108,29 @@ public class Histogram<T> {
 		});
 		return list;
 	}
+	
+	public List<Pair<T, Integer>> getRankedScored() {
+		List<Pair<T, Integer>> list = new ArrayList<Pair<T, Integer>>();
+		for (T item : histogram.keySet()) {
+			list.add(new Pair<T, Integer>(item, histogram.get(item)));
+		}
+		Collections.sort(list, new Comparator<Pair<T, Integer>>() {
+
+			@Override
+			public int compare(Pair<T, Integer> o1, Pair<T, Integer> o2) {
+				if (o1.getSecond() > o2.getSecond()) {
+					return -1;
+				}
+				else if (o1.getSecond() < o2.getSecond()) {
+					return 1;
+				}
+				else {
+					return 0;
+				}
+			}
+		});
+		return list;
+	}
 
 	/**
 	 * Returns the histogram as a line:

@@ -384,7 +384,7 @@ public class Selection extends SelectionCore {
 	public static final Selection getStar(final Coordinate center, 
 										  final int radius) throws Exception {
 		Selection selection = getDiamond(center, radius);
-		selection.add(getBox(center, radius * 3 / 4).getCoordinates());
+		selection.add(getBox(center, (radius * 3) / 4).getCoordinates());
 		return selection;
 	}
 	

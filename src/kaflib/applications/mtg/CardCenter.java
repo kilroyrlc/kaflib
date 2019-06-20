@@ -28,9 +28,9 @@ import kaflib.gui.AddRemoveList;
 import kaflib.gui.AddRemoveListListener;
 import kaflib.gui.FileSelectorComponent;
 import kaflib.gui.FileSelectorListener;
-import kaflib.gui.ImageComponent;
 import kaflib.gui.RatingPanel;
 import kaflib.gui.Suggestor;
+import kaflib.gui.components.DownscaledImageComponent;
 import kaflib.types.DemandWorker;
 import kaflib.types.Matrix;
 import kaflib.types.WordTrie;
@@ -76,7 +76,7 @@ public class CardCenter extends JFrame implements FocusListener,
 	private final JCheckBox have;
 	private final RatingPanel community_rating;
 
-	private final ImageComponent image;
+	private final DownscaledImageComponent image;
 	private final BufferedImage none;
 	private String current_name;
 	
@@ -158,7 +158,7 @@ public class CardCenter extends JFrame implements FocusListener,
 					    				   true);
 		temp.add(community_rating);
 		
-		image = new ImageComponent();
+		image = new DownscaledImageComponent();
 		
 		card_panel.add(image, BorderLayout.WEST);
 		card_panel.add(temp, BorderLayout.CENTER);

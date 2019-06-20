@@ -95,6 +95,13 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 		value = value >> 8;
 	}
 	
+	public RGBPixel(final RGBPixel pixel, final Opacity opacity) {
+		super(opacity);
+		r = new Byte(pixel.getR());
+		g = new Byte(pixel.getG());
+		b = new Byte(pixel.getB());
+	}
+	
 	public RGBPixel(final RGBPixel pixel) {
 		super(pixel.getOpacity());
 		r = new Byte(pixel.getR());
@@ -223,6 +230,26 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 	 */
 	public void setB(final Byte b) {
 		this.b = b;
+	}
+	
+	public boolean isCloserToMidtoneThan(final RGBPixel other) {
+		int distance = Math.abs(0x7f - (r.getValue() + g.getValue() + b.getValue()) / 3);
+		int other_d = Math.abs(0x7f - (other.getR().getValue() + other.getG().getValue() + other.getB().getValue()) / 3);
+		return distance < other_d;
+	}
+	
+	public boolean isLighter(final RGBPixel other) {
+		int value = r.getValue() - other.getR().getValue();
+		value += g.getValue() - other.getG().getValue();
+		value += b.getValue() - other.getB().getValue();
+		return value > 0;
+	}
+	
+	public boolean isDarker(final RGBPixel other) {
+		int value = r.getValue() - other.getR().getValue();
+		value += g.getValue() - other.getG().getValue();
+		value += b.getValue() - other.getB().getValue();
+		return value < 0;
 	}
 	
 	/**

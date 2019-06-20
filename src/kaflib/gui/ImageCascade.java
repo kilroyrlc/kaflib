@@ -8,21 +8,22 @@ import java.util.List;
 import javax.swing.JPanel;
 
 import kaflib.graphics.Canvas;
+import kaflib.gui.components.DownscaledImageComponent;
 import kaflib.utils.CheckUtils;
 import kaflib.utils.GUIUtils;
 
 public class ImageCascade extends JPanel {
 
 	private static final long serialVersionUID = 1L;
-	private final List<ImageComponent> cascade;
+	private final List<DownscaledImageComponent> cascade;
 
 	public ImageCascade(final BufferedImage... images) throws Exception {
 		super(new FlowLayout());
 		
-		cascade = new ArrayList<ImageComponent>();
+		cascade = new ArrayList<DownscaledImageComponent>();
 		
 		for (BufferedImage image : images) {
-			ImageComponent component = new ImageComponent(image);
+			DownscaledImageComponent component = new DownscaledImageComponent(image);
 			JPanel panel = GUIUtils.getTitledPanel("");
 			panel.add(component);
 			cascade.add(component);
@@ -33,10 +34,10 @@ public class ImageCascade extends JPanel {
 	public ImageCascade(final Canvas... images) throws Exception {
 		super(new FlowLayout());
 		
-		cascade = new ArrayList<ImageComponent>();
+		cascade = new ArrayList<DownscaledImageComponent>();
 		
 		for (Canvas image : images) {
-			ImageComponent component = new ImageComponent(image);
+			DownscaledImageComponent component = new DownscaledImageComponent(image);
 			JPanel panel = GUIUtils.getTitledPanel("");
 			panel.add(component);
 			cascade.add(component);

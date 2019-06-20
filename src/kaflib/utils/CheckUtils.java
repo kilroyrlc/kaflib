@@ -375,7 +375,7 @@ public class CheckUtils {
 	public static void checkWritable(final File file, final String description) throws Exception {
 		check(file, description);
 		
-		if (!file.exists() || !file.canWrite()) {
+		if (file.exists() && !file.canWrite()) {
 			throw new Exception("Cannot write file: " + file.toString() + ".");
 		}
 	}

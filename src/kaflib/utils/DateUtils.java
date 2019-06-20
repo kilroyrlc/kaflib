@@ -130,6 +130,21 @@ public class DateUtils {
 		SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
 		return format.format(Calendar.getInstance().getTime());
 	}
+
+	/**
+	 * Returns the date in yyyymmdd format with the given year/month/day separator.
+	 * @param separator
+	 * @return
+	 * @throws Exception
+	 */
+	public static String getYYYYMMDD(final String separator) throws Exception {
+		SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+		String unformatted = format.format(Calendar.getInstance().getTime());
+		
+		return unformatted.substring(0, 4) + separator +
+			   unformatted.substring(4, 6) + separator +
+			   unformatted.substring(6);
+	}
 	
 	/**
 	 * Returns the date as unseparated year-month-day, underscore, hour-

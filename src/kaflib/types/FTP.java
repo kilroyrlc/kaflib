@@ -221,9 +221,16 @@ public class FTP {
 		// Upload the file.
 		FileInputStream stream = new FileInputStream(file);
 		ftp.setFileType(getFileType(file));
-		boolean success = ftp.storeFile(path, stream);
-		stream.close();
-		return success;
+		try {
+			boolean success = ftp.storeFile(path, stream);
+			stream.close();
+			return success;
+		}
+		catch (Exception e) {
+			stream.close();
+			System.err.println("Exception uploading: " + file + ".");
+			throw e;
+		}
 	}
 
 	public boolean sync(final String path,

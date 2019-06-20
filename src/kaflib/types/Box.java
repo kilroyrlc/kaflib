@@ -25,6 +25,10 @@ public class Box {
 	protected final int width;
 	protected final int height;
 	
+	public Box(final int width, final int height) throws Exception {
+		this(0, width, 0, height);
+	}
+	
 	/**
 	 * Creates a box of specified x/width, y/height.
 	 * @param xMin
@@ -184,6 +188,24 @@ public class Box {
 		else {
 			return false;
 		}
+	}
+	
+	/**
+	 * Returns a new box where any areas of this box outside the outer are
+	 * cropped to the outer.
+	 * @param outer
+	 * @return
+	 * @throws Exception
+	 */
+	public Box crop(final Box outer) throws Exception {
+		if (isContained(outer)) {
+			return new Box(top_left, bottom_right);
+		}
+		
+		return new Box(new Coordinate(Math.max(outer.getTopLeft().getX(), top_left.getX()),
+									  Math.max(outer.getTopLeft().getY(), top_left.getY())),
+					   new Coordinate(Math.min(outer.getBottomRight().getX(), bottom_right.getX()),
+								  	  Math.min(outer.getBottomRight().getY(), bottom_right.getY())));
 	}
 	
 	public int getWidth() {

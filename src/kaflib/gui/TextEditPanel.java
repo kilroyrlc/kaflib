@@ -13,11 +13,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import kaflib.gui.components.KButton;
+import kaflib.gui.components.KButton.ButtonType;
 import kaflib.types.Worker;
 import kaflib.utils.AESUtils;
 import kaflib.utils.FileUtils;
 import kaflib.utils.GUIUtils;
-import kaflib.utils.GUIUtils.ButtonType;
 import kaflib.utils.KeyPair;
 
 public class TextEditPanel extends JPanel {
@@ -59,7 +60,7 @@ public class TextEditPanel extends JPanel {
 		button_pane = new JPanel();
 		button_pane.setLayout(new BoxLayout(button_pane, BoxLayout.Y_AXIS));
 		
-		save = GUIUtils.getButton(ButtonType.SAVE);
+		save = GUIUtils.getButton(KButton.ButtonType.SAVE);
 		save.addActionListener(new ActionListener(){
 			@Override
 			public void actionPerformed(ActionEvent e) {

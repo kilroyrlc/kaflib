@@ -59,11 +59,11 @@ public class CanvasGrid {
 		width = (tileWidth * grid.length) - (margin * (grid.length - 1));
 		height = (tileHeight * grid[0].length) - (margin * (grid[0].length - 1));
 		
-		scaled = Canvas.fill(source, width, height);
+		scaled = CanvasUtils.fill(source, width, height);
 		for (int i = 0; i < grid.length; i++) {
-			int xstart = Math.max(0, i * tileWidth - (i * margin));
+			int xstart = Math.max(0, i * tileWidth - (i * margin) - 1);
 			for (int j = 0; j < grid[i].length; j++) {
-				int ystart = Math.max(0, j * tileHeight - (j * margin));
+				int ystart = Math.max(0, j * tileHeight - (j * margin) - 1);
 				grid[i][j] = scaled.get(new Box(xstart, tileWidth, 
 												ystart, tileHeight));
 			}
@@ -150,13 +150,13 @@ public class CanvasGrid {
 		for (int i = 0; i < grid.length; i++){
 			Canvas column = grid[i][0];
 			for (int j = 1; j < grid[i].length; j++) {
-				column = Canvas.join(column, grid[i][j], margin, false);
+				column = CanvasUtils.join(column, grid[i][j], margin, false);
 			}
 			if (i == 0) {
 				canvas = column;
 			}
 			else {
-				canvas = Canvas.join(canvas, column, margin, true);
+				canvas = CanvasUtils.join(canvas, column, margin, true);
 			}
 		}
 		return canvas;

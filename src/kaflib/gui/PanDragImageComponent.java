@@ -1,12 +1,8 @@
 package kaflib.gui;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import kaflib.gui.components.DownscaledImageComponent;
 
-public class PanDragImageComponent extends ImageComponent implements MouseMotionListener,
-																	 MouseWheelListener {
+public class PanDragImageComponent extends DownscaledImageComponent {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -14,18 +10,6 @@ public class PanDragImageComponent extends ImageComponent implements MouseMotion
 		super();
 		addMouseWheelListener(this);
 		addMouseMotionListener(this);
-	}
-
-	@Override
-	public void mouseWheelMoved(MouseWheelEvent e) {
-	}
-
-	@Override
-	public void mouseDragged(MouseEvent e) {
-	}
-
-	@Override
-	public void mouseMoved(MouseEvent e) {
 	}
 
 }

@@ -26,16 +26,40 @@ import java.util.ArrayList;
  */
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.apache.xmlbeans.impl.util.Base64;
+
+import kaflib.types.Pair;
 
 
 /**
  * Contains math utilities.
  */
 public class MathUtils {
+	
+	private static Map<Pair<Integer, Integer>, Integer> distance_lookup = new HashMap<Pair<Integer, Integer>, Integer>();
+	private static final int DISTANCE_MAX_SIZE = 128;
+	
+	public static final int getDistance(final Pair<Integer, Integer> dxdy) {
+		if (distance_lookup.containsKey(dxdy)) {
+			return distance_lookup.get(dxdy);
+		}
+		Pair<Integer, Integer> reverse = new Pair<Integer, Integer>(dxdy.getSecond(), dxdy.getFirst());
+		if (distance_lookup.containsKey(reverse)) {
+			return distance_lookup.get(reverse);
+		}
+		
+		int value = (int) Math.sqrt((double)(dxdy.getFirst() * dxdy.getFirst()) + (dxdy.getSecond() * dxdy.getSecond()));
+		if (distance_lookup.size() < DISTANCE_MAX_SIZE) {
+			distance_lookup.put(dxdy, value);
+		}
+		return value;
+	}
+	
 	/**
 	 * Sums the values in the collection.
 	 * @param values

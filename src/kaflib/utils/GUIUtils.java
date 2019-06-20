@@ -48,6 +48,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
 
+import kaflib.gui.components.KButton;
 import kaflib.types.Pair;
 
 /**
@@ -55,20 +56,7 @@ import kaflib.types.Pair;
  */
 public class GUIUtils {
 
-	public enum ButtonType {
-		DIRECTORY,
-		FILE,
-		COMPUTER,
-		HARD_DRIVE,
-		SAVE,
-		NEW_FOLDER,
-		UP_FOLDER,
-		HOME_FOLDER,
-		DETAILS_VIEW,
-		LIST_VIEW
-	}
-	
-	public static JButton getButton(final ButtonType type) throws Exception {
+	public static JButton getButton(final KButton.ButtonType type) throws Exception {
 		switch (type) {
 		case DIRECTORY:
 			return new JButton(UIManager.getIcon("FileView.directoryIcon"));

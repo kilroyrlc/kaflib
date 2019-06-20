@@ -3,6 +3,9 @@ package kaflib.graphics;
 import kaflib.types.Percent;
 import kaflib.types.Byte;
 
+/**
+ * Defines an opacity type for ARGB.
+ */
 public class Opacity implements Comparable<Opacity> {
 	private final Byte value;
 
@@ -26,6 +29,14 @@ public class Opacity implements Comparable<Opacity> {
 
 	public Opacity(final Percent percent) throws Exception {
 		this.value = new Byte(percent);
+	}
+	
+	public boolean greaterThanThreeQuarter() {
+		return getInt() > THREE_QUARTER.getInt();
+	}
+	
+	public boolean greaterThanHalf() {
+		return getInt() > HALF.getInt();
 	}
 	
 	/**

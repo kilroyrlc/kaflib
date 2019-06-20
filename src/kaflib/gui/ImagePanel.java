@@ -15,6 +15,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import kaflib.graphics.GraphicsUtils;
+import kaflib.gui.components.DownscaledImageComponent;
+import kaflib.gui.components.KButton;
 import kaflib.types.Directory;
 import kaflib.utils.AESUtils;
 import kaflib.utils.FileUtils;
@@ -35,7 +37,7 @@ public class ImagePanel extends javax.swing.JPanel {
 	
 	private BufferedImage image;
 	private Directory last_saved_directory;
-	private final ImageComponent image_component;
+	private final DownscaledImageComponent image_component;
 	private final JPanel button_panel;
 	private final JTextField file_label;
 	private final List<JButton> buttons;
@@ -55,7 +57,7 @@ public class ImagePanel extends javax.swing.JPanel {
 		file_label.setEditable(false);
 		add(file_label, BorderLayout.NORTH);
 		
-		image_component = new ImageComponent(width, height);
+		image_component = new DownscaledImageComponent(width, height);
 		add(image_component, BorderLayout.CENTER);
 		
 		button_panel = new JPanel();
@@ -71,7 +73,7 @@ public class ImagePanel extends javax.swing.JPanel {
 	 * @throws Exception
 	 */
 	private final void addButtons() throws Exception {
-		JButton button = GUIUtils.getButton(GUIUtils.ButtonType.SAVE);
+		JButton button = GUIUtils.getButton(KButton.ButtonType.SAVE);
 		button.addActionListener(new ActionListener(){
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -81,7 +83,7 @@ public class ImagePanel extends javax.swing.JPanel {
 		button_panel.add(button);
 		buttons.add(button);
 		
-		button = GUIUtils.getButton(GUIUtils.ButtonType.FILE);
+		button = GUIUtils.getButton(KButton.ButtonType.FILE);
 		button.addActionListener(new ActionListener(){
 			@Override
 			public void actionPerformed(ActionEvent e) {

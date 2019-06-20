@@ -298,7 +298,13 @@ public class GraphicsUtils {
 	 * @throws Exception
 	 */
 	public static BufferedImage read(final File file) throws Exception {
-		return ImageIO.read(file);
+		try {
+			return ImageIO.read(file);
+		}
+		catch (Exception e) {
+			System.err.println("File: " + file + ".");
+			throw e;
+		}
 	}
 	
 
@@ -487,9 +493,37 @@ public class GraphicsUtils {
 				scaling = scale_x;
 			}
 		}
-		
 		return getScaled(image, scaling);
+	}
+	
+	public static BufferedImage scaleTo(final BufferedImage image, 
+										final Integer minWidth, 
+										final Integer minHeight) throws Exception {
+		if (minWidth == null && minHeight == null) {
+			throw new Exception("Must specify at least one constraint.");
+		}
 
+		Float scale_x = null;
+		if (minWidth != null) {
+			scale_x = (float) minWidth / image.getWidth();
+		}
+
+		Float scale_y = null;
+		if (minHeight != null) {
+			scale_y = (float) minHeight / image.getHeight();
+		}
+
+		float scaling;
+		if (scale_y == null) {
+			scaling = scale_x;
+		}
+		else if (scale_x == null) {
+			scaling = scale_y;
+		}
+		else {
+			scaling = Math.max(scale_x, scale_y);
+		}
+		return getScaled(image, scaling);
 	}
 	
 	/**
@@ -570,8 +604,14 @@ public class GraphicsUtils {
 		CheckUtils.check(file, "file");
 		CheckUtils.check(image, "image for file: "+ file.getName());
 		
+		BufferedImage bgr = image;
+		if (bgr.getType() != BufferedImage.TYPE_3BYTE_BGR) {
+			bgr = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+			bgr.createGraphics().drawImage(image, 0, 0, image.getWidth(), image.getHeight(), null);
+		}
+		
 		try {
-			ImageIO.write(image, "jpg", file);
+			ImageIO.write(bgr, "jpg", file);
 		}
 		catch (Exception e) {
 			System.out.println("Unable to write " + file + ".");
@@ -586,119 +626,7 @@ public class GraphicsUtils {
 		ImageIO.write(image, "png", file);
 	}
 	
-	/**
-	 * Returns a guess as to a thumbnail for the image, based on contrast 
-	 * and rule of thirds.
-	 * @param input
-	 * @param preshrink
-	 * @param width
-	 * @param height
-	 * @return
-	 * @throws Exception
-	 */
-	public static BufferedImage getThumbnail(final BufferedImage input, 
-											 final int preshrink, 
-											 final int width, 
-											 final int height) throws Exception {
-		BufferedImage image = input;
-		
-		if (preshrink > 1 && image.getWidth() / preshrink > width && image.getHeight() / preshrink > height) {
-			image = getScaledDown(input, preshrink);
-		}
-		
-		if (width > image.getWidth() || height > image.getHeight()) {
-			image = getScaledUp(input, 2);
-		}
-		
-		if (width > image.getWidth() || height > image.getHeight()) {
-			throw new Exception("Invalid thumbnail size: " + width + "x" + height + " for image: " + input.getWidth() + "x" + input.getHeight() + ".");
-		}
-		
-		int seventh_width = image.getWidth() / 7;
-		int seventh_height = image.getHeight() / 7;
-		int half_width = (image.getWidth() - width) / 2;
-		int half_height = (image.getHeight() - height) / 2;
-		int sixseventh_width = Math.max(0, image.getWidth() - seventh_width - width);
-		int sixseventh_height = Math.max(0, image.getHeight() - seventh_height - height);
-		
-		BufferedImage best_thumbnail = getCropped(image, 0, 0, width, height);
-		int best_contrast = 0;
-		
-		BufferedImage thumbnail;
-		
-		// Top left.
-		if (seventh_width + width < image.getWidth() && seventh_height + height < image.getHeight()) {
-			thumbnail = getCropped(image, seventh_width, seventh_height, width, height);
-			int contrast = getContrast(thumbnail);
-			if (contrast > best_contrast) {
-				best_contrast = contrast;
-				best_thumbnail = thumbnail;
-			}
-		}
 
-		// Center left.
-		if (seventh_width + width < image.getWidth() && half_height + height < image.getHeight()) {
-			thumbnail = getCropped(image, seventh_width, half_height, width, height);
-			int contrast = getContrast(thumbnail);
-			if (contrast > best_contrast) {
-				best_contrast = contrast;
-				best_thumbnail = thumbnail;
-			}
-		}
-
-		// Bottom left.
-		if (seventh_width + width < image.getWidth() && sixseventh_height + height < image.getHeight()) {
-			thumbnail = getCropped(image, seventh_width, sixseventh_height, width, height);
-			int contrast = getContrast(thumbnail);
-			if (contrast > best_contrast) {
-				best_contrast = contrast;
-				best_thumbnail = thumbnail;
-			}
-		}
-		
-		// Top right.
-		if (sixseventh_width + width < image.getWidth() && seventh_height + height < image.getHeight()) {
-			thumbnail = getCropped(image, sixseventh_width, seventh_height, width, height);
-			int contrast = getContrast(thumbnail);
-			if (contrast > best_contrast) {
-				best_contrast = contrast;
-				best_thumbnail = thumbnail;
-			}
-		}
-
-		// Center right.
-		if (sixseventh_width + width < image.getWidth() && half_height + height < image.getHeight()) {
-			thumbnail = getCropped(image, sixseventh_width, half_height, width, height);
-			int contrast = getContrast(thumbnail);
-			if (contrast > best_contrast) {
-				best_contrast = contrast;
-				best_thumbnail = thumbnail;
-			}
-		}
-
-		// Bottom right.
-		if (sixseventh_width + width < image.getWidth() && sixseventh_height + height < image.getHeight()) {
-			thumbnail = getCropped(image, sixseventh_width, sixseventh_height, width, height);
-			int contrast = getContrast(thumbnail);
-			if (contrast > best_contrast) {
-				best_contrast = contrast;
-				best_thumbnail = thumbnail;
-			}
-		}
-		
-		// Center.
-		if (half_width + width < image.getWidth() && half_height + height < image.getHeight()) {
-			thumbnail = getCropped(image, half_width, half_height, width, height);
-			int contrast = getContrast(thumbnail);
-			if (contrast > best_contrast) {
-				best_contrast = contrast;
-				best_thumbnail = thumbnail;
-			}
-		}		
-		
-		return best_thumbnail;
-	}
-	
 	/**
 	 * Samples several axes for red channel deltas.
 	 * @param image

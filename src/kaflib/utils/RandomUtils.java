@@ -327,6 +327,10 @@ public class RandomUtils {
 	 */
 	public static <T> List<T> getRandom(final List<T> values,
 										final int count) throws Exception {
+		if (count >= values.size()) {
+			return values;
+		}
+		
 		Set<Integer> indices = RandomUtils.randomSet(Math.min(count, values.size()),
 													 0, 
 													 values.size() - 1);

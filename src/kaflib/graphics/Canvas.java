@@ -1,11 +1,9 @@
 package kaflib.graphics;
 
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,16 +13,12 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import kaflib.graphics.GraphicsUtils.Rotation;
-import kaflib.gui.ImageComponent;
+import kaflib.gui.components.DownscaledImageComponent;
 import kaflib.types.Box;
 import kaflib.types.Byte;
 import kaflib.types.Coordinate;
-import kaflib.types.Histogram;
 import kaflib.types.IntegerHistogram;
-import kaflib.types.Matrix;
-import kaflib.types.Pair;
 import kaflib.types.Percent;
-import kaflib.types.Worker;
 import kaflib.utils.CheckUtils;
 import kaflib.utils.GUIUtils;
 import kaflib.utils.MathUtils;
@@ -33,7 +27,8 @@ import kaflib.utils.TypeUtils;
 
 /**
  * Defines a raster canvas of pixels (argb values).  Uninitialized values start
- * as transparent black.
+ * as transparent black.  Canvas dimensions are immutable, but values can be
+ * modified.
  */
 public class Canvas {
 	public enum Orientation {
@@ -47,6 +42,7 @@ public class Canvas {
 	private static final int SIMILAR_THRESHOLD = 64;
 	
 	private final RGBPixel pixels[][];
+	private Map<Coordinate, RGBPixel> map;
 
 	/**
 	 * Reads an image file to a canvas.
@@ -164,6 +160,13 @@ public class Canvas {
 		}
 	}
 	
+	public Canvas(final RGBPixel canvas[][]) throws Exception {
+		pixels = new RGBPixel[canvas.length][canvas[0].length];
+		for (int i = 0; i < canvas.length; i++) {
+			setColumn(canvas[i], i);
+		}
+	}
+	
 	/**
 	 * Creates a canvas with pixels randomly/uniformly one of the supplied 
 	 * colors.
@@ -202,8 +205,17 @@ public class Canvas {
 								other.toString() + ".");
 		}
 	}
-	
 
+	public void applyTransform(final CanvasTransform transform) throws Exception {
+		CheckUtils.check(pixels, "image");
+		CheckUtils.check(transform, "transform");
+		transform.apply(pixels);
+	}
+
+	/**
+	 * Returns width / height.
+	 * @return
+	 */
 	public double getAspectRatio() {
 		return (double) getWidth() / (double) getHeight();
 	}
@@ -218,19 +230,6 @@ public class Canvas {
 		int aint = (int) (a * multiplier);
 		int bint = (int) (b * multiplier);
 		return aint == bint;
-	}
-	
-	public static Canvas getLuminance(final Canvas canvas) throws Exception {
-		Canvas grey = new Canvas(canvas);
-		for (int i = 0; i < grey.getWidth(); i++) {
-			for (int j = 0; j < grey.getHeight(); j++) {
-				grey.set(i, j, new RGBPixel(true,
-											grey.get(i, j).getLuminance(),
-											grey.get(i, j).getLuminance(),
-											grey.get(i, j).getLuminance()));
-			}
-		}
-		return grey;
 	}
 	
 	public IntegerHistogram getLuminanceHistogram(final Collection<Coordinate> coordinates) throws Exception {
@@ -254,8 +253,8 @@ public class Canvas {
 			return false;
 		}
 		
-		Canvas this_scaled = scaleTo(this, SIMILAR_SCALE_WIDTH, null);
-		Canvas other_scaled = scaleTo(other, SIMILAR_SCALE_WIDTH, null);
+		Canvas this_scaled = CanvasUtils.scaleTo(this, SIMILAR_SCALE_WIDTH, null);
+		Canvas other_scaled = CanvasUtils.scaleTo(other, SIMILAR_SCALE_WIDTH, null);
 		for (Coordinate value : this_scaled.getBounds().getRandom(SIMILAR_SAMPLES)) {
 			RGBPixel this_average = RGBPixel.getAverage(this_scaled.getBox(value, 3));
 
@@ -291,7 +290,7 @@ public class Canvas {
 	 * @throws Exception
 	 */
 	public Box getBounds() throws Exception {
-		return new Box(0, getWidth(), 0, getHeight());
+		return new Box(0, getWidth() - 1, 0, getHeight() - 1);
 	}
 	
 	/**
@@ -305,7 +304,7 @@ public class Canvas {
 		return pixels[column];
 	}
 	
-	public void setColumn(final RGBPixel column[], 
+	public final void setColumn(final RGBPixel column[], 
 						  final int index) throws Exception {
 		if (column.length != pixels[0].length) {
 			throw new Exception("Mismatched column lengths: " + 
@@ -343,10 +342,38 @@ public class Canvas {
 		Canvas canvas = new Canvas(box.getWidth(), box.getHeight());
 		for (int i = 0; i < box.getWidth(); i++) {
 			for (int j = 0; j < box.getHeight(); j++) {
-				canvas.set(i, j, new RGBPixel(get(i + box.getXMin(), j + box.getYMin())));
+				try {
+					canvas.set(i, j, new RGBPixel(get(i + box.getXMin(), j + box.getYMin())));
+				}
+				catch (Exception e) {
+					System.err.println("Error writing " + i + ", " + j + " from " + 
+									   (i + box.getXMin() + ", " + (j + box.getYMin() + ".")));
+					throw e;
+				}
 			}
 		}
 		return canvas;
+	}
+	
+	/**
+	 * Returns the pixel array.
+	 * @return
+	 */
+	public RGBPixel[][] get() {
+		return pixels;
+	}
+	
+	public RGBPixel[][] getCopy() {
+		return CanvasUtils.copy(pixels);
+	}
+	
+	public void set(final RGBPixel values[][]) throws Exception {
+		if (values.length != pixels.length || values[0].length != pixels[0].length) {
+			throw new Exception("Mismatched canvas sizes.");
+		}
+		for (int i = 0; i < values.length; i++) {
+			System.arraycopy(values[i], 0, pixels[i], 0, pixels[i].length);
+		}
 	}
 	
 	/**
@@ -366,6 +393,34 @@ public class Canvas {
 		return pixels;
 	}
 
+	/**
+	 * Adds a border of the specified number of pixels.
+	 * @param width
+	 * @param color
+	 * @throws Exception
+	 */
+	public void addBorder(final int width, final RGBPixel color) throws Exception {
+		CheckUtils.checkPositive(width, "width");
+		CheckUtils.check(color, "color");
+		int height = pixels[0].length;
+		
+		// Top/bottom.
+		for (int i = 0; i < pixels.length; i++) {
+			for (int j = 0; j < Math.min(width, height); j++) {
+				pixels[i][j] = new RGBPixel(color);
+				pixels[i][height - 1 - j] = new RGBPixel(color);
+			}
+		}
+		
+		// Left/right.
+		for (int i = 0; i < Math.min(width, pixels.length); i++) {
+			for (int j = 0; j < height; j++) {
+				pixels[i][j] = new RGBPixel(color);
+				pixels[pixels.length - 1 - i][j] = new RGBPixel(color);
+			}
+		}
+	}
+	
 	/**
 	 * Takes a collection of coordinates, returns the average difference 
 	 * between each pixel and the average.
@@ -470,6 +525,37 @@ public class Canvas {
 							  RandomUtils.randomInt(getHeight()));
 	}
 	
+	/**
+	 * Returns a map of the contents of this Canvas.
+	 * @return
+	 */
+	public Map<Coordinate, RGBPixel> getMap() {
+		if (map == null) {
+			for (int i = 0; i < pixels.length; i++) {
+				for (int j = 0; j < pixels[i].length; j++) {
+					map.put(new Coordinate(i, j), pixels[i][j]);
+				}
+			}
+		}
+		return map;
+	}
+	
+	/**
+	 * Returns a set of all coordinates in this Canvas.
+	 * @return
+	 */
+	public Set<Coordinate> getCoordinates() {
+		return getMap().keySet();
+	}
+	
+	/**
+	 * Returns a collection of the pixels in this Canvas.
+	 * @return
+	 */
+	public Collection<RGBPixel> getPixels() {
+		return getMap().values();
+	}
+	
 	public String toString() {
 		return getWidth() + "x" + getHeight() + " canvas";
 	}
@@ -482,86 +568,6 @@ public class Canvas {
 		return pixels[0].length;
 	}
 
-	public static Canvas getRandomRotateMirror(final Canvas canvas) throws Exception {
-		int random = RandomUtils.randomInt(0, 3);
-		Canvas changed;
-		if (random == 0) {
-			changed = new Canvas(canvas);
-		}
-		else if (random == 1) {
-			changed = rotate(canvas, GraphicsUtils.Rotation.CLOCKWISE);
-		}
-		else if (random == 2) {
-			changed = rotate(canvas, GraphicsUtils.Rotation.ONE_EIGHTY);
-		}
-		else {
-			changed = rotate(canvas, GraphicsUtils.Rotation.COUNTERCLOCKWISE);
-		}
-		random = RandomUtils.randomInt(0, 2);
-		if (random == 0) {
-		}
-		else if (random == 1) {
-			changed = mirror(changed, false);
-		}
-		else {
-			changed = mirror(changed, true);
-		}
-		return changed;
-	}
-	
-	public static Canvas rotate(final Canvas image, 
-								final GraphicsUtils.Rotation rotation) throws Exception {
-		if (rotation == Rotation.CLOCKWISE) {
-			Canvas output = new Canvas(image.getHeight(), image.getWidth());
-			for (int i = 0; i < image.getWidth(); i++) {
-				for (int j = 0; j < image.getHeight(); j++) {
-					output.set(output.getWidth() - j - 1, i, image.get(i, j));
-				}
-			}
-			return output;
-		}
-		else if (rotation == Rotation.COUNTERCLOCKWISE) {
-			Canvas output = new Canvas(image.getHeight(), image.getWidth());
-			for (int i = 0; i < image.getWidth(); i++) {
-				for (int j = 0; j < image.getHeight(); j++) {
-					output.set(j, output.getHeight() - i - 1, image.get(i, j));
-				}
-			}
-			return output;			
-		}
-		else if (rotation == Rotation.ONE_EIGHTY) {
-			Canvas output = new Canvas(image.getWidth(), image.getHeight());
-			for (int i = 0; i < image.getWidth(); i++) {
-				for (int j = 0; j < image.getHeight(); j++) {
-					output.set(output.getWidth() - i - 1, output.getHeight() - j - 1, image.get(i, j));
-				}
-			}
-			return output;
-		}
-		else {
-			throw new Exception("Unsupported rotation: " + rotation + ".");
-		}
-	}
-
-	public static Canvas mirror(final Canvas image, 
-								final boolean horizontal) throws Exception {
-		int width = image.getWidth();
-		int height = image.getHeight();
-
-		Canvas output = new Canvas(image.getHeight(), image.getWidth());
-		for (int i = 0; i < width; i++) {
-			for (int j = 0; j < image.getHeight(); j++) {
-				if (horizontal) {
-					output.set(width - i - 1, j, image.get(i, j));
-				}
-				else {
-					output.set(i, height - j - 1, image.get(i, j));
-				}
-			}
-		}
-		return output;
-	}
-	
 	/**
 	 * Draws the specified values of the canvas from the top left x, y.
 	 * @param topLeft
@@ -833,193 +839,68 @@ public class Canvas {
 	    return image;
 	}
 	
-	/**
-	 * Resizes the canvas so the smaller dimensions match, then center
-	 * crops the longer dimension.
-	 * @param source
-	 * @param width
-	 * @param height
-	 * @return
-	 * @throws Exception
-	 */
-	public static Canvas fill(final Canvas source,
-							  final int width,
-							  final int height) throws Exception {
-		if (source.getWidth() == width && source.getHeight() == height) {
-			return source;
+	public Canvas getCropped(final int width,
+			   				 final int height) throws Exception {
+		CheckUtils.checkPositive(width);
+		CheckUtils.checkPositive(height);
+		int dx = getWidth() - width;
+		int dy = getHeight() - height;
+		if (dx < 0 || dy < 0) {
+			throw new Exception("Attempting to crop to larger area: " + getWidth() + 
+					" -> " + width + " by " + getHeight() + " -> " + height + ".");
 		}
-		
-		return new Canvas(GraphicsUtils.fill(source.toBufferedImage(), width, height));
+		return getCropped(dx / 2, dy / 2, width, height);
 	}
 
-	public Canvas getScaled(final Integer maxWidth,
-			  final Integer maxHeight) throws Exception {
-		return scaleTo(this, maxWidth, maxHeight);
-	}
-	
-	/**
-	 * Scales the canvas until the width or height (if specified) reaches max.
-	 * @param canvas
-	 * @param maxWidth
-	 * @param maxHeight
-	 * @return
-	 * @throws Exception
-	 */
-	public static Canvas scaleTo(final Canvas canvas,
-								  final Integer maxWidth,
-								  final Integer maxHeight) throws Exception {
-		return new Canvas(GraphicsUtils.getScaled(canvas.toBufferedImage(), maxWidth, maxHeight));
-	}
-	
-	public static Canvas join(final Canvas... canvases) throws Exception {
-		int width = 0;
-		int height = 0;
-		for (Canvas canvas : canvases) {
-			width += canvas.getWidth();
-			height = Math.max(height, canvas.getHeight());
-		}
-		Canvas new_canvas = new Canvas(width, height);
-		int x_start = 0;
-		
-		for (Canvas canvas : canvases) {
-			new_canvas.set(new Coordinate(x_start, 0), canvas);
-			x_start += canvas.getWidth();
-		}
-		return new_canvas;
-	}
-	
-	/**
-	 * Joins two canvases together, left-to-right or top-to-bottom where the 
-	 * joined dimensions must match.  If margin > 0, treats that number of 
-	 * pixels as overlap where a heuristic decides how to blend them.
-	 * @param topLeft
-	 * @param bottomRight
-	 * @param margin
-	 * @param horizontal
-	 * @return
-	 * @throws Exception
-	 */
-	public static Canvas join(final Canvas topLeft, 
-							  final Canvas bottomRight,
-							  final int margin,
-							  final boolean horizontal) throws Exception {
-		Canvas canvas;
-		if (horizontal) {
-			CheckUtils.checkEquals(topLeft.getHeight(), bottomRight.getHeight(), "Height");
-			canvas = new Canvas(topLeft.getWidth() + bottomRight.getWidth() - margin,
-							    topLeft.getHeight());
-			// Copy non-margin left side.
-			for (int i = 0; i < topLeft.getWidth() - margin; i++) {
-				canvas.setColumn(topLeft.getColumn(i), i);
-			}
-			// Copy non-margin right side.
-			for (int i = margin; i < bottomRight.getWidth(); i++) {
-				canvas.setColumn(bottomRight.getColumn(i), topLeft.getWidth() + i - margin);
-			}
+	public Canvas getCropped(final int x, 
+							final int y, 
+							final int width, 
+							final int height) throws Exception {
+		CheckUtils.checkNonNegative(x);
+		CheckUtils.checkNonNegative(y);
+		CheckUtils.checkPositive(width);
+		CheckUtils.checkPositive(height);
 
-			if (margin > 0) {
-				// Blend each row, left to right.
-				double increment = 1.0 / (double)(margin - 1);
-				for (int i = 0; i < topLeft.getHeight(); i++) {
-					double percent_left = 1;
-					for (int j = 0; j < margin; j++) {
-						RGBPixel blend = new RGBPixel(topLeft.get(topLeft.getWidth() - margin + j, i),
-													  bottomRight.get(j, i),
-													  new Percent(percent_left),
-													  new Percent(90));
-						canvas.set(topLeft.getWidth() - margin + j, i, blend);
-						percent_left -= increment;
-					}
-				}
+		if (x + width > getWidth() || y + height > getHeight()) {
+			throw new Exception("Invalid crop (" + x + ", " + y + ") " + width + "x" + height + 
+					" for " + getWidth() + "x" + getHeight());
+		}
+		
+		Canvas cropped = new Canvas(width, height);
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				cropped.set(i, j, get(i + x, j + y));
 			}
+		}
+		return cropped;
+	}
+	
+	public Canvas getScaled(final int longestSide) throws Exception {
+		if (getOrientation() == Orientation.LANDSCAPE) {
+			return getScaled(longestSide, null);
 		}
 		else {
-			CheckUtils.checkEquals(topLeft.getWidth(), bottomRight.getWidth(), "Width");
-			canvas = new Canvas(topLeft.getWidth(),
-							    topLeft.getHeight() + bottomRight.getHeight() - margin);
-			// Copy non-margin top side.
-			for (int i = 0; i < topLeft.getWidth(); i++) {
-				// Copy top.
-				TypeUtils.copy(topLeft.getColumn(i), 0, canvas.getColumn(i), 0, topLeft.getColumn(i).length - margin);
-				
-				// Copy bottom.
-				TypeUtils.copy(bottomRight.getColumn(i), 
-								 margin, 
-								 canvas.getColumn(i), 
-								 topLeft.getColumn(i).length, 
-								 bottomRight.getColumn(i).length - margin);
-
-				if (margin > 0) {
-					double increment = 1.0 / (double) (margin - 1);
-					double percent_top = 1;
-					for (int j = 0; j < margin; j++) {
-
-						RGBPixel blend = new RGBPixel(topLeft.get(i, topLeft.getHeight() - margin + j),
-													  bottomRight.get(i, j),
-													  new Percent(percent_top),
-													  new Percent(90));
-						canvas.set(i, topLeft.getHeight() - margin + j, blend);
-						percent_top -= increment;
-					}
-				}
-				
-			}
+			return getScaled(null, longestSide);
 		}
-		
-		return canvas;
+	}
+
+	public Canvas getScaledToShortestSide(final int shortestSide) throws Exception {
+		if (getOrientation() == Orientation.LANDSCAPE) {
+			return getScaled(null, shortestSide);
+		}
+		else {
+			return getScaled(shortestSide, null);
+		}
 	}
 	
-
-	public static Canvas createMottled(final Coordinate dimensions,
-									   final RGBPixel bg, 
-									   final RGBPixel fg) throws Exception {
-		return createMottled(dimensions, bg, fg, 2);
+	public Canvas getScaled(final Integer maxWidth,
+			  				final Integer maxHeight) throws Exception {
+		return CanvasUtils.scaleTo(this, maxWidth, maxHeight);
 	}
 	
-	public static Canvas createMottled(final Coordinate dimensions,
-									   final RGBPixel bg, 
-									   final RGBPixel fg, 
-									   final int smooth) throws Exception {
-		Canvas canvas = new Canvas(dimensions.getX(), 
-								   dimensions.getY(),
-								   bg,
-								   fg,
-								   new Percent(70));
-		
-		for (int i = 0; i < smooth; i++) {
-			canvas.smooth(2);
-		}
-		return canvas;
-	}
-
-	public static Canvas createMottled(final Coordinate dimensions,
-										final int smooth,
-										final RGBPixel... colors) throws Exception {
-		Canvas canvas = new Canvas(dimensions.getX(), 
-				dimensions.getY(),
-				colors);
-
-		for (int i = 0; i < smooth; i++) {
-			canvas.smooth(2);
-		}
-		return canvas;
-	}
-	
-	public static Canvas createMottled(final Coordinate dimensions,
-									final int smooth,
-									final Color... colors) throws Exception {
-		RGBPixel pixels[] = new RGBPixel[colors.length];
-		for (int i = 0; i < colors.length; i++) {
-			pixels[i] = new RGBPixel(colors[i]);
-		}
-		Canvas canvas = new Canvas(dimensions.getX(), 
-				dimensions.getY(),
-				pixels);
-
-		for (int i = 0; i < smooth; i++) {
-			canvas.smooth(2);
-		}
-		return canvas;
+	public Canvas getScaledUp(final Integer minWidth,
+				final Integer minHeight) throws Exception {
+		return CanvasUtils.scaleToAtLeast(this, minWidth, minHeight);
 	}
 	
 	public static void main(String args[]) {
@@ -1031,35 +912,15 @@ public class Canvas {
 				System.exit(1);
 			}
 			final Canvas canvas = new Canvas(file);
-			Set<Box> boxes = canvas.getRandomCoverage(30, 30, 2);
-			for (Box box : boxes) {
-				canvas.fill(box, RGBPixel.getRandomOpaque());
-			}
+			canvas.addBorder(5, RGBPixel.OPAQUE_BLUE);
 			
-			final ImageComponent component = new ImageComponent(canvas);
+			final DownscaledImageComponent component = new DownscaledImageComponent(canvas);
 			JPanel panel = new JPanel();
 			panel.add(component);
 			frame.setContentPane(panel);
 			frame.pack();
 			frame.setVisible(true);
-			
-			Worker worker = new Worker() {
-				@Override
-				protected void process() throws Exception {
-					for (int i = 0; i < 5; i++) {
-						Thread.sleep(5000);
-						int size = RandomUtils.randomInt(25, 40);
-						
-						Set<Box> boxes = canvas.getRandomCoverage(size, size, 2);
-						for (Box box : boxes) {
-							canvas.fill(box, RGBPixel.getRandomOpaque());
-						}
-						component.update(canvas);
-					}
-				}
-				
-			};
-			worker.start();
+	
 			
 		}
 		catch (Exception e) {

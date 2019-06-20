@@ -1,22 +1,14 @@
 package kaflib.applications;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
-import kaflib.gui.TwoPasswordConfirmPanel;
 import kaflib.types.Directory;
-import kaflib.types.FileHash;
-import kaflib.utils.AESUtils;
 import kaflib.utils.FileUtils;
-import kaflib.utils.KeyPair;
-import kaflib.utils.StringUtils;
 
 public class RecursiveUnzip  extends JFrame {
 

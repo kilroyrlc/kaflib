@@ -544,6 +544,10 @@ public class CardDatabase implements Iterable<CardInstance> {
 		Set<String> missing = new HashSet<String>();
 		
 		for (String name : names) {
+			if (name.isEmpty()) {
+				continue;
+			}
+			
 			Card card = getCard(name);
 			if (card == null) {
 				missing.add(name);

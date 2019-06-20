@@ -12,7 +12,7 @@ import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import kaflib.graphics.Canvas;
-import kaflib.gui.RadioPanel;
+import kaflib.gui.components.KRadioPanel;
 import kaflib.types.Directory;
 import kaflib.types.Worker;
 import kaflib.utils.FileUtils;
@@ -21,7 +21,7 @@ import kaflib.utils.GUIUtils;
 public class ImageConverter extends JFrame {
 
 	private static final long serialVersionUID = 1L;
-	private final RadioPanel format;
+	private final KRadioPanel format;
 	private final JButton go;
 	private final JButton exit;
 	private Directory working_directory;
@@ -32,7 +32,7 @@ public class ImageConverter extends JFrame {
 		working_directory = new Directory();
 		JPanel panel = new JPanel(new FlowLayout());
 		
-		format = new RadioPanel("Format", "png", "jpg");
+		format = new KRadioPanel("Format", "png", "jpg");
 		go = new JButton("Go...");
 		go.addActionListener(new ActionListener(){
 			@Override

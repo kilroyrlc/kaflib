@@ -41,6 +41,10 @@ public class ThumbCropBoxes {
 	}
 	
 	public void setCrop(final Box box) {
+		if (box.equals(crop)) {
+			return;
+		}
+		
 		crop = box;
 	}
 	
