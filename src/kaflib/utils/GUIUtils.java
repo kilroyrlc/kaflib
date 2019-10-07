@@ -49,6 +49,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
 
 import kaflib.gui.components.KButton;
+import kaflib.types.Directory;
 import kaflib.types.Pair;
 
 /**
@@ -161,8 +162,14 @@ public class GUIUtils {
 	 * @param message
 	 * @return
 	 */
-	public static int showConfirmDialog(final Component parent, final String title, final String message) {
-		return JOptionPane.showConfirmDialog(parent, message, title, JOptionPane.OK_CANCEL_OPTION);
+	public static boolean showConfirmDialog(final Component parent, final String title, final String message) {
+		int response = JOptionPane.showConfirmDialog(parent, message, title, JOptionPane.OK_CANCEL_OPTION);
+		if (response == JOptionPane.OK_OPTION) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 	
 	/**
@@ -235,7 +242,7 @@ public class GUIUtils {
 	}
 
 
-	public static File chooseDirectory(final Component parent) {
+	public static Directory chooseDirectory(final Component parent) {
 		return chooseDirectory(parent, null);
 	}
 	
@@ -244,7 +251,7 @@ public class GUIUtils {
 	 * @param parent
 	 * @return
 	 */
-	public static File chooseDirectory(final Component parent,
+	public static Directory chooseDirectory(final Component parent,
 									   final File startingDirectory) {
 		JFileChooser chooser;
 		if (startingDirectory != null && 
@@ -264,7 +271,12 @@ public class GUIUtils {
 		if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
 			File file = chooser.getSelectedFile();
 			if (file != null && file.exists() && file.isDirectory()) {
-				return file;
+				try {
+					return new Directory(file);
+				}
+				catch (Exception e) {
+					return null;
+				}
 			}
 			else {
 				return null;

@@ -25,6 +25,19 @@ public class Player {
 	private final Set<Position> positions;
 	private final int hash_code;
 	
+
+	public Player(final String name, final String team, final String position) throws Exception {
+		this.name = name;
+		this.team = team;
+		this.position = getPosition(position);
+		teams = new HashSet<String>();
+		positions = new HashSet<Position>();
+		teams.add(this.team);
+		positions.add(this.position);
+		hash_code = (name + position).hashCode();
+
+	}
+	
 	public Player(final String string) throws Exception {
 		String input = new String(string.getBytes("UTF-8"));
 		input = StringUtils.replace(input, "[\\w\\d\\s\\-\\/\\,\\.]", ' ');
@@ -133,6 +146,9 @@ public class Player {
 		}
 		else if (string.matches("^\\s*[Tt][Ee]\\s*$")) {
 			return Position.TE;
+		}
+		else if (string.matches("^\\s*[Dd][/][Ss][Tt]\\s*$")) {
+			return Position.D_ST;
 		}
 		else if (string.matches("^\\s*[Dd][Ee][Ff]\\s*$")) {
 			return Position.D_ST;

@@ -3,7 +3,7 @@ package kaflib.graphics;
 import java.awt.Component;
 import java.io.File;
 
-import kaflib.gui.TwoPasswordConfirmPanel;
+import kaflib.gui.composite.TwoPasswordConfirmPanel;
 import kaflib.utils.AESUtils;
 import kaflib.utils.CheckUtils;
 import kaflib.utils.FileUtils;

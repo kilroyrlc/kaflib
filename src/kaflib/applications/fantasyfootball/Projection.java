@@ -26,7 +26,10 @@ public class Projection {
 	 * @param last the last to set
 	 */
 	public void setLast(final Float last) throws Exception {
-		if (this.last != null && this.last != last) {
+		if (this.last != null) {
+			if (this.last.equals(last)) {
+				return;
+			}
 			throw new Exception("Trying to reset last: " + this.last + 
 								"/" + last + ".");
 		}
@@ -60,7 +63,10 @@ public class Projection {
 	 * @param expected the expected to set
 	 */
 	public void setProjected(final Float projected) throws Exception {
-		if (this.projected != null && this.projected != projected) {
+		if (this.projected != null) {
+			if (this.projected.equals(projected)) {
+				return;
+			}
 			throw new Exception("Trying to reset projected: " + this.projected + 
 								"/" + expected + ".");
 		}

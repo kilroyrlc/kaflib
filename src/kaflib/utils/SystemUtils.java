@@ -25,11 +25,20 @@ package kaflib.utils;
 import java.util.Arrays;
 import java.util.List;
 
+import kaflib.types.Directory;
+
 /**
  * Contains utilities for system interaction.
  */
 public class SystemUtils {
 
+	public static void executeCommandSerially(final Directory directory, final String... commands) throws Exception {
+		ProcessBuilder builder = new ProcessBuilder(commands);
+		builder.directory(directory);
+		builder.start();
+		builder.start().waitFor();
+	}
+	
 	/**
 	 * Executes the specified command serially.
 	 * @param command

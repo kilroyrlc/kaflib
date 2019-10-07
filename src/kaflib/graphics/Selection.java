@@ -9,6 +9,7 @@ import java.util.Set;
 import kaflib.types.Coordinate;
 import kaflib.types.IntegerHistogram;
 import kaflib.utils.CheckUtils;
+import kaflib.utils.CoordinateUtils;
 import kaflib.utils.StringUtils;
 
 /**
@@ -237,10 +238,10 @@ public class Selection extends SelectionCore {
 	 */
 	public String toMatrix() throws Exception {
 		Set<Coordinate> coordinates = getCoordinates();
-		int x_start = Coordinate.getMinX(coordinates);
-		int y_start = Coordinate.getMinY(coordinates);
-		int x_size = Math.max(Coordinate.getMaxX(coordinates) - x_start, 1) + 4;
-		int y_size = Math.max(Coordinate.getMaxY(coordinates) - y_start, 1) + 4;
+		int x_start = CoordinateUtils.getMinX(coordinates);
+		int y_start = CoordinateUtils.getMinY(coordinates);
+		int x_size = Math.max(CoordinateUtils.getMaxX(coordinates) - x_start, 1) + 4;
+		int y_size = Math.max(CoordinateUtils.getMaxY(coordinates) - y_start, 1) + 4;
 		CheckUtils.checkPositive(x_start, "x start");
 		CheckUtils.checkPositive(y_start, "y start");
 		CheckUtils.checkPositive(x_size, "x size");
@@ -469,11 +470,11 @@ public class Selection extends SelectionCore {
 		Coordinate next;
 		int value = 0;
 		if (horizontal) {
-			start = Coordinate.getMinXCoordinate(coordinates);
+			start = CoordinateUtils.getMinXCoordinate(coordinates);
 			next = start.getEast();
 		}
 		else {
-			start = Coordinate.getMinYCoordinate(coordinates);
+			start = CoordinateUtils.getMinYCoordinate(coordinates);
 			next = start.getSouth();
 		}
 		window.add(start);

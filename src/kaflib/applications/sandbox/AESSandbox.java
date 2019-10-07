@@ -1,6 +1,6 @@
 package kaflib.applications.sandbox;
 
-import kaflib.gui.TwoPasswordConfirmPanel;
+import kaflib.gui.composite.TwoPasswordConfirmPanel;
 import kaflib.utils.KeyPair;
 
 public class AESSandbox {

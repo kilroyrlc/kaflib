@@ -1,11 +1,13 @@
 package kaflib.types;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import kaflib.utils.CheckUtils;
+import kaflib.utils.CoordinateUtils;
 import kaflib.utils.RandomUtils;
 import kaflib.utils.StringUtils;
 import kaflib.utils.TypeUtils;
@@ -70,10 +72,10 @@ public class Box {
 		
 		List<Coordinate> coordinates = TypeUtils.getList(c0, c1);
 		
-		x_min = Coordinate.getMinX(coordinates);
-		x_max = Coordinate.getMaxX(coordinates);
-		y_min = Coordinate.getMinY(coordinates);
-		y_max = Coordinate.getMaxY(coordinates);
+		x_min = CoordinateUtils.getMinX(coordinates);
+		x_max = CoordinateUtils.getMaxX(coordinates);
+		y_min = CoordinateUtils.getMinY(coordinates);
+		y_max = CoordinateUtils.getMaxY(coordinates);
 		width = x_max - x_min + 1;
 		height = y_max - y_min + 1;
 		
@@ -118,10 +120,10 @@ public class Box {
 		
 		List<Coordinate> coordinates = TypeUtils.getList(c0, c1);
 		
-		x_min = Coordinate.getMinX(coordinates);
-		x_max = Coordinate.getMaxX(coordinates);
-		y_min = Coordinate.getMinY(coordinates);
-		y_max = Coordinate.getMaxY(coordinates);
+		x_min = CoordinateUtils.getMinX(coordinates);
+		x_max = CoordinateUtils.getMaxX(coordinates);
+		y_min = CoordinateUtils.getMinY(coordinates);
+		y_max = CoordinateUtils.getMaxY(coordinates);
 		width = x_max - x_min + 1;
 		height = y_max - y_min + 1;
 		
@@ -206,6 +208,21 @@ public class Box {
 									  Math.max(outer.getTopLeft().getY(), top_left.getY())),
 					   new Coordinate(Math.min(outer.getBottomRight().getX(), bottom_right.getX()),
 								  	  Math.min(outer.getBottomRight().getY(), bottom_right.getY())));
+	}
+	
+	/**
+	 * Removes all coordinates outside this box.
+	 * @param coordinates
+	 * @return
+	 */
+	public Collection<Coordinate> intersection(final Collection<Coordinate> coordinates) {
+		List<Coordinate> inter = new ArrayList<Coordinate>();
+		for (Coordinate coordinate : coordinates) {
+			if (contains(coordinate)) {
+				inter.add(coordinate);
+			}
+		}
+		return inter;
 	}
 	
 	public int getWidth() {
@@ -421,10 +438,10 @@ public class Box {
 	 */
 	public static final Box getBoundingBoxIf(final Collection<Coordinate> coordinates) throws Exception {
 		CheckUtils.checkSize(coordinates, 2);
-		int x_min = Coordinate.getMinX(coordinates);
-		int x_max = Coordinate.getMaxX(coordinates);
-		int y_min = Coordinate.getMinY(coordinates);
-		int y_max = Coordinate.getMaxY(coordinates);
+		int x_min = CoordinateUtils.getMinX(coordinates);
+		int x_max = CoordinateUtils.getMaxX(coordinates);
+		int y_min = CoordinateUtils.getMinY(coordinates);
+		int y_max = CoordinateUtils.getMaxY(coordinates);
 		if (x_min >= x_max || y_min >= y_max) {
 			return null;
 		}

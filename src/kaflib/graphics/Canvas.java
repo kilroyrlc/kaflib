@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -290,7 +291,7 @@ public class Canvas {
 	 * @throws Exception
 	 */
 	public Box getBounds() throws Exception {
-		return new Box(0, getWidth() - 1, 0, getHeight() - 1);
+		return new Box(0, getWidth(), 0, getHeight());
 	}
 	
 	/**
@@ -365,6 +366,12 @@ public class Canvas {
 	
 	public RGBPixel[][] getCopy() {
 		return CanvasUtils.copy(pixels);
+	}
+	
+	public void set(final Map<Coordinate, RGBPixel> values) throws Exception {
+		for (Coordinate coordinate : values.keySet()) {
+			set(coordinate, values.get(coordinate));
+		}
 	}
 	
 	public void set(final RGBPixel values[][]) throws Exception {
@@ -494,6 +501,10 @@ public class Canvas {
 		}
 	}
 	
+	public Coordinate getCenter() {
+		return new Coordinate(getWidth() / 2, getHeight() / 2);
+	}
+	
 	public void toFile(final File file) throws Exception {
 		GraphicsUtils.writePNG(toBufferedImage(), file);
 	}
@@ -506,13 +517,14 @@ public class Canvas {
 		GraphicsUtils.writeJPG(toBufferedImage(), file);
 	}
 	
-	public RGBPixel get(final Coordinate location) throws Exception {
+	public RGBPixel get(final Coordinate location) {
 		return get(location.getX(), location.getY());
 	}
 	
-	public RGBPixel get(int x, int y) throws Exception {
-		CheckUtils.checkRange(x, 0, pixels.length - 1, "x value");
-		CheckUtils.checkRange(y, 0, pixels[0].length - 1, "y value");
+	public RGBPixel get(int x, int y) {
+		if (x < 0 || x >= pixels.length || y < 0 || y >= pixels[0].length) {
+			return null;
+		}
 		if (pixels[x][y] == null) {
 			return new RGBPixel(RGBPixel.TRANSPARENT_BLACK);
 		}
@@ -531,6 +543,7 @@ public class Canvas {
 	 */
 	public Map<Coordinate, RGBPixel> getMap() {
 		if (map == null) {
+			map = new HashMap<Coordinate, RGBPixel>(pixels.length * pixels[0].length);
 			for (int i = 0; i < pixels.length; i++) {
 				for (int j = 0; j < pixels[i].length; j++) {
 					map.put(new Coordinate(i, j), pixels[i][j]);
@@ -660,7 +673,11 @@ public class Canvas {
 			}
 		}
 	}
-	
+
+	public void uncheckedSet(final Coordinate coordinate, final RGBPixel value) {
+		pixels[coordinate.getX()][coordinate.getY()] = value;
+	}
+
 	public void set(final Coordinate coordinate, final RGBPixel value) throws Exception {
 		if (!isValid(coordinate)) {
 			return;

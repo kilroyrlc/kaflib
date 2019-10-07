@@ -337,6 +337,28 @@ public class RGBPixel extends Pixel implements Comparable<RGBPixel> {
 		return value;
 	}
 	
+	/**
+	 * Returns the average of this pixel and another (opacity set to max).
+	 * If the other value is null, uses this value.
+	 * @param other
+	 * @return
+	 */
+	public RGBPixel average(final RGBPixel other) {
+		if (other == null) {
+			return this;
+		}
+		int value = 0;
+		value |= r.average(other.getR()).getValue();
+		value = value << 8;
+		value |= g.average(other.getG()).getValue();
+		value = value << 8;
+		value |= b.average(other.getB()).getValue();
+		
+		
+		return new RGBPixel(true, value);
+							
+	}
+	
 	public static RGBPixel getAverage(final Collection<RGBPixel> pixels) throws Exception {
 		CheckUtils.checkNonEmpty(pixels, "pixel values");
 		

@@ -28,10 +28,14 @@ public class DownscaledImageComponent extends ImageComponent {
 	}
 	
 	public DownscaledImageComponent(final File file) throws Exception {
-		this(0, null, DEFAULT_WIDTH, DEFAULT_HEIGHT, null);
-		set(file);
+		this(file, false);
 	}
 
+	public DownscaledImageComponent(final File file, boolean listen) throws Exception {
+		this(0, null, DEFAULT_WIDTH, DEFAULT_HEIGHT, true);
+		set(file);
+	}
+	
 	public DownscaledImageComponent(final Canvas canvas) throws Exception {
 		this(0, null, DEFAULT_WIDTH, DEFAULT_HEIGHT, null);
 		set(canvas);
@@ -42,6 +46,11 @@ public class DownscaledImageComponent extends ImageComponent {
 		set(image);
 	}
 
+	public DownscaledImageComponent(final BufferedImage image, boolean listen) throws Exception {
+		this(0, null, DEFAULT_WIDTH, DEFAULT_HEIGHT, true);
+		set(image);
+	}
+	
 	public DownscaledImageComponent(final int maxWidth, final int maxHeight) throws Exception {
 		this(0, null, maxWidth, maxHeight, null);
 	}
@@ -77,6 +86,23 @@ public class DownscaledImageComponent extends ImageComponent {
 		max_height = maxHeight;
 	}
 
+	protected DownscaledImageComponent(final int maxWidth, 
+			final int maxHeight,
+			final boolean listen) throws Exception {
+		this(null, null, maxWidth, maxHeight, true);
+	}
+	
+	protected DownscaledImageComponent(final Integer borderWidth, 
+            final Color borderColor,
+            final int maxWidth, 
+			final int maxHeight,
+			final boolean listen) throws Exception {
+		super(borderWidth, borderColor, true);
+		CheckUtils.checkPositive(maxWidth, maxHeight);
+		max_width = maxWidth;
+		max_height = maxHeight;
+	}
+	
 	public void update(final File file) throws Exception {
 		set(new Canvas(file));
 	}
@@ -134,8 +160,9 @@ public class DownscaledImageComponent extends ImageComponent {
 		return scaling_factor;
 	}
 	
-	public void clear() throws Exception {
-		set((BufferedImage) null);
+	public void clear() {
+		displayed_image = null;
+		redraw();
 	}
 
 	@Override

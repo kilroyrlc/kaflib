@@ -31,42 +31,57 @@ import kaflib.utils.CheckUtils;
  * Defines a key-value cache that evicts either based on recent use or total
  * use.
  */
-public class Cache <K, V> {
-
-	public enum EvictionMethod {LRU, ACCESSES};
+public abstract class Cache <K, V> {
 
 	// Map of keys to value and integer value holding usage data.
-	private final Map<K, Pair<V, Integer>> map;
-	private final EvictionMethod method;
-	private final int size;
-
+	protected final Map<K, V> map;
+	private int size;
 	
-	// Defines a counter to represent time.  It increments every access rather
-	// than asking System for time in millis.
-	private int counter;
-
-	// Mutex and default timeout to handle concurrency.
-	private Mutex mutex;
-	private long lockTimeoutMS = 5000;
-
+	private Worker evict_worker;
+	
 	/**
 	 * Creates the cache with the given retention/eviction method and size.
 	 * @param method
 	 * @param size
 	 * @throws Exception
 	 */
-	public Cache(final EvictionMethod method, int size) throws Exception {
-		CheckUtils.check(method, "eviction method");
+	public Cache(final int size) throws Exception {
 		CheckUtils.checkPositive(size);
-		
-		this.method = method;
-		this.size = size;
-		counter = 0;
-		mutex = new Mutex();
-		
-		map = new HashMap<K, Pair<V, Integer>>(size + 1);
+		setSize(size);
+		map = new HashMap<K, V>(size + 3);
 	}
+	
+	public final void setSize(final int size) throws Exception {
+		this.size = size;
+		if (map != null && map.size() > size) {
+			startEvictions();
+		}
+	}
+	
+	protected synchronized void startEvictions() throws Exception {
+		if (map.size() <= size || evict_worker != null && !evict_worker.isDone()) {
+			return;
+		}
+		evict_worker = new Worker() {
 
+			@Override
+			protected void process() throws Exception {
+				int count = map.size() - size;
+				while (count > 0) {
+					evict(count);
+					count = map.size() - size;
+				}
+			}
+			
+		};
+		evict_worker.start();
+	}
+	
+	protected abstract void evict(final int count);
+	protected abstract void accessed(final K key);
+	
+	
+	
 	/**
 	 * Checks the cache for the given key.  Returns null if it is not found,
 	 * returns the item if it is.
@@ -74,24 +89,32 @@ public class Cache <K, V> {
 	 * @return
 	 * @throws Exception
 	 */
-	public V lookup(final K key) throws Exception {
-		CheckUtils.check(key, "key");
-		
-		int combo = mutex.lock(lockTimeoutMS);
-		
-		if (!map.containsKey(key)) {
-			mutex.unlock(combo);
+	public V lookup(final K key) {
+		if (key == null) {
 			return null;
 		}
-		
-		accessed(key);
-		V value = map.get(key).getKey();
-		
-		mutex.unlock(combo);
-		
+
+		V value = map.get(key);
+		if (value != null) {
+			accessed(key);
+		}
 		return value;
 	}
 
+	/**
+	 * Returns whether or not the key is contained in the cache.
+	 * @param key
+	 * @return
+	 */
+	public boolean contains(final K key) {
+		if (key == null || !map.containsKey(key)) {
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+	
 	/**
 	 * Adds the specified key and value to the cache or resets the item if it
 	 * already exists.
@@ -101,108 +124,32 @@ public class Cache <K, V> {
 	 */
 	public void insert(final K key, final V value) throws Exception {
 		CheckUtils.check(key, "key");
-		
-		evict();
-		
-		int combo = mutex.lock(lockTimeoutMS);
-		
-		Pair<V, Integer> pair;
-		
+
 		if (map.containsKey(key)) {
-			pair = map.get(key);
-			pair.setKey(value);
+			return;
 		}
 		else {
-			pair = new Pair<V, Integer>(value, 0);
+			map.put(key, value);
+			accessed(key);
+			if (map != null && map.size() > size) {
+				startEvictions();
+			}
 		}
-
-		map.put(key, pair);
-		accessed(key);
-		
-		mutex.unlock(combo);
+	}
+	
+	protected void remove(final K key) {
+		map.remove(key);
 	}
 
 	/**
 	 * Removes all items from the cache.
 	 */
-	public void flush() throws Exception {
-		int combo = mutex.lock(lockTimeoutMS);
+	public synchronized void clear() throws Exception {
 		map.clear();
-		mutex.unlock(combo);
 	}
-	
-	/**
-	 * Evicts lines from the cache until there is room for one more.
-	 * @throws Exception
-	 */
-	private void evict() throws Exception {
-		int combo = mutex.lock(lockTimeoutMS);
 
-		while (map.size() > size - 1) {
-			map.remove(findEvictee());
-		}
-		
-		mutex.unlock(combo);
-	}
-	
-	/**
-	 * Finds the eviction candidate based on the eviction method.  Note this
-	 * function does not lock the map so it is not thread safe.
-	 */
-	private K findEvictee() throws Exception {
-		int evicteeAccess = Integer.MAX_VALUE;
-		K evictee = null;
-		
-		for (K key : map.keySet()) {
-			int access = map.get(key).getValue();
-			
-			if (method == EvictionMethod.LRU || method == EvictionMethod.ACCESSES) {
-				// If the accesses/access time value is less than the least,
-				// this is the new candidate.
-				if (access < evicteeAccess) {
-					evictee = key;
-					evicteeAccess = access;
-				}
-				// If they are equal, don't always evict the first one.  This
-				// could be random, but meh.
-				else if (access == evicteeAccess && System.currentTimeMillis() % 4 == 0) {
-					evictee = key;
-					evicteeAccess = access;
-				}
-				else {
-					// Don't evict this.
-				}
-			}
-			else {
-				throw new Exception("Added eviction method without defining protocol.");
-			}			
-		}
-
-		return evictee;
-	}
-	
-	/**
-	 * Handles updating a cache line for an access.
-	 * @param key
-	 * @throws Exception
-	 */
-	private void accessed(final K key) throws Exception {
-		CheckUtils.check(key, "key");
-		
-		if (method == EvictionMethod.LRU) {
-			// Cycle time back to 0.
-			if (counter == Integer.MAX_VALUE - 1) {
-				counter = 0;
-			}
-
-			map.get(key).setValue(counter++);
-		}
-		else if (method == EvictionMethod.ACCESSES) {
-			map.get(key).setValue(Math.min(map.get(key).getValue() + 1, Integer.MAX_VALUE - 1));
-		}
-		else {
-			throw new Exception("Added eviction method without defining protocol.");
-		}
+	public String toString() {
+		return "Cache of size: " + map.size();
 	}
 
 	/**
@@ -215,88 +162,15 @@ public class Cache <K, V> {
 		for (K key : map.keySet()) {
 			buffer.append(key.toString());
 			buffer.append(" : ");
-			buffer.append(map.get(key).getKey().toString());
+			buffer.append(map.get(key).toString());
 			buffer.append(" [");
-			buffer.append(map.get(key).getValue().toString());
+			buffer.append(map.get(key).toString());
 			buffer.append("]\n");
 		}
 		
 		return new String(buffer);
 	}
 
-	/**
-	 * Returns a string with basic information.
-	 */
-	public String toString() {
-		return new String(method + " cache, size: " + map.size());
-	}
-	
-	/**
-	 * Unit test function.
-	 * @param args
-	 */
-	public static void main(String args[]) {
-		try {
-			Cache<String, String> cache = new Cache<String, String>(Cache.EvictionMethod.LRU, 3);
-			
-			System.out.println("Looking up aaa.");
-			String result = cache.lookup("aaa");
-			if (result != null) {
-				System.out.println("Hit.");
-			}
-			else {
-				System.out.println("Miss.");
-			}
-			cache.insert("aaa", "aaaaa");
-			System.out.println(cache.toString());
 
-			System.out.println("Looking up aaa.");
-			result = cache.lookup("aaa");
-			if (result != null) {
-				System.out.println("Hit.");
-			}
-			else {
-				System.out.println("Miss.");
-			}
-			System.out.println("Inserting bbb.");
-			cache.insert("bbb", "bbbbb");
-			System.out.println(cache.toString());
-
-			System.out.println("Looking up aaa.");
-			result = cache.lookup("aaa");
-			if (result != null) {
-				System.out.println("Hit.");
-			}
-			else {
-				System.out.println("Miss.");
-			}
-			System.out.println("Looking up bbb.");
-			result = cache.lookup("bbb");
-			if (result != null) {
-				System.out.println("Hit.");
-			}
-			else {
-				System.out.println("Miss.");
-			}
-
-			cache.insert("ccc", "ccccc");
-			System.out.println(cache.toString());
-
-			System.out.println("Looking up bbb.");
-			result = cache.lookup("bbb");
-			if (result != null) {
-				System.out.println("Hit.");
-			}
-			else {
-				System.out.println("Miss.");
-			}
-			cache.insert("ddd", "ddddd");
-			System.out.println(cache.toString());
-			
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 	
 }

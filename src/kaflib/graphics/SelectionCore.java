@@ -6,6 +6,7 @@ import java.util.Set;
 
 import kaflib.types.Box;
 import kaflib.types.Coordinate;
+import kaflib.utils.CoordinateUtils;
 
 /**
  * Defines core functionality of the selection class.  This may be bad design
@@ -213,7 +214,7 @@ public abstract class SelectionCore {
 	 * @throws Exception
 	 */
 	private final void computeCentroid() throws Exception {
-		centroid = Coordinate.getCentroid(coordinates);
+		centroid = CoordinateUtils.getCentroid(coordinates);
 	}
 	
 	/**

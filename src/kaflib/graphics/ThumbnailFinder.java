@@ -4,10 +4,15 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import kaflib.gui.components.KFrame;
+import kaflib.gui.components.KPanel;
+import kaflib.gui.components.StaticImageComponent;
 import kaflib.types.Box;
 import kaflib.types.Coordinate;
 import kaflib.types.IntegerHistogram;
@@ -15,9 +20,14 @@ import kaflib.types.Pair;
 import kaflib.types.Percent;
 import kaflib.types.Worker;
 import kaflib.utils.CheckUtils;
+import kaflib.utils.GUIUtils;
 import kaflib.utils.MathUtils;
 import kaflib.utils.TypeUtils;
 
+/**
+ * Defines a heuristic method for finding thumbnails based on naive image
+ * attributes.
+ */
 public class ThumbnailFinder extends Worker {
 
 	private final Canvas canvas;
@@ -141,6 +151,65 @@ public class ThumbnailFinder extends Worker {
 		return best_box;
 	}
 	
+
+	public List<Box> getRankedSelectionsAreas(final int minX, final int maxX, final int minY, final int maxY) throws Exception {
+		List<Box> values = new ArrayList<Box>();
+		for (Pair<Box, Percent> pair : getRankedSelections(minX, maxX, minY, maxY)) {
+			values.add(pair.getFirst());
+		}
+		return values;
+	}
+	
+	/**
+	 * Returns all possible selections within the given constrains, ordered by
+	 * value.
+	 * @param minX
+	 * @param maxX
+	 * @param minY
+	 * @param maxY
+	 * @return
+	 * @throws Exception
+	 */
+	public List<Pair<Box, Percent>> getRankedSelections(final int minX, final int maxX, final int minY, final int maxY) throws Exception {
+		if (!isDone()) {
+			throw new Exception("Area computation not yet complete.");
+		}
+		List<Pair<Box, Percent>> selections = new ArrayList<Pair<Box, Percent>>();
+		
+		int best = Integer.MIN_VALUE;
+		Box best_box = null;
+		
+		int x_max = areas.length;
+		int y_max = areas[0].length;
+		
+		// Iterate over all starting top/lefts.
+		for (int i = 0; i < x_max; i++) {
+			for (int j = 0; j < y_max; j++) {
+				List<Integer> percentages = new ArrayList<Integer>();
+				
+				for (int k = i; k < Math.min(i + maxX + 1, x_max); k++) {
+					for (int l = j; l < Math.min(j + maxY + 1, y_max); l++) {
+						percentages.add(areas[k][l].getNormalizedInterest().get());
+						if (k - i + 1 >= minX && l - j + 1 >= minY) {
+							int average = MathUtils.average(percentages);
+							selections.add(new Pair<Box, Percent>(new Box(areas[i][j].getTopLeft(), areas[k][l].getBottomRight()),
+																  new Percent(average, 0, 100)));
+						}
+					}
+				}
+			}
+		}
+		Collections.sort(selections, new Comparator<Pair<Box, Percent>>(){
+			@Override
+			public int compare(Pair<Box, Percent> o1, Pair<Box, Percent> o2) {
+				return o1.getSecond().compareTo(o2.getSecond());
+			}
+		});
+		Collections.reverse(selections);
+		
+		return selections;
+	}
+	
 	/**
 	 * Overlays the interest values on the canvas.
 	 * @return
@@ -164,6 +233,15 @@ public class ThumbnailFinder extends Worker {
 			}
 		}
 		return new Canvas(overlay);
+	}
+
+	public List<Coordinate> getRankedCoordinates() throws Exception {
+		List<Pair<Coordinate, Percent>> ranked = getRanked();
+		List<Coordinate> values = new ArrayList<Coordinate>();
+		for (Pair<Coordinate, Percent> r : ranked) {
+			values.add(r.getFirst());
+		}
+		return values;
 	}
 	
 	public List<Pair<Coordinate, Percent>> getRanked() throws Exception {
@@ -243,13 +321,19 @@ public class ThumbnailFinder extends Worker {
 	
 	public static void main(String args[]) {
 		try {
-			Canvas canvas = new Canvas(new File(new File("data"), "flag_medium.jpg"));
-			ThumbnailFinder thumbnailer = new ThumbnailFinder(canvas, 5);
+			StaticImageComponent a = new StaticImageComponent();
+			StaticImageComponent b = new StaticImageComponent();
+			KFrame frame = new KFrame();
+			File file = GUIUtils.chooseFile(frame, null);
+			Canvas canvas = new Canvas(file);
+			a.set(canvas);
+			b.set(canvas);
+			frame.setContent(new KPanel("Thumbnailer", 1, 2, a, b));
+			
+			ThumbnailFinder thumbnailer = new ThumbnailFinder(canvas, 8);
 			thumbnailer.start();
 			thumbnailer.blockUntilDone(null);
-//			for (Pair<Coordinate, Percent> value : thumbnailer.getRanked()) {
-//				System.out.println(value.toString());
-//			}
+			b.set(thumbnailer.drawInterest());
 		}
 		catch (Exception e) {
 			e.printStackTrace();

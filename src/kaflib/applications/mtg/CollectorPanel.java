@@ -31,8 +31,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import kaflib.graphics.GraphicsUtils;
-import kaflib.gui.ProgressLabel;
 import kaflib.gui.components.DownscaledImageComponent;
+import kaflib.gui.components.ProgressLabel;
+import kaflib.gui.components.StaticImageComponent;
 import kaflib.types.WordTrie;
 import kaflib.types.Worker;
 import kaflib.utils.FileUtils;
@@ -75,7 +76,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 	
 	private Boolean tor_available;
 	private final BufferedImage no_image;
-	private final DownscaledImageComponent image;
+	private final StaticImageComponent image;
 	private final CardDatabase db;
 	
 	public CollectorPanel(final CardDatabase db, final WordTrie tree) throws Exception {	
@@ -146,8 +147,8 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		panel.add(progress, BorderLayout.CENTER);
 		panel.add(start, BorderLayout.EAST);
 		
-		image = new DownscaledImageComponent();
-		image.update(no_image);
+		image = new StaticImageComponent();
+		image.set(no_image);
 		
 		JPanel left_panel = new JPanel();
 		left_panel.setLayout(new BorderLayout());
@@ -296,7 +297,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 				progress.increment(this);
 			}
 	
-			progress.setText("Scrape finished, save recommended.");
+			//progress.setText("Scrape finished, save recommended.");
 			progress.release(this);
 		}
 		catch (Exception e) {
@@ -478,7 +479,7 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 		}
 		
 		try {
-			FileUtils.torGet(new URL("http://gatherer.wizards.com/Pages/Card/Languages.aspx?printed=false&multiverseid=" + RandomUtils.randomInt(1, 500)));
+			//FileUtils.torGet(new URL("http://gatherer.wizards.com/Pages/Card/Languages.aspx?printed=false&multiverseid=" + RandomUtils.randomInt(1, 500)));
 			tor_available = true;
 		}
 		catch (Exception e) {
@@ -504,36 +505,40 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 	}
 	
 	private String get(final URL url) throws Exception {
-		if (torAvailable()) {
-			return FileUtils.torGet(url);
-		}
-		else if (!tor_only.isSelected()) {
-			return FileUtils.read(url);
-		}
-		else {
-			throw new Exception("Tor required but unavailable.  Check that it is installed/running.");
-		}
+		return null;
+//		if (torAvailable()) {
+//			return FileUtils.torGet(url);
+//		}
+//		else if (!tor_only.isSelected()) {
+//			return FileUtils.read(url);
+//		}
+//		else {
+//			throw new Exception("Tor required but unavailable.  Check that it is installed/running.");
+//		}
 	}
 
 	private void get(final File file, final URL url) throws Exception {
-		if (torAvailable()) {
-			FileUtils.torDownload(file, url);
-		}
-		else if (!tor_only.isSelected()) {
-			FileUtils.download(file, url);
-		}
-		else {
-			throw new Exception("Tor required but unavailable.  Check that it is installed/running.");
-		}
+//		if (torAvailable()) {
+//			FileUtils.torDownload(file, url);
+//		}
+//		else if (!tor_only.isSelected()) {
+//			FileUtils.download(file, url);
+//		}
+//		else {
+//			throw new Exception("Tor required but unavailable.  Check that it is installed/running.");
+//		}
 	}
 	
 	private void scrape(final int id) throws Exception {
 		Boolean english = isEnglish(get(new URL("http://gatherer.wizards.com/Pages/Card/Languages.aspx?printed=false&multiverseid=" + id)));
-		
+
 		if (english == null) {
+			progress.setText("Scraping: " + id + " - invalid");
+
 			db.addInvalid(id);
 		}
 		else if (english == false) {
+			progress.setText("Scraping: " + id + " - foreign");
 			db.addForeign(id);
 		}
 		else {
@@ -551,8 +556,9 @@ public class CollectorPanel extends JPanel implements KeyListener, ActionListene
 							image_file.delete();
 						}
 						else {
-							this.image.update(image);
+							this.image.set(image);
 						}
+						progress.setText("Scraping: " + id + " - added");
 					}
 				}
 			}

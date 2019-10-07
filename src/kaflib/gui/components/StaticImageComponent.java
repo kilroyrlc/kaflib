@@ -21,16 +21,27 @@ public class StaticImageComponent extends ImageComponent {
 		image = null;
 	}
 
+	public StaticImageComponent(final Canvas canvas) throws Exception {
+		super();
+		set(canvas);
+	}
+	
 	public StaticImageComponent(final File file) throws Exception {
 		super();
 		set(file);
 	}
-	
+
 	public StaticImageComponent(final Integer borderWidth, 
 				              	final Color borderColor,
 				              	final ImageListener listener) {
 		super(borderWidth, borderColor, listener);
 	}
+	
+	public void clear() {
+		image = null;
+		redraw();
+	}
+
 	
 	public void set(final File file) throws Exception {
 		set(GraphicsUtils.read(file));

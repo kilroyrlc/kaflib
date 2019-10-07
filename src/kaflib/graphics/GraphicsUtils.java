@@ -26,6 +26,7 @@ import kaflib.types.Coordinate;
 import kaflib.types.Box;
 import kaflib.types.Byte;
 import kaflib.utils.CheckUtils;
+import kaflib.utils.CoordinateUtils;
 
 /**
  * Graphics utilites.
@@ -838,7 +839,6 @@ public class GraphicsUtils {
 		throw new Exception("Could not read after " + tries + " retries.");
 	}
 
-	
 	public static boolean isMonochrome(final BufferedImage image) throws Exception {
 		return isMonochrome(image, image.getWidth() * image.getHeight() / 10, 0);
 	}
@@ -847,7 +847,7 @@ public class GraphicsUtils {
 									   final int samples,
 									   final int tolerance) throws Exception {
 		
-		Set<Coordinate> coordinates = Coordinate.getRandom(samples, 0, image.getWidth(), 0, image.getHeight());
+		Set<Coordinate> coordinates = CoordinateUtils.getRandom(samples, 0, image.getWidth(), 0, image.getHeight());
 				
 		for (Coordinate coordinate : coordinates) {
 			int value = image.getRGB(coordinate.getX(), coordinate.getY());

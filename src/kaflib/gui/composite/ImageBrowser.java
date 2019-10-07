@@ -1,13 +1,13 @@
 package kaflib.gui.composite;
 
-import java.io.File;
-
 import kaflib.gui.components.KFrame;
 import kaflib.gui.components.ScaledImageComponent;
+import kaflib.gui.components.ThumbnailButton;
+import kaflib.gui.components.ThumbnailListener;
 import kaflib.types.Directory;
 import kaflib.utils.GUIUtils;
 
-public class ImageBrowser extends KFrame implements ThumbnailPanelListener {
+public class ImageBrowser extends KFrame implements ThumbnailListener {
 	
 	private static final long serialVersionUID = 2331238816577899177L;
 	private final ThumbnailBrowser panel;
@@ -20,21 +20,9 @@ public class ImageBrowser extends KFrame implements ThumbnailPanelListener {
 		super();
 		panel = new ThumbnailBrowser(directory, width, rows, columns, false, this);
 		image = new ScaledImageComponent(800, 600);
-		panel.getEastPanel().add(image);
 		setContent(panel);
 	}
 
-	@Override
-	public void selected(File file) {
-		try {
-			image.set(file);
-			panel.redraw();
-		}
-		catch (Exception e) {
-			System.err.println("Could not load file: " + file + ".");
-		}
-	}
-	
 	public static void main(String args[]) {
 		try {
 			KFrame frame = new KFrame();
@@ -45,6 +33,17 @@ public class ImageBrowser extends KFrame implements ThumbnailPanelListener {
 			e.printStackTrace();
 			System.exit(1);
 		}
+	}
+
+	@Override
+	public void selection(final ThumbnailButton source) {
+		try {
+			image.set(source.getFile());
+			panel.redraw();
+		}
+		catch (Exception e) {
+			System.err.println("Could not load file: " + source.getFile() + ".");
+		}		
 	}
 
 

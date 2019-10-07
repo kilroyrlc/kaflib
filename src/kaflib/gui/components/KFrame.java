@@ -28,8 +28,6 @@ public class KFrame extends JFrame {
 		content = panel;
 		setDefaultCloseOperation(closeOperation);
 		setContentPane(panel);
-		pack();
-		setVisible(true);
 	}
 	
 	public void setContent(final KPanel panel) throws Exception {
@@ -37,8 +35,10 @@ public class KFrame extends JFrame {
 			throw new Exception("Cannot reset content.");
 		}
 		setContentPane(panel);
+	}
+	
+	public void packAndShow() {
 		pack();
 		setVisible(true);
 	}
-	
 }

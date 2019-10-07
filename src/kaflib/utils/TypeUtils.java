@@ -90,6 +90,15 @@ public class TypeUtils {
 		}
 		return list;
 	}
+	
+	@SafeVarargs
+	public static <T> Set<T> getSet(final T... values) {
+		Set<T> set = new HashSet<T>(values.length);
+		for (T t : values) {
+			set.add(t);
+		}
+		return set;
+	}
 
 	
 	/**

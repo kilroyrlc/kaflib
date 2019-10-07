@@ -33,12 +33,17 @@ public class ScaledImageComponent extends ImageComponent {
 		this.height = height;
 	}
 	
+	public void clear() {
+		image = null;
+		redraw();
+	}
 	
 	public void set(final File file) throws Exception {
 		set(GraphicsUtils.read(file));
 	}
 
 	public void set(final BufferedImage image) throws Exception {
+		this.image = null;
 		this.image = GraphicsUtils.getScaled(image, width, height);
 		redraw();
 	}

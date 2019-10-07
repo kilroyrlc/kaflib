@@ -30,9 +30,6 @@ import java.io.FileReader;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -45,8 +42,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
-import javax.net.ssl.HttpsURLConnection;
-
 import kaflib.types.Directory;
 import kaflib.types.Matrix;
 import kaflib.types.Pair;
@@ -56,11 +51,9 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.util.Zip4jConstants;
-
 import com.opencsv.CSVReader;
 
 /**
@@ -473,154 +466,7 @@ public class FileUtils {
 	}
 	
 
-	@SafeVarargs
-	public static String torGet(final URL url, final Pair<String, String>... properties) throws Exception {
-		return torGet(url, null, properties);
-	}
-	
-	/**
-	 * Reads the html from the specified url using tor.
-	 * @param url
-	 * @return
-	 * @throws Exception
-	 */
-	@SafeVarargs
-	public static String torGet(final URL url, final Long retrySleepMS, final Pair<String, String>... properties) throws Exception {
-		String string = null;
-		final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
-									  new InetSocketAddress("127.0.0.1", 9150));
-		if (url.toString().startsWith("https")) {
-			HttpsURLConnection connection = (HttpsURLConnection) url.openConnection(proxy);
-			connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
-			for (Pair<String, String> property : properties) {
-				connection.addRequestProperty(property.getFirst(), property.getSecond());
-			}
-			
-			//HttpURLConnection.setFollowRedirects(false);
-			connection.setConnectTimeout(60000);
-			connection.setReadTimeout(60000);
-			for (int i = 0; i < 5; i++) {
-				try {
-					connection.connect();
-					break;
-				}
-				catch (Exception e) {
-					System.out.println(e.getMessage());
-				}
-				Thread.sleep(retrySleepMS);
-			}		
-			
-			string = StringUtils.read(connection.getInputStream());
-			connection.disconnect();
-		}
-		else {
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
-			connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
-			for (Pair<String, String> property : properties) {
-				connection.addRequestProperty(property.getFirst(), property.getSecond());
-			}			
-			//HttpURLConnection.setFollowRedirects(false);
-			connection.setConnectTimeout(60000);
-			connection.setReadTimeout(60000);
-			for (int i = 0; i < 5; i++) {
-				try {
-					connection.connect();
-					break;
-				}
-				catch (Exception e) {
-					System.out.println(e.getMessage());
-				}
-				Thread.sleep(retrySleepMS);
-			}		
-			
-			string = StringUtils.read(connection.getInputStream());
-			connection.disconnect();
-		}
-		
-		
-		return string;
-	}
-	
-	/**
-	 * Downloads the specified url to file using tor.
-	 * @param file
-	 * @param url
-	 * @throws Exception
-	 */
-	@SafeVarargs
-	public static void torDownload(final File file, final URL url, final Pair<String, String>... properties) throws Exception {
-		if (!file.exists()) {
-			file.createNewFile();
-		}
-		if (url.toString().startsWith("https")) {
-			final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
-										  new InetSocketAddress("127.0.0.1", 9150));
-			HttpsURLConnection connection = (HttpsURLConnection) url.openConnection(proxy);
-			connection.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
-			for (Pair<String, String> property : properties) {
-				connection.addRequestProperty(property.getFirst(), property.getSecond());
-			}
-			//HttpURLConnection.setFollowRedirects(false);
-			//connection.setConnectTimeout(60000);
-			//connection.setReadTimeout(60000);
-			for (int i = 0; i < 5; i++) {
-				try {
-					connection.connect();
-					break;
-				}
-				catch (Exception e) {
-					System.out.println(e.getMessage());
-				}
-			}		
-			
-			InputStream input = connection.getInputStream();
-			OutputStream output = new FileOutputStream(file);
-	
-			byte[] bytes = new byte[2048];
-			int length;
-	
-			while ((length = input.read(bytes)) != -1) {
-				output.write(bytes, 0, length);
-			}
-			input.close();
-			output.close();
-			connection.disconnect();
-		}
-		else {
-			final Proxy proxy = new Proxy(Proxy.Type.SOCKS, 
-					  new InetSocketAddress("127.0.0.1", 9150));
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
-			connection.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
-			for (Pair<String, String> property : properties) {
-				connection.addRequestProperty(property.getFirst(), property.getSecond());
-			}
-			//HttpURLConnection.setFollowRedirects(false);
-			//connection.setConnectTimeout(60000);
-			//connection.setReadTimeout(60000);
-			for (int i = 0; i < 5; i++) {
-				try {
-					connection.connect();
-					break;
-				}
-				catch (Exception e) {
-					System.out.println(e.getMessage());
-				}
-			}		
 
-			InputStream input = connection.getInputStream();
-			OutputStream output = new FileOutputStream(file);
-
-			byte[] bytes = new byte[2048];
-			int length;
-
-			while ((length = input.read(bytes)) != -1) {
-				output.write(bytes, 0, length);
-			}
-			input.close();
-			output.close();
-			connection.disconnect();
-		}
-	}
 	
 	/**
      * Creates a file [prefix][rand%256][suffix] in the current directory.
@@ -1052,9 +898,17 @@ public class FileUtils {
         outstream.close();
 	}
 	
-	public static void copyTo(final Directory destination, final File source) throws Exception {
+	/**
+	 * Copies the specified file to the destination directory.
+	 * @param destination
+	 * @param source
+	 * @return
+	 * @throws Exception
+	 */
+	public static File copyTo(final Directory destination, final File source) throws Exception {
 		File destination_file = new File(destination, source.getName());
 		copy(destination_file, source);
+		return destination_file;
 	}
 	
 	/**

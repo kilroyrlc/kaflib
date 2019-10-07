@@ -136,6 +136,10 @@ public class ListNavigationPanel<T> extends KPanel implements KListener {
 		update(0);
 	}
 
+	public T getCurrent() {
+		return values.get(index);
+	}
+	
 	private void update(final int index) throws Exception {
 		CheckUtils.checkWithin(index, values);
 		this.index = index;

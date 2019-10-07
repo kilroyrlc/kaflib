@@ -16,8 +16,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import kaflib.gui.PasswordConfirmPanel;
-import kaflib.gui.ProgressLabel;
+import kaflib.gui.components.ProgressLabel;
+import kaflib.gui.composite.PasswordConfirmPanel;
 import kaflib.types.Mutex;
 import kaflib.types.Pair;
 import kaflib.types.Worker;

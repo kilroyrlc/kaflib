@@ -31,6 +31,21 @@ public abstract class ImageComponent extends Component implements MouseListener,
 	public ImageComponent() {
 		this(null, null, null);
 	}
+
+	public ImageComponent(final boolean listen) {
+		this(null, null, true);
+	}
+
+	protected ImageComponent(final Integer borderWidth, 
+			              final Color borderColor,
+			              final boolean listen) {
+		this(borderWidth, borderColor, null);
+		if (listen) {
+			addMouseListener(this);
+			addMouseMotionListener(this);
+			addMouseWheelListener(this);
+		}
+	}
 	
 	public ImageComponent(final Integer borderWidth, 
 			              final Color borderColor,
@@ -76,6 +91,7 @@ public abstract class ImageComponent extends Component implements MouseListener,
 		});
 	}
 	
+	public abstract void clear();
 	
 	/**
 	 * Repaints the component.
@@ -118,46 +134,64 @@ public abstract class ImageComponent extends Component implements MouseListener,
     
     
 	@Override
-	public final void mouseClicked(MouseEvent e) {
+	public void mouseClicked(MouseEvent e) {
 	}
 
 	@Override
-	public final void mousePressed(MouseEvent e) {
+	public void mousePressed(MouseEvent e) {
+		if (listener == null) {
+			return;
+		}
+
 		listener.mouseDown(MouseButton.getButton(e.getButton()), 
 						   e.getX() - border_width, 
 						   e.getY() - border_width);
 	}
 
 	@Override
-	public final void mouseReleased(MouseEvent e) {
+	public void mouseReleased(MouseEvent e) {
+		if (listener == null) {
+			return;
+		}
+
 		listener.mouseUp(MouseButton.getButton(e.getButton()), 
 				   e.getX() - border_width, 
 				   e.getY() - border_width);
 	}
 
 	@Override
-	public final void mouseEntered(MouseEvent e) {
+	public void mouseEntered(MouseEvent e) {
 	}
 
 	@Override
-	public final void mouseExited(MouseEvent e) {
+	public void mouseExited(MouseEvent e) {
 	}
 
 	@Override
-	public final void mouseDragged(MouseEvent e) {
+	public void mouseDragged(MouseEvent e) {
+		if (listener == null) {
+			return;
+		}
+
 		listener.mouseDrag(MouseButton.getButton(e.getButton()),
 						   e.getX() - border_width, 
 				   		   e.getY() - border_width);		
 	}
 	
 	@Override
-	public final void mouseMoved(MouseEvent e) {
+	public void mouseMoved(MouseEvent e) {
+		if (listener == null) {
+			return;
+		}
 		listener.mouseMove(e.getX() - border_width, 
 				   		   e.getY() - border_width);
 	}
 
 	@Override
-	public final void mouseWheelMoved(MouseWheelEvent e) {
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		if (listener == null) {
+			return;
+		}
 		listener.mouseWheelMove(e.getWheelRotation());
 	}
 }

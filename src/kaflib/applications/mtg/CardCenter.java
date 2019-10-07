@@ -24,13 +24,13 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
 import kaflib.graphics.GraphicsUtils;
-import kaflib.gui.AddRemoveList;
-import kaflib.gui.AddRemoveListListener;
-import kaflib.gui.FileSelectorComponent;
-import kaflib.gui.FileSelectorListener;
-import kaflib.gui.RatingPanel;
 import kaflib.gui.Suggestor;
 import kaflib.gui.components.DownscaledImageComponent;
+import kaflib.gui.components.FileSelectorComponent;
+import kaflib.gui.components.FileSelectorListener;
+import kaflib.gui.components.RatingPanel;
+import kaflib.gui.composite.AddRemoveList;
+import kaflib.gui.composite.AddRemoveListListener;
 import kaflib.types.DemandWorker;
 import kaflib.types.Matrix;
 import kaflib.types.WordTrie;
@@ -432,7 +432,7 @@ public class CardCenter extends JFrame implements FocusListener,
 			}
 			// Remove duplicates pressed.
 			else if (e.getSource().equals(remove_duplicates)) {
-				card_list.removeDuplicates();
+				//card_list.removeDuplicates();
 			}
 			// Generate text file pressed.
 			else if (e.getSource().equals(generate_text)) {

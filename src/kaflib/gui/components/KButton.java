@@ -74,7 +74,7 @@ public class KButton extends JButton implements ActionListener {
 			   final boolean monospace,
 			   final boolean disableOnClick,
 			   final Component... toDisable) {
-		this(listener, monospace, disableOnClick, toDisable);
+		this(listener, listener != null, monospace, disableOnClick, toDisable);
 		setIcon(type.getIcon());
 	}
 	
@@ -83,7 +83,7 @@ public class KButton extends JButton implements ActionListener {
 			   final boolean monospace,
 			   final boolean disableOnClick,
 			   final Component... toDisable) {
-		this(listener, monospace, disableOnClick, toDisable);
+		this(listener, listener != null, monospace, disableOnClick, toDisable);
 		setIcon(icon);
 	}
 
@@ -92,11 +92,16 @@ public class KButton extends JButton implements ActionListener {
 			   final boolean monospace,
 			   final boolean disableOnClick,
 			   final Component... toDisable) {
-		this(listener, monospace, disableOnClick, toDisable);
+		this(listener, listener != null, monospace, disableOnClick, toDisable);
 		setText(label);
 	}
 	
+	protected KButton(final boolean listen) {
+		this(null, listen, false, false);
+	}
+	
 	private KButton(final KListener listener,
+				   final boolean listen,
 				   final boolean monospace,
 				   final boolean disableOnClick,
 				   final Component... toDisable) {
@@ -109,7 +114,7 @@ public class KButton extends JButton implements ActionListener {
 		
 		disable = new ArrayList<Component>();
 		disable_on_click = disableOnClick;
-		if (disableOnClick || listener != null) {
+		if (disableOnClick || listener != null || listen) {
 			addActionListener(this);
 		}
 		

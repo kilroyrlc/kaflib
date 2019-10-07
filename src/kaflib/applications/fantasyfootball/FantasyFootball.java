@@ -238,7 +238,11 @@ public class FantasyFootball {
 	    		player.getName().equals("D. Thomas") || 
 	    		player.getName().equals("J. Nelson") || 
 	    		player.getName().equals("T. Smith") || 
-	    		player.getName().equals("J. Brown")) {
+	    		player.getName().equals("J. Brown") || 
+	    		player.getName().equals("D. Moore") || 
+	    		player.getName().equals("D. Washington") || 
+	    		player.getName().equals("D. Williams") || 
+	    		player.getName().equals("D. Johnson")) {
 	    		continue;
 	    	}
 
@@ -274,23 +278,66 @@ public class FantasyFootball {
 	    Document document = Jsoup.parse(file, "UTF-8");
 	    Map<Player, Float> stats = new HashMap<Player, Float>();
 
-	    Elements rows = ParseUtils.select(document, ".pncPlayerRow");
+	    Elements rows = ParseUtils.select(document, ".Table2__tbody tr");
 	    if (rows == null || rows.size() == 0) {
 	    	throw new Exception("Unable to find playertable.");
 	    }
 	    
 	    for (Element row : rows) {
-	    	Elements selection = row.select(".playertablePlayerName");
-	    	if (selection == null || selection.size() != 1) {
-	    		throw new Exception("Parse fail on:\n" + StringUtils.truncateIf(row.html(), 256));
-	    	}
+	    	String name;
+	    	String team;
+	    	String position;
+	    	Elements columns = row.select("td");
 
-	    	Player player = new Player(selection.text());
-	    	selection = row.select(".playertableStat.appliedPoints.sortedCell");
+	    	Elements selection = columns.get(0).select("div .player__column");
+	    	if (selection == null || selection.size() < 1) {
+	    		throw new Exception("Parse fail (" + selection.size() + ") on:\n" + StringUtils.truncateIf(row.html(), 512));
+	    	}
+	    	name = selection.get(0).attr("title");
+	    	name = selection.text();
+	    	
+	    	selection = row.select(".playerinfo__playerteam");
 	    	if (selection == null || selection.size() != 1) {
+	    		throw new Exception("Parse fail on:\n" + StringUtils.truncateIf(row.html(), 512));
+	    	}
+	    	team = selection.text();
+
+	    	selection = row.select(".playerinfo__playerpos");
+	    	if (selection == null || selection.size() != 1) {
+	    		throw new Exception("Parse fail on:\n" + StringUtils.truncateIf(row.html(), 512));
+	    	}
+	    	position = selection.text();
+	    	
+	    	Player player = new Player(name, team, position);
+
+	    	Float stat = null;
+	    	for (Element column : columns) {
+		    	selection = column.select("div .total");
+
+		    	for (Element element : selection) {
+		    		if (element.attr("title").equals("Fantasy Points")) {
+		    			if (selection.text().trim().equals("--")) {
+		    				stat = new Float(0.0);
+		    			}
+		    			else {
+			    			try {
+			    				stat = Float.valueOf(selection.text());
+			    			}
+			    			catch (Exception e) {
+			    				System.out.println("Value: " + selection.text() + ".");
+			    				throw e;
+			    			}
+		    			}
+		    		}
+		    	}
+		    	if (stat != null) {
+		    		break;
+		    	}
+	    	}
+	    	
+	    	if (stat == null) { 
 	    		throw new Exception("Parse fail on:\n" + row.html());
 	    	}
-	    	Float stat = Float.valueOf(selection.text());
 	    	
 	    	if (stats.containsKey(player) && stats.get(player) != stat) {
 	    		throw new Exception(player + ": " + stat + " / " + stats.get(player));

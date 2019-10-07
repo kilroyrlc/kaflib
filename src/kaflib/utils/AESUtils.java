@@ -5,6 +5,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.AlgorithmParameters;
 import java.security.spec.KeySpec;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -40,6 +45,27 @@ public class AESUtils {
 		return new String(bytes);
 	}
 	
+	public static List<String> readLines(final File in, 
+								   		 final KeyPair keys) throws Exception {
+		String text = read(in, keys);
+		List<String> lines = new ArrayList<String>();
+		for (String line : text.split("\n")) {
+			lines.add(line);
+		}
+		return lines;
+	}
+	
+
+	public static Set<String> readLineValues(final File in, 
+								   		 final KeyPair keys) throws Exception {
+		String text = read(in, keys);
+		Set<String> lines = new HashSet<String>();
+		for (String line : text.split("\n")) {
+			lines.add(line);
+		}
+		return lines;
+	}
+	
 	/**
 	 * Writes the file to a string.
 	 * @param out
@@ -53,6 +79,17 @@ public class AESUtils {
 		CheckUtils.checkWritable(out, "output file");
 		CheckUtils.check(keys, "keys");
 		AESUtils.encrypt(out, text.getBytes("UTF-8"), keys);
+	}
+	
+	public static void write(final File out, 
+							 final KeyPair keys, 
+							 final Collection<String> lines) throws Exception {
+		StringBuffer buffer = new StringBuffer();
+		for (String line : lines) {
+			buffer.append(line);
+			buffer.append("\n");
+		}
+		write(out, keys, new String(buffer));
 	}
 	
 	/**
@@ -100,7 +137,7 @@ public class AESUtils {
 		
 		encrypt(out, buffer, keys);
 		
-		if (deleteInput) {
+		if (deleteInput && !out.equals(in)) {
 			in.delete();
 		}
 		
@@ -171,14 +208,13 @@ public class AESUtils {
 							   final boolean deleteInput,
 							   final KeyPair keys) throws Exception {
 		CheckUtils.checkReadable(in, "input file");
-		
 		byte buffer[] = decrypt(in, keys);
 		
 		FileOutputStream ostream = new FileOutputStream(out);		
 		ostream.write(buffer);	
 		ostream.close();
 		
-		if (deleteInput) {
+		if (deleteInput && !out.equals(in)) {
 			in.delete();
 		}
 	}

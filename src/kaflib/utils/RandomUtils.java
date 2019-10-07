@@ -254,6 +254,13 @@ public class RandomUtils {
 		CheckUtils.checkNonEmpty(values, "values");
 		return values[randomInt(values.length)];
 	}	
+
+	public static <T> T uncheckedGetRandom(final T values[]) {
+		if (values == null || values.length == 0) {
+			return null;
+		}
+		return values[randomInt(values.length)];
+	}	
 	
 	/**
 	 * Returns a random value from the set.

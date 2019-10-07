@@ -2,11 +2,9 @@ package kaflib.types;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -15,12 +13,14 @@ import java.util.regex.Pattern;
 import kaflib.utils.CheckUtils;
 import kaflib.utils.RandomUtils;
 
-public class Coordinate {
+public class Coordinate implements Comparable<Coordinate> {
 
 	private final boolean positive_domain;
 	private final int x;
 	private final int y;
 	private final int hash_code;
+	
+	public static Coordinate ORIGIN = new Coordinate(0, 0);
 	
 	/**
 	 * Creates a coordinate.
@@ -410,29 +410,6 @@ public class Coordinate {
 		return neighbors;
 	}
 	
-	public enum BoxValues {
-		X,
-		Y,
-		WIDTH,
-		HEIGHT
-	}
-	
-	/**
-	 * Returns an x/y width/height where width and height are positive.
-	 * @param a
-	 * @param b
-	 * @return
-	 */
-	public static Map<BoxValues, Integer> getXYWH(final Coordinate a, 
-										          final Coordinate b) {
-		Map<BoxValues, Integer> values = new HashMap<BoxValues, Integer>();
-		values.put(BoxValues.X, Math.min(a.getX(), b.getX()));
-		values.put(BoxValues.Y, Math.min(a.getY(), b.getY()));
-		values.put(BoxValues.WIDTH, Math.abs(a.getX() - b.getX()));
-		values.put(BoxValues.HEIGHT, Math.abs(a.getY() - b.getY()));
-		return values;
-	}
-	
 	public int hashCode() {
 		return hash_code;
 	}
@@ -447,7 +424,7 @@ public class Coordinate {
 	}
 	
 	public boolean equals(Coordinate c) {
-		return x == getX() && y == getY();
+		return x == c.getX() && y == c.getY();
 	}
 
 	public String toSerial() {
@@ -458,114 +435,6 @@ public class Coordinate {
 		return toSerial();
 	}
 	
-	
-	/**
-	 * Returns the average x and y.
-	 * @param coordinates
-	 * @return
-	 * @throws Exception
-	 */
-	public static Coordinate getCentroid(final Collection<Coordinate> coordinates) throws Exception {
-		int x = 0;
-		int y = 0;
-		
-		for (Coordinate coordinate : coordinates) {
-			CheckUtils.checkAddOverflow(coordinate.getX(), x);
-			CheckUtils.checkAddOverflow(coordinate.getY(), y);
-			
-			x += coordinate.getX();
-			y += coordinate.getY();
-		}
-		return new Coordinate(x / coordinates.size(), y / coordinates.size());
-	}
-	
-	public static int getMinX(final Collection<Coordinate> coordinates) {
-		int x = Integer.MAX_VALUE;
-		for (Coordinate coordinate : coordinates) {
-			if (coordinate.getX() < x) {
-				x = coordinate.getX();
-			}
-		}
-		return x;
-	}
-	
-	public static Coordinate getMinXCoordinate(final Collection<Coordinate> coordinates) {
-		Coordinate min = null;
-		int x = Integer.MAX_VALUE;
-		for (Coordinate coordinate : coordinates) {
-			if (coordinate.getX() < x) {
-				x = coordinate.getX();
-				min = coordinate;
-			}
-		}
-		return min;
-	}
-	
-	public static Coordinate getMaxXCoordinate(final Collection<Coordinate> coordinates) {
-		int x = Integer.MIN_VALUE;
-		Coordinate max = null;
-		for (Coordinate coordinate : coordinates) {
-			if (coordinate.getX() > x) {
-				x = coordinate.getX();
-				max = coordinate;
-			}
-		}
-		return max;
-	}
-	
-	public static int getMaxX(final Collection<Coordinate> coordinates) {
-		int x = Integer.MIN_VALUE;
-		for (Coordinate coordinate : coordinates) {
-			if (coordinate.getX() > x) {
-				x = coordinate.getX();
-			}
-		}
-		return x;
-	}
-	
-	public static int getMinY(final Collection<Coordinate> coordinates) {
-		int y = Integer.MAX_VALUE;
-		for (Coordinate coordinate : coordinates) {
-			if (coordinate.getY() < y) {
-				y = coordinate.getY();
-			}
-		}
-		return y;
-	}
-	
-	public static Coordinate getMinYCoordinate(final Collection<Coordinate> coordinates) {
-		Coordinate min = null;
-		int y = Integer.MAX_VALUE;
-		for (Coordinate coordinate : coordinates) {
-			if (coordinate.getY() < y) {
-				y = coordinate.getY();
-				min = coordinate;
-			}
-		}
-		return min;
-	}
-	
-	public static int getMaxY(final Collection<Coordinate> coordinates) {
-		int y = Integer.MIN_VALUE;
-		for (Coordinate coordinate : coordinates) {
-			if (coordinate.getY() > y) {
-				y = coordinate.getY();
-			}
-		}
-		return y;
-	}
-	
-	public static Coordinate getMaxYCoordinate(final Collection<Coordinate> coordinates) {
-		Coordinate max = null;
-		int y = Integer.MIN_VALUE;
-		for (Coordinate coordinate : coordinates) {
-			if (coordinate.getY() > y) {
-				y = coordinate.getY();
-				max = coordinate;
-			}
-		}
-		return max;
-	}
 	
 	public Collection<Coordinate> getBox(final int width, final int height) throws Exception {
 		CheckUtils.checkPositive(width);
@@ -580,28 +449,27 @@ public class Coordinate {
 		return box;
 	}
 
-	public static Coordinate getRandom(final Box box) throws Exception {
-		return getRandom(box.getXMin(), box.getXMax(), box.getYMin(), box.getYMax());
-	}
-	
-	public static Coordinate getRandom(final int xMin, final int xMax, 
-									   final int yMin, final int yMax) throws Exception {
-		return new Coordinate(RandomUtils.randomInt(xMin, xMax),
-							  RandomUtils.randomInt(yMin, yMax));
-	}
 
-	public static Set<Coordinate> getRandom(final int count, final int xMin, final int xMax, 
-			   						   final int yMin, final int yMax) throws Exception {
-		Set<Coordinate> coordinates = new HashSet<Coordinate>();
-		if (count > (xMax - xMin) * (yMax - yMin) / 2) {
-			throw new Exception("Suboptimal sampling quantity.");
+	@Override
+	public int compareTo(Coordinate o) {
+		if (getX() < o.getX()) {
+			return -1;
 		}
-		
-		while (coordinates.size() < count) {
-			coordinates.add(getRandom(xMin, xMax, yMin, yMax));
+		else if (getX() > o.getX()) {
+			return 1;
 		}
-		
-		return coordinates;
+		else {
+			if (getY() < o.getY()) {
+				return -1;
+			}
+			else if (getY() > o.getY()) {
+				return 1;
+			}	
+			else {
+				return 0;
+			}
+		}
+
 	}
 	
 }

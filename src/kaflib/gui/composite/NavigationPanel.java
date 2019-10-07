@@ -231,6 +231,15 @@ public class NavigationPanel extends KPanel implements KListener {
 			}
 		});
 	}
+	
+	/**
+	 * Go to the next item as if the user clicked the button.
+	 */
+	public void next() {
+		current = Math.min(max, current + 1);
+		reload();
+		listener.navigationRequested(current);
+	}
 
 	@Override
 	public void serialValueChanged(Component component) {
@@ -268,9 +277,7 @@ public class NavigationPanel extends KPanel implements KListener {
 			listener.navigationRequested(current);
 		}
 		else if (component == next_button) {
-			current = Math.min(max, current + 1);
-			reload();
-			listener.navigationRequested(current);
+			next();
 		}
 		else if (component == last_button) {
 			current = max;

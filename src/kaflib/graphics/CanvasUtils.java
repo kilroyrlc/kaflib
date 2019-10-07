@@ -10,8 +10,17 @@ import kaflib.utils.CheckUtils;
 import kaflib.utils.RandomUtils;
 import kaflib.utils.TypeUtils;
 
+/**
+ * Static canvas functions.
+ */
 public class CanvasUtils {
 
+	/**
+	 * Return a canvas that is randomly rotated and also randomly mirrored.
+	 * @param canvas
+	 * @return
+	 * @throws Exception
+	 */
 	public static Canvas getRandomRotateMirror(final Canvas canvas) throws Exception {
 		int random = RandomUtils.randomInt(0, 3);
 		Canvas changed;
@@ -39,6 +48,13 @@ public class CanvasUtils {
 		return changed;
 	}
 
+	/**
+	 * Rotate the canvas.
+	 * @param image
+	 * @param rotation
+	 * @return
+	 * @throws Exception
+	 */
 	public static Canvas rotate(final Canvas image, 
 								final GraphicsUtils.Rotation rotation) throws Exception {
 		if (rotation == Rotation.CLOCKWISE) {
@@ -73,6 +89,32 @@ public class CanvasUtils {
 		}
 	}
 
+	public static CircularCanvas getRandomCircle(final Canvas canvas, final int radius) throws Exception {
+		CircularCanvas circle = new CircularCanvas(radius);
+		Coordinate start = new Coordinate(RandomUtils.randomInt(0, canvas.getWidth() - circle.getDiameter() - 1),
+										  RandomUtils.randomInt(0, canvas.getHeight() - circle.getDiameter() - 1));
+		
+		circle.getCoordinates().parallelStream().forEach(c -> circle.uncheckedSet(c, canvas.get(c.add(start))));
+		return circle;
+	}
+	
+	public static DonutCanvas getRandomDonut(final Canvas canvas, final int outer, final int inner) throws Exception {
+		DonutCanvas circle = new DonutCanvas(outer, inner);
+		Coordinate start = new Coordinate(RandomUtils.randomInt(0, canvas.getWidth() - circle.getDiameter() - 1),
+										  RandomUtils.randomInt(0, canvas.getHeight() - circle.getDiameter() - 1));
+		
+		circle.getOuterCoordinates().parallelStream().forEach(c -> circle.uncheckedSet(c, canvas.get(c.add(start))));
+		circle.getInnerCoordinates().parallelStream().forEach(c -> circle.uncheckedSet(c, canvas.get(c.add(start))));
+		return circle;
+	}
+	
+	public static DonutCanvas getDonut(final Canvas canvas, final int outer, final int inner, final Coordinate topLeft) throws Exception {
+		DonutCanvas circle = new DonutCanvas(outer, inner);
+		circle.getOuterCoordinates().parallelStream().forEach(c -> circle.uncheckedSet(c, canvas.get(c.add(topLeft))));
+		circle.getInnerCoordinates().parallelStream().forEach(c -> circle.uncheckedSet(c, canvas.get(c.add(topLeft))));
+		return circle;
+	}
+	
 	public static Canvas mirror(final Canvas image, 
 								final boolean horizontal) throws Exception {
 		int width = image.getWidth();
@@ -292,6 +334,17 @@ public class CanvasUtils {
 		return new_canvas;
 	}
 
+	public static Canvas merge(final Canvas a, final Canvas b) throws Exception {
+		if (a.getWidth() != b.getWidth() || a.getHeight() != b.getHeight()) {
+			throw new Exception("Sizes do not match.");
+		}
+		Canvas output = new Canvas(a);
+		
+		output.getCoordinates().parallelStream().
+						forEach(c -> output.uncheckedSet(c, output.get(c).average(b.get(c))));
+		return output;
+	}
+	
 	public static Canvas getLuminance(final Canvas canvas) throws Exception {
 		Canvas grey = new Canvas(canvas);
 		for (int i = 0; i < grey.getWidth(); i++) {

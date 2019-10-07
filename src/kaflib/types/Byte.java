@@ -106,6 +106,18 @@ public class Byte implements Comparable<Byte> {
 		add(o);
 	}
 	
+	/**
+	 * Averages the two byte values, or returns this if the other is null.
+	 * @param other
+	 * @return
+	 */
+	public Byte average(final Byte other) {
+		if (other == null) {
+			return new Byte(this);
+		}
+		return new Byte((value + other.getValue()) / 2);
+	}
+	
 	public static Byte combine(final Byte a, final Byte b, final Percent aPct) throws Exception {
 		CheckUtils.checkRange(aPct.get(), 0, 100);
 		return new Byte(((a.getValue() * aPct.get()) / 100) +

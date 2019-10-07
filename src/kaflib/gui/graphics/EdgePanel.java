@@ -11,7 +11,7 @@ import javax.swing.JPanel;
 
 import kaflib.graphics.RGBPixel;
 import kaflib.graphics.transform.EdgeFilter;
-import kaflib.gui.SliderPanel;
+import kaflib.gui.components.SliderPanel;
 import kaflib.types.Worker;
 import kaflib.utils.GUIUtils;
 

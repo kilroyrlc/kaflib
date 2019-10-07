@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * Defines an integer percent type.
  */
-public class Percent implements Serializable {
+public class Percent implements Serializable, Comparable<Percent> {
 	public static final Percent ZERO = new Percent(0);
 	public static final Percent ONE_HUNDRED = new Percent(100);
 	
@@ -117,5 +117,18 @@ public class Percent implements Serializable {
 	
 	public int of(final int value) throws Exception {
 		return (this.value * value) / 100;
+	}
+
+	@Override
+	public int compareTo(Percent o) {
+		if (get() < o.get()) {
+			return -1;
+		}
+		else if (get() > o.get()) {
+			return 1;
+		}
+		else {
+			return 0;
+		}
 	}
 }

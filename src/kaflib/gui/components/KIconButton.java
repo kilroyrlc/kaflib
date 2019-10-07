@@ -2,6 +2,7 @@ package kaflib.gui.components;
 
 import java.awt.Component;
 import java.io.File;
+import java.io.InputStream;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -13,6 +14,7 @@ public class KIconButton extends KButton {
 	private static final long serialVersionUID = 5599468658793339700L;
 
 	public enum IconType {
+		ADD("add"),
 		AWARD("award"),
 		COMMENT("comment"),
 		DIRECTORY("directory"),
@@ -30,6 +32,7 @@ public class KIconButton extends KButton {
 		OK("ok"),
 		QUESTION("question"),
 		REFRESH("refresh"),
+		REMOVE("remove"),
 		SAVE_NEXT("save_next"),
 		START("start"),
 		TRASH("trash"),
@@ -43,7 +46,7 @@ public class KIconButton extends KButton {
 			return resource;
 		}
 		public File getFile() {
-			return new File("data/icons/" + getResource() + ".png");
+			return new File("resource/icons/" + getResource() + ".png");
 		}
 		private final String resource;
 		

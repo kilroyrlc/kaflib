@@ -3,6 +3,7 @@ package kaflib.gui.components;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.GridLayout;
+import java.awt.LayoutManager;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -28,6 +29,10 @@ public class KPanel extends JPanel {
 	 */
 	public KPanel() {
 		super();
+	}
+	
+	public KPanel(final LayoutManager layout) {
+		super(layout);
 	}
 
 	public KPanel(final Component component) {
@@ -131,6 +136,12 @@ public class KPanel extends JPanel {
 		for (Component component : getComponents()) {
 			component.setEnabled(enabled);
 		}
+	}
+	
+	public void setTitle(final String title) {
+		this.title = title;
+		setBorder(createBorder());
+		redraw();
 	}
 	
 	public void redraw() {
